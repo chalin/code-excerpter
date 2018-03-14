@@ -6,13 +6,13 @@ module.exports = function regionFileReader(log) {
     name: 'regionFileReader',
 
     getDocs: function (fileInfo) {
-      // log.info("fileShredder processing: " + fileInfo.relativePath);
+      // log.info("processing: " + fileInfo.relativePath);
       var docs = buildRegionDocs(fileInfo.content, fileInfo.extension);
-      var wasShredded = docs.some(function(doc) {
+      var wasProcessed = docs.some(function(doc) {
         return doc.regionName != null;
       });
-      if (wasShredded) {
-        log.info("shredded file: " + fileInfo.relativePath);
+      if (wasProcessed) {
+        log.info("read file: " + fileInfo.relativePath);
       }
       return docs;
     }

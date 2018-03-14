@@ -2,15 +2,19 @@
 var path = require('canonical-path');
 var del = require('del');
 var Dgeni = require('dgeni');
+var fs = require('fs');
 var _ = require('lodash');
 var globby = require('globby');
-var ignoreDirs = ['**/node_modules/**', '**/dist/**', '**/build/packages/**', '**/build/test/**', '**/build/web/**', '**/.*/**'];
 
-var _getLogLevel = function (options) { return options.logLevel || 'info'; }
+module.exports = {
+  _excerpt: _excerpt,
+  excerpt: excerpt,
+};
 
-var shred = function (shredOptions) {
+// Excerpt from all examples in exampleDir.
+function _excerpt(options) {
   try {
-    var pkg = createShredExamplePackage(shredOptions);
+    var pkg = createDgeniPackage(options);
     var dgeni = new Dgeni([pkg]);
     return dgeni.generate();
   } catch (err) {
@@ -20,54 +24,23 @@ var shred = function (shredOptions) {
   }
 }
 
-var shredSingleExampleDir = function (shredOptions, fileDir) {
-  shredOptions = resolveShredOptions(shredOptions);
-  var relativePath = path.relative(shredOptions.examplesDir, fileDir);
-  var examplesDir = path.join(shredOptions.examplesDir, relativePath);
-  var fragmentsDir = path.join(shredOptions.fragmentsDir, relativePath);
-  var options = {
-    includeSubdirs: true,
-    examplesDir: examplesDir,
-    fragmentsDir: fragmentsDir,
-    logLevel: _getLogLevel(shredOptions)
-  }
-  var cleanPath = path.join(fragmentsDir, '*.*')
-  return del([cleanPath, '!**/*.ovr.*']).then(function (paths) {
-    // console.log('Deleted files/folders:\n', paths.join('\n'));
-    return shred(options);
-  });
+function excerpt(options, fileDir) {
+  if (!fileDir) return _excerpt(options);
+
+  options = resolveOptions(options);
+  var relativePath = path.relative(options.examplesDir, fileDir);
+  options.examplesDir = path.resolve(options.examplesDir, relativePath);
+  options.fragmentsDir = path.resolve(options.fragmentsDir, relativePath);
+  // Should this package be attempting to clean out the fragments dir?
+  return del(path.join(options.fragmentsDir, '**'))
+    .then(function (paths) { return _excerpt(options); });
 }
 
-var shredSingleDir = function (shredOptions, filePath) {
-  shredOptions = resolveShredOptions(shredOptions);
-  var fileDir = path.dirname(filePath);
-  var relativePath = path.relative(shredOptions.examplesDir, fileDir);
-  var examplesDir = path.join(shredOptions.examplesDir, relativePath);
-  var fragmentsDir = path.join(shredOptions.fragmentsDir, relativePath);
-  var options = {
-    includeSubdirs: false,
-    examplesDir: examplesDir,
-    fragmentsDir: fragmentsDir,
-    logLevel: _getLogLevel(shredOptions)
-  }
-  var cleanPath = path.join(fragmentsDir, '*.*')
-  return del([cleanPath, '!**/*.ovr.*']).then(function (paths) {
-    // console.log('Deleted files/folders:\n', paths.join('\n'));
-    return shred(options);
-  });
-}
-
-module.exports = {
-  shred: shred,
-  shredSingleExampleDir: shredSingleExampleDir,
-  shredSingleDir: shredSingleDir,
-};
-
-function createShredExamplePackage(shredOptions) {
+function createDgeniPackage(options) {
   var pkg = new Dgeni.Package('code-excerpter', [
     // require('dgeni-packages/base') - doesn't work
   ]);
-  var options = resolveShredOptions(shredOptions);
+  var options = resolveOptions(options);
 
   initializePackage(pkg)
     .factory(require('./regionFileReader'))
@@ -77,32 +50,31 @@ function createShredExamplePackage(shredOptions) {
     })
     // default configs - may be overridden
     .config(function (log, readFilesProcessor) {
-      log.level = _getLogLevel(shredOptions);
+      log.level = options.logLevel;
       // Specify the base path used when resolving relative paths to source and output files
       readFilesProcessor.basePath = "/";
 
       // Specify collections of source files that should contain the documentation to extract
-      var extns = ['*.ts', '*.html', '*.js', '*.css', '*.json', '*.dart', '*.yaml', '*.yml', '*.es6'];
-      var includeFiles = extns.map(function (extn) {
-        if (options.includeSubdirs) {
-          return path.join(options.examplesDir, '**', extn);
-        } else {
-          return path.join(options.examplesDir, extn);
-        }
-      });
+      var include;
+      if (fs.lstatSync(options.examplesDir).isFile()) {
+        include = options.examplesDir;
+        log.info(`Excerpter: processing ${options.examplesDir}`);
+      } else {
+        include = options.extns.map(function (extn) {
+          return options.includeSubdirs
+            ? path.join(options.examplesDir, '**', extn)
+            : path.join(options.examplesDir, extn);
+        });
 
-      // HACK ( next two lines) because the glob function that dgeni uses internally isn't good at removing 'node_modules' early
-      // this just uses globby to 'preglob' the include files ( and  exclude the node_modules).
-      var includeFiles = globby.sync(includeFiles, { ignore: ignoreDirs });
+        // HACK ( next two lines) because the glob function that dgeni uses internally isn't good at removing 'node_modules' early
+        // this just uses globby to 'preglob' the include files ( and  exclude the node_modules).
+        include = globby.sync(include, { ignore: options.ignore });
 
-      log.info(`Shredding ${includeFiles.length} files inside ${shredOptions.examplesDir}`);
-
+        log.info(`Excerpter: processing ${options.examplesDir} (${include.length} files inside)`);
+      }
       readFilesProcessor.sourceFiles = [{
-        // Process all candidate files in `src` and its subfolders ...
-        include: includeFiles,
-        exclude: ['**/node_modules/**', '**/dist/**', '**/build/web/**', '**/.*/**'],
-        // When calculating the relative path to these files use this as the base path.
-        // So `src/foo/bar.js` will have relative path of `foo/bar.js`
+        include: include,
+        exclude: options.ignore,
         basePath: options.examplesDir
       }];
     })
@@ -113,31 +85,28 @@ function createShredExamplePackage(shredOptions) {
   return pkg;
 }
 
-function resolveShredOptions(shredOptions) {
-  var DOCS_FOLDER = '../../public/docs';
-  var so = _.defaults({}, shredOptions, {
+function resolveOptions(options) {
+  options = _.defaults({}, options, {
     // read files from any subdir under here
-    examplesDir: path.join(DOCS_FOLDER, "_examples"),
-    // shredded files get copied here with same subdir structure.
-    fragmentsDir: path.join(DOCS_FOLDER, "_fragments"),
-    // whether to include subdirectories when shredding.
-    includeSubdirs: true
-  });
+    examplesDir: "_examples",
 
-  so.examplesDir = path.resolve(so.examplesDir);
-  so.fragmentsDir = path.resolve(so.fragmentsDir);
-  return so;
-}
+    // Array of string, of glob patterns of files to search for code excerpt markers
+    extns: ['*.css', '*.dart', '*.html', '*.js', '*.json', '*.scss', '*.ts', '*.yaml', '*.yml',],
 
-function resolveMapOptions(mapOptions) {
-  var so = _.defaults({}, mapOptions, {
-    includeSubdirs: true
+    // Excerpts get copied here with same subdir structure.
+    fragmentsDir: "_fragments",
+
+    // String, or array of string, of glob patterns of files to ignore
+    ignore: ['**/node_modules/**', '**/dist/**', '**/build/packages/**', '**/build/test/**', '**/build/web/**', '**/.*/**'],
+
+    // Whether to process subdirectories
+    includeSubdirs: true,
+
+    logLevel: 'warn',
   });
-  so.jadeDir = path.resolve(so.jadeDir);
-  so.devguideExamplesDir = path.resolve(so.devguideExamplesDir);
-  so.apiExamplesDir = path.resolve(so.apiExamplesDir);
-  so.fragmentsDir = path.resolve(so.fragmentsDir);
-  return so;
+  options.examplesDir = path.resolve(options.examplesDir);
+  options.fragmentsDir = path.resolve(options.fragmentsDir);
+  return options;
 }
 
 function initializePackage(pkg) {
