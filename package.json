@@ -1,0 +1,26 @@
+{
+  "name": "code-excerpter",
+  "version": "1.0.0",
+  "description": "A line-based utility for extracting code regions.",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chalin/code-excerpter.git"
+  },
+  "author": "Angular and Dart project authors",
+  "license": "BSD-2-Clause",
+  "bin": {
+    "code-excerpter": "./bin/code-excerpter"
+  },
+  "dependencies": {
+    "canonical-path": "0.0.2",
+    "del": "^3.0.0",
+    "dgeni": "^0.4.0",
+    "dgeni-packages": "^0.26.0",
+    "globby": "^4.0.0",
+    "lodash": "^4.17.5"
+  }
+}

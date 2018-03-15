@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var lib = require('../lib/');
+main();
+
+function main() {
+  var args = process.argv.slice(2);
+  if (args.length != 2 && args.length != 3) usage(args);
+
+  var options = {
+    examplesDir: args[0],
+    fragmentsDir: args[1],
+  };
+  var target = args[2] || null;
+
+  return lib.excerpt(options, target);
+}
+
+function usage(args) {
+  console.error('Unexpected arguments:', args);
+  console.error('Usage: code-excerpter <examples-dir-base> <fragment-dir> [path-to-dir-or-file-to-excerpt-from]')
+  process.exit(1)
+}
