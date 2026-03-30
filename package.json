@@ -1,0 +1,40 @@
+{
+  "name": "code-excerpter",
+  "version": "0.0.1",
+  "description": "A line-based tool for extracting and injecting code excerpts into documentation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "code-excerpter": "./dist/cli.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check . --write",
+    "prepare": "tsup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chalin/code-excerpter.git"
+  },
+  "author": "Patrice Chalin",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "commander": "^13.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
