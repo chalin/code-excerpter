@@ -11,9 +11,9 @@ logic, no I/O. Port the `Directive` class from
 [`chalin/code_excerpter`](https://github.com/chalin/code_excerpter) with
 comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 
-- [ ] Implement `src/directive.ts`
-- [ ] Write `test/directive.test.ts`
-- [ ] Update docs as needed
+- [x] Implement `src/directive.ts`
+- [x] Write `test/directive.test.ts`
+- [x] Update docs as needed
 
 ## Phase 1b — `extract.ts`
 
