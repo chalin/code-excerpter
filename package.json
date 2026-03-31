@@ -41,7 +41,7 @@
     "npm-check-updates": "^19.6.6",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.7.0",
+    "typescript": "^6.0.2",
     "vitest": "^3.0.0"
   }
 }
