@@ -11,12 +11,17 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
+    "check:spelling": "npx cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
+    "check": "npm run check:spelling && npm run lint",
     "dev": "tsx src/cli.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "biome check .",
+    "fix": "npm run lint:fix",
     "lint:fix": "biome check . --write",
-    "prepare": "tsup"
+    "lint": "biome check .",
+    "prepare": "tsup",
+    "test:watch": "vitest",
+    "test:base": "vitest run",
+    "test": "npm run check && npm run test:base",
+    "update:packages": "npx npm-check-updates -u"
   },
   "repository": {
     "type": "git",
@@ -32,6 +37,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
+    "cspell": "^9.7.0",
+    "npm-check-updates": "^19.6.6",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0",
