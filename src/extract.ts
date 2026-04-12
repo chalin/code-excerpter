@@ -26,16 +26,23 @@ export function maxUnindent(lines: string[]): string[] {
   const nonBlankLines = lines.filter((s) => !blankLineRe.test(s));
   if (nonBlankLines.length === 0) return lines;
 
-  const indents = nonBlankLines.map((s) => leadingWhitespaceRe.exec(s)?.[0].length ?? 0);
+  const indents = nonBlankLines.map(
+    (s) => leadingWhitespaceRe.exec(s)?.[0].length ?? 0,
+  );
   const minLen = Math.min(...indents);
 
   if (minLen === 0) return lines;
 
-  return lines.map((line) => (line.length < minLen ? line : line.substring(minLen)));
+  return lines.map((line) =>
+    line.length < minLen ? line : line.substring(minLen),
+  );
 }
 
 function dropTrailingPlaster(lines: string[]): string[] {
-  if (lines.length === 0 || !lines[lines.length - 1].includes(DEFAULT_PLASTER)) {
+  if (
+    lines.length === 0 ||
+    !lines[lines.length - 1].includes(DEFAULT_PLASTER)
+  ) {
     return lines;
   }
   return lines.slice(0, -1);
@@ -64,7 +71,8 @@ export function extractExcerpts(
     onWarning?.(`${msg} at ${uri}:${lineIdx + 1}`);
   };
 
-  const quoteName = (name: string): string => (name.startsWith("'") ? name : `"${name}"`);
+  const quoteName = (name: string): string =>
+    name.startsWith("'") ? name : `"${name}"`;
 
   const excerptStart = (name: string): boolean => {
     if (!excerpts.has(name)) excerpts.set(name, []);

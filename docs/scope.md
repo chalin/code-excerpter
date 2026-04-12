@@ -54,7 +54,7 @@ syntax).
 
 ### Supported source file extensions
 
-```
+```text
 *.css  *.dart  *.html  *.js  *.json  *.scss  *.ts  *.yaml  *.yml
 ```
 

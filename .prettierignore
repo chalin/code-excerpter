@@ -1,10 +1,1 @@
-# Prettier also applies `.gitignore` (see https://prettier.io/docs/ignore ) and
-# ignores `node_modules/` by default. List only tracked paths we still skip
-# (Biome owns TypeScript and JavaScript.)
-
-**/*.ts
-**/*.tsx
-**/*.mts
-**/*.cts
-**/*.mjs
-**/*.cjs
+# https://prettier.io/docs/ignore. None yet.

@@ -17,7 +17,8 @@ const uri = "foo";
  */
 function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
   let raw = strings[0] ?? "";
-  for (let i = 0; i < values.length; i++) raw += String(values[i]) + (strings[i + 1] ?? "");
+  for (let i = 0; i < values.length; i++)
+    raw += String(values[i]) + (strings[i + 1] ?? "");
   const noLeading = raw.startsWith("\n") ? raw.slice(1) : raw;
   const lines = noLeading.split("\n");
   while (lines.length > 0 && /^\s*$/.test(lines[lines.length - 1])) lines.pop();
@@ -28,7 +29,8 @@ function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
       if (indent < minIndent) minIndent = indent;
     }
   }
-  if (minIndent === 0 || minIndent === Number.POSITIVE_INFINITY) return lines.join("\n");
+  if (minIndent === 0 || minIndent === Number.POSITIVE_INFINITY)
+    return lines.join("\n");
   return lines.map((l) => l.slice(minIndent)).join("\n");
 }
 
@@ -38,7 +40,9 @@ function dedent(strings: TemplateStringsArray, ...values: unknown[]): string {
  * region when there is no explicit `#docregion` for it.
  */
 function stripDirectives(content: string): string[] {
-  const lines = content.split("\n").filter((line) => tryParseDirective(line) === null);
+  const lines = content
+    .split("\n")
+    .filter((line) => tryParseDirective(line) === null);
   while (lines.length > 0 && /^\s*$/.test(lines[lines.length - 1])) {
     lines.pop();
   }
@@ -117,7 +121,12 @@ describe("extract", () => {
 
   // -------------------------------------------------------------------------
   describe("no excerpts", () => {
-    const cases = ["", "abc", "abc\ndef\n", "docregion" /* without leading # */];
+    const cases = [
+      "",
+      "abc",
+      "abc\ndef\n",
+      "docregion" /* without leading # */,
+    ];
 
     for (const content of cases) {
       it(`returns empty map for ${JSON.stringify(content)}`, () => {
@@ -197,7 +206,9 @@ describe("extract", () => {
     });
 
     it("default region with content line (not closed)", () => {
-      expect(extractExcerpts(uri, "#docregion\nabc")).toEqual(new Map([["", ["abc"]]]));
+      expect(extractExcerpts(uri, "#docregion\nabc")).toEqual(
+        new Map([["", ["abc"]]]),
+      );
     });
 
     it("named region with no content (not closed)", () => {
@@ -224,8 +235,10 @@ describe("extract", () => {
     describe("empty region", () => {
       it("warns for empty default region", () => {
         const warnings: string[] = [];
-        const result = extractExcerpts(uri, "#docregion\n#enddocregion", (msg) =>
-          warnings.push(msg),
+        const result = extractExcerpts(
+          uri,
+          "#docregion\n#enddocregion",
+          (msg) => warnings.push(msg),
         );
         expect(warnings).toEqual(["empty region at foo:2"]);
         expect(result).toEqual(new Map([["", []]]));
@@ -233,8 +246,10 @@ describe("extract", () => {
 
       it("warns for empty named region", () => {
         const warnings: string[] = [];
-        const result = extractExcerpts(uri, "#docregion a\n#enddocregion a", (msg) =>
-          warnings.push(msg),
+        const result = extractExcerpts(
+          uri,
+          "#docregion a\n#enddocregion a",
+          (msg) => warnings.push(msg),
         );
         expect(warnings).toEqual(["empty region a at foo:2"]);
         expect(result).toEqual(
@@ -250,38 +265,52 @@ describe("extract", () => {
       it("default region", () => {
         const warnings: string[] = [];
         extractExcerpts(uri, "#enddocregion", (msg) => warnings.push(msg));
-        expect(warnings).toEqual(['region "" end without a prior start at foo:1']);
+        expect(warnings).toEqual([
+          'region "" end without a prior start at foo:1',
+        ]);
       });
 
       it("named region a", () => {
         const warnings: string[] = [];
         extractExcerpts(uri, "#enddocregion a", (msg) => warnings.push(msg));
-        expect(warnings).toEqual(['region "a" end without a prior start at foo:1']);
+        expect(warnings).toEqual([
+          'region "a" end without a prior start at foo:1',
+        ]);
       });
 
       it("named regions a,b", () => {
         const warnings: string[] = [];
         extractExcerpts(uri, "#enddocregion a,b", (msg) => warnings.push(msg));
-        expect(warnings).toEqual(['regions ("a", "b") end without a prior start at foo:1']);
+        expect(warnings).toEqual([
+          'regions ("a", "b") end without a prior start at foo:1',
+        ]);
       });
 
       it("start a, end default", () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion a\n#enddocregion", (msg) => warnings.push(msg));
-        expect(warnings).toEqual(['region "" end without a prior start at foo:2']);
+        extractExcerpts(uri, "#docregion a\n#enddocregion", (msg) =>
+          warnings.push(msg),
+        );
+        expect(warnings).toEqual([
+          'region "" end without a prior start at foo:2',
+        ]);
       });
     });
 
     describe("repeated start", () => {
       it("default region repeated", () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion\n#docregion", (msg) => warnings.push(msg));
+        extractExcerpts(uri, "#docregion\n#docregion", (msg) =>
+          warnings.push(msg),
+        );
         expect(warnings).toEqual(['repeated start for region "" at foo:2']);
       });
 
       it("named region a repeated", () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion a\n#docregion a", (msg) => warnings.push(msg));
+        extractExcerpts(uri, "#docregion a\n#docregion a", (msg) =>
+          warnings.push(msg),
+        );
         expect(warnings).toEqual(['repeated start for region "a" at foo:2']);
       });
     });
@@ -290,7 +319,9 @@ describe("extract", () => {
       it("unquoted default region name is deprecated", () => {
         const warnings: string[] = [];
         extractExcerpts(uri, "#docregion ,a", (msg) => warnings.push(msg));
-        expect(warnings).toEqual(["unquoted default region name is deprecated at foo:1"]);
+        expect(warnings).toEqual([
+          "unquoted default region name is deprecated at foo:1",
+        ]);
       });
 
       it("duplicate region argument", () => {

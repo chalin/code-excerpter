@@ -15,9 +15,9 @@ Project conventions for code, documentation, and tests.
 - **Async I/O**: Prefer `node:fs/promises` for all file operations.
 - **Naming**: Use camelCase for variables/functions, PascalCase for classes and
   types/interfaces.
-- **Formatting**: 2-space indentation, 100-character line width. **Biome**
-  enforces this for TypeScript and JavaScript; **Prettier** for Markdown and
-  YAML (see [docs/tooling.md](tooling.md)).
+- **Formatting**: 2-space indentation, 100-character line width. **Prettier**
+  enforces layout; **ESLint** covers lint rules (see
+  [docs/tooling.md](tooling.md)).
 - **No default exports**: Use named exports everywhere in `src/` and `test/`.
   Bundler or test **config files** may use `export default` when the tool API
   requires it (for example `tsup.config.ts`, `vitest.config.ts`).

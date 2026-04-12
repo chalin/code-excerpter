@@ -23,7 +23,7 @@ fenced code block that immediately follows the instruction.
 
 Specifies a source file (and optionally a named region) to inject:
 
-```
+```text
 <?code-excerpt "path/to/file.ext (region-name)" arg1="val1" arg2="val2"?>
 ```
 
@@ -43,17 +43,13 @@ Specifies a source file (and optionally a named region) to inject:
 ```
 ````
 
-```
-
 ### Set instruction
 
 Sets a persistent value for the current file, such as `path-base`:
 
-```
-
+```text
 <?code-excerpt path-base="examples/ng/doc"?>
-
-````
+```
 
 A set instruction has no path argument and no following code block. It affects
 all subsequent code fragment instructions in the same file.
@@ -62,25 +58,25 @@ all subsequent code fragment instructions in the same file.
 
 ## Recognized Arguments
 
-| Argument | Type | Description |
-|---|---|---|
-| _(path string)_ | string | Positional: `"path/file.ext (region)"` |
-| `path-base` | string | Sets the base directory for source file paths (set instruction) |
-| `region` | string | Named region to extract (alternative to inline `(region)`) |
-| `from` | string/regex | Start extraction from the first line matching this pattern |
-| `to` | string/regex | End extraction before the first line matching this pattern |
-| `skip` | integer | Skip the first N lines of the extracted region |
-| `take` | integer | Take only the first N lines of the extracted region |
-| `remove` | string/regex | Remove all lines matching this pattern |
-| `retain` | string/regex | Keep only lines matching this pattern |
-| `replace` | `"pattern" -> "replacement"` | Regex replace within extracted lines |
-| `indent-by` | integer | Prepend N spaces to every output line |
-| `plaster` | string | Override the plaster comment (use `"none"` to disable) |
+| Argument        | Type                         | Description                                                     |
+| --------------- | ---------------------------- | --------------------------------------------------------------- |
+| _(path string)_ | string                       | Positional: `"path/file.ext (region)"`                          |
+| `path-base`     | string                       | Sets the base directory for source file paths (set instruction) |
+| `region`        | string                       | Named region to extract (alternative to inline `(region)`)      |
+| `from`          | string/regex                 | Start extraction from the first line matching this pattern      |
+| `to`            | string/regex                 | End extraction before the first line matching this pattern      |
+| `skip`          | integer                      | Skip the first N lines of the extracted region                  |
+| `take`          | integer                      | Take only the first N lines of the extracted region             |
+| `remove`        | string/regex                 | Remove all lines matching this pattern                          |
+| `retain`        | string/regex                 | Keep only lines matching this pattern                           |
+| `replace`       | `"pattern" -> "replacement"` | Regex replace within extracted lines                            |
+| `indent-by`     | integer                      | Prepend N spaces to every output line                           |
+| `plaster`       | string                       | Override the plaster comment (use `"none"` to disable)          |
 
 ### Limitations
 
-- XML processing instructions cannot contain unescaped `>` characters.
-  Use `&gt;` if a `>` is needed in a pattern value.
+- XML processing instructions cannot contain unescaped `>` characters. Use
+  `&gt;` if a `>` is needed in a pattern value.
 
 ---
 
@@ -101,13 +97,14 @@ When multiple transform arguments are present, they are applied in this order:
 
 ## Comment-Prefixed Instructions
 
-`<?code-excerpt?>` instructions may be preceded by a comment prefix when
-the markdown file requires it (e.g., inside an HTML comment block):
+`<?code-excerpt?>` instructions may be preceded by a comment prefix when the
+markdown file requires it (e.g., inside an HTML comment block):
 
+<!-- prettier-ignore -->
 ```markdown
 // <?code-excerpt "lib/main.dart"?>
 /// <?code-excerpt "lib/main.dart"?>
-````
+```
 
 The tool strips leading `//` or `///` prefixes before parsing the instruction.
 
@@ -119,7 +116,7 @@ Source files mark extractable regions using special directive comments.
 
 ### Syntax
 
-```
+```text
 // #docregion region-name
 // #enddocregion region-name
 ```
@@ -127,7 +124,7 @@ Source files mark extractable regions using special directive comments.
 Multiple region names can be listed on a single directive line, separated by
 commas:
 
-```
+```text
 // #docregion setup, imports
 ```
 

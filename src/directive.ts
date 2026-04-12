@@ -5,7 +5,8 @@
  * - CSS and Java-like languages: `* /`
  * - HTML: `-->`
  */
-const directiveRegEx = /^(\s*)(\S.*?)?#((?:end)?docregion)\b\s*(.*?)(?:\s*(?:-->|\*\/))?\s*$/;
+const directiveRegEx =
+  /^(\s*)(\S.*?)?#((?:end)?docregion)\b\s*(.*?)(?:\s*(?:-->|\*\/))?\s*$/;
 
 const argSeparator = /\s*,\s*/;
 
@@ -56,7 +57,8 @@ export function tryParseDirective(line: string): Directive | null {
   const rawArgs = match[4] ?? "";
   const issues: string[] = [];
 
-  const argsMaybeWithDups: string[] = rawArgs === "" ? [] : rawArgs.split(argSeparator);
+  const argsMaybeWithDups: string[] =
+    rawArgs === "" ? [] : rawArgs.split(argSeparator);
 
   const argCounts = new Map<string, number>();
 

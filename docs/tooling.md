@@ -9,25 +9,27 @@ rationale for each decision.
 
 Semver pins live in `package.json`; this table is orientation only.
 
-| Category              | Stack                                                                                      |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| Runtime               | Node.js ≥20, ESM (`"type": "module"`)                                                      |
-| Bundle + declarations | `tsup` (JS) then `tsc --emitDeclarationOnly` (`.d.ts`); [details](#tsup--typescript-build) |
-| Dev runner            | `tsx`                                                                                      |
-| Tests                 | `vitest`                                                                                   |
-| Lint/format           | `@biomejs/biome` (TypeScript / JavaScript)                                                 |
-| Markdown + YAML       | `prettier` (Markdown, YAML; Biome does not format these here)                              |
-| CLI args              | `commander`                                                                                |
+| Category              | Stack                                                                |
+| --------------------- | -------------------------------------------------------------------- |
+| Runtime               | Node.js, ESM                                                         |
+| Bundle + declarations | `tsup`, `tsc` — [tsup + TypeScript (build)](#tsup--typescript-build) |
+| Dev runner            | `tsx`                                                                |
+| Tests                 | `vitest`                                                             |
+| Lint                  | `eslint` + `typescript-eslint` (TypeScript / JavaScript)             |
+| Format                | `prettier`                                                           |
+| Markdown lint         | `markdownlint-cli2`                                                  |
+| Type checking         | `tsc` - see [Type checking](#type-checking)                          |
+| Command-line args     | `commander`                                                          |
 
 ---
 
 ## Rationale
 
-### Node.js 20+ (ESM)
+### Node.js (ESM)
 
-Node.js 20 is the current LTS release and has full native ESM support. By
-targeting ESM exclusively (`"type": "module"` in `package.json`), we avoid
-dual-module complexity and stay aligned with the direction of the ecosystem.
+The supported Node.js floor lives under `engines` in `package.json`. The package
+is ESM-only, which avoids dual-module complexity and matches the direction of
+the Node ecosystem for new libraries.
 
 ### tsup + TypeScript (build)
 
@@ -50,12 +52,12 @@ example `npm install github:chalin/code-excerpter`) still produces both
 **Alternative considered:** `tsc` alone for everything — ruled out because it
 does not bundle or apply the CLI shebang as cleanly as esbuild/tsup.
 
-### tsx (dev runner)
+### Dev runner
 
 `tsx` allows running TypeScript files directly without a prior build step, using
 esbuild under the hood. The `dev` npm script uses it for fast iteration.
 
-### vitest (tests)
+### Tests
 
 `vitest` is fast, TypeScript-native, and has a Jest-compatible API. It requires
 minimal configuration (auto-detects TypeScript via the project's
@@ -64,29 +66,54 @@ minimal configuration (auto-detects TypeScript via the project's
 **Alternative considered:** Jest — ruled out because it requires heavier
 configuration for ESM + TypeScript projects.
 
-### @biomejs/biome (lint/format)
+### Lint
 
-`biome` is an all-in-one, fast linter and formatter for TypeScript and
-JavaScript here. It replaces ESLint + Prettier for those languages with one tool
-and minimal config. The default rules are sensible and the formatter is
-compatible with Prettier’s output style.
+**ESLint** (with **typescript-eslint**) handles static analysis for TypeScript
+and JavaScript, including `src/`, `test/`, and root config files such as
+`vitest.config.ts`. It focuses on suspicious patterns, import hygiene, and
+similar checks—not layout or type soundness (those stay with Prettier and the
+TypeScript compiler; see [Format](#format) and [Type checking](#type-checking)).
 
-**Alternative considered:** ESLint + Prettier — ruled out to reduce tooling
-complexity.
+**Alternative considered:** Biome as an all-in-one linter and formatter — ruled
+out here in favor of the more common ESLint + Prettier split and richer lint
+ecosystems.
 
-### Prettier (Markdown + YAML)
+`typescript-eslint` currently peers TypeScript `>=4.8.4 <6.1.0`. Raising the
+TypeScript range past 6.0.x requires a matching `typescript-eslint` upgrade (and
+a fresh pass over `eslint.config.js`) once releases support TypeScript 6.1+.
 
-Prettier formats Markdown and YAML (including `.github/` workflows and
-`.cspell.yml`). TypeScript and JavaScript stay with Biome only so a single tool
-owns lint + format for `src/` and `test/`.
+### Format
 
-`npm run check:format` verifies Prettier formatting without writes;
+**Prettier** is the layout formatter for the repository.
+**eslint-config-prettier** turns off ESLint rules that disagree with Prettier so
+lint and format stay aligned.
+
+`npm run check:format` verifies Prettier formatting without writes, and
 `npm run fix:format` applies it. Prettier follows `.gitignore` by default, then
-`.prettierignore` (see [Ignoring files](https://prettier.io/docs/ignore)). For
-`fix:format:diff` and the `_list:diff*` helpers, see [NPM scripts](#npm-scripts)
-below.
+`.prettierignore` (see [Ignoring files](https://prettier.io/docs/ignore)). The
+`fix:format:diff` and `_list:diff*` helpers are described under
+[NPM scripts](#npm-scripts) below.
 
-### CLI args
+### Markdown lint
+
+**markdownlint-cli2** runs [markdownlint][markdownlint] over `**/*.md` while
+excluding `node_modules/` and `dist/` (see `check:markdown` in `package.json`).
+Rule tweaks live in `.markdownlint-cli2.yaml`; **line-length** is off so
+Markdown layout can follow Prettier without duplicate line-length enforcement.
+
+[markdownlint]: https://github.com/DavidAnson/markdownlint
+
+### Type checking
+
+**TypeScript** (`tsc --noEmit` via `npm run check:types`) enforces the type
+system for the files in `tsconfig.json` (currently `src/` only). That step is
+intentionally separate from the [build](#tsup--typescript-build) pipeline:
+`check:types` type-checks without writing `dist/`, while
+`tsc --emitDeclarationOnly` after `tsup` only emits `.d.ts` for publishable
+`src/` entrypoints. CI and `npm test` run `check:types` as part of `check` so
+type errors fail the gate even when formatting and lint are clean.
+
+### Command-line arguments
 
 - `commander` is the most widely used Node.js CLI argument parsing library. It
   is simple, stable, and right-sized for this project. No complex plugin system
@@ -105,32 +132,44 @@ below states why it exists, not what it chains to (see `package.json` for that).
 `build` and `prepare` are also described under
 [tsup + TypeScript](#tsup--typescript-build).
 
-- `_build`: Produce publishable JS plus `.d.ts` (see tsup section).
-- `_diff:fail`: Fail CI or local checks when the tree still differs from `HEAD`
+- `_build`: Produces publishable JS plus `.d.ts` (see tsup section).
+- `_diff:fail`: Fails CI or local checks when the tree still differs from `HEAD`
   after fixers.
-- `_list:diff-never-empty` / `_list:diff:all`: Feed diff-scoped Prettier with
-  changed or untracked paths. `_list:diff-never-empty` prints `README.md` when
+- `_list:diff-never-empty` / `_list:diff:all`: Supply changed or untracked paths
+  to diff-scoped Prettier. `_list:diff-never-empty` prints `README.md` when
   there are no changed paths against `HEAD`, so downstream commands always
   receive at least one path.
-- `build`: Public alias for `_build`.
-- `check:format`: Verify Prettier formatting (Markdown/YAML and other Prettier
-  paths); does not write files.
-- `check:spelling`: Spell-check the Markdown set the cspell config cares about.
-- `check:types`: Type-check with `tsc --noEmit` (no build artifacts).
-- `check`: Runs `check:format`, `lint`, `check:types`, then `check:spelling`
-  (read-only gates).
-- `dev`: Run the CLI from TypeScript without a prior production build.
-- `fix`: Auto-fix what Biome and Prettier can rewrite across the repo.
-- `fix:format`: Apply Prettier to every supported path (respecting ignores).
-- `fix:format:diff`: Apply Prettier (`__check:format --write`) on the
+- `build`: Serves as the public alias for `_build`.
+- `check:format`: Verifies Prettier formatting across supported paths without
+  writing files.
+- `check:markdown`: Catches Markdown structure and style rules that Prettier
+  does not cover (see [Markdown lint](#markdown-lint)).
+- `check:spelling`: Spell-checks the Markdown set the cspell config cares about.
+- `check:types`: Type-checks with `tsc --noEmit` (no build artifacts).
+- `check`: Provides one entry point through which humans and CI invoke every
+  read-only quality gate before tests (exact steps and order live in
+  `package.json`).
+- `dev`: Runs the CLI from TypeScript without a prior production build.
+- `fix`: Provides one entry point for supported auto-fixers so ESLint, Markdown,
+  and Prettier fixes do not need separate invocations (there is no type or
+  spelling auto-fix here).
+- `fix:format`: Applies Prettier to every supported path (respecting ignores).
+- `fix:format:diff`: Applies Prettier (`__check:format --write`) on the
   diff/untracked path set from `_list:diff*`.
-- `fix:lint`: Apply Biome auto-fixes for TS/JS and related files.
-- `lint`: Report Biome issues without writing files.
-- `postbuild`: Assert `dist/` contains the expected build artifacts.
-- `prepare`: Build on install so git URL consumers get `dist/`.
-- `test`: Verify behavior after format, lint, types, spelling, and unit-test
-  gates (`check` then Vitest).
-- `test:base`: Run unit tests only (matches the CI `test` job).
-- `test:watch`: Re-run Vitest while iterating on tests.
-- `update:packages`: Refresh dependency ranges via npm-check-updates (review
-  before committing).
+- `fix:lint`: Applies ESLint auto-fixes where rules support `--fix`.
+- `fix:markdown`: Normalizes Markdown after edits using markdownlint’s fix mode
+  and a trailing-whitespace cleanup pass on `*.md` (markdownlint does not
+  address line endings alone).
+- `lint`: Reports ESLint issues without writing files.
+- `seq`: Keeps `package.json` readable by centralizing “run these scripts in
+  order, stop on the first failure” instead of long `&&` chains. Uses **bash**;
+  on Windows, Git Bash, WSL, or another environment where `bash` is on `PATH` is
+  required.
+- `postbuild`: Asserts `dist/` contains the expected build artifacts.
+- `prepare`: Builds on install so git URL consumers get `dist/`.
+- `test`: Offers the default “trust this tree” path: full read-only gates, then
+  unit tests (see `package.json` for how `check` composes).
+- `test:base`: Runs unit tests only (matches the CI `test` job).
+- `test:watch`: Re-runs Vitest during local iteration on tests.
+- `update:packages`: Refreshes dependency ranges via npm-check-updates; a manual
+  review before commit is expected.
