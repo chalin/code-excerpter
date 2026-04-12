@@ -100,11 +100,21 @@ orchestrates the extraction + transform pipeline for each code block.
 
 ### `src/update.ts` (Phase 4)
 
-**Dart source:** `dart-lang/site-shared/pkgs/excerpter/bin/excerpter.dart`
+**Dart source:** `dart-lang/site-shared/pkgs/excerpter/lib/src/update.dart`
 
-Walks directory trees, finds markdown files matching configured extensions, and
-runs the updater (from `inject.ts`) on each file. Writes updated content back if
-changed.
+Walks directory trees (or individual files), collects `.md` files, and runs
+`injectMarkdown` on each. Writes updated content back when changed.
+
+- `updatePaths(paths, options?)` — async entry point; returns `UpdateResult`
+  with `filesProcessed`, `filesUpdated`, `errors[]`, `warnings[]`.
+- Skips dot-prefixed segments and user-supplied `exclude` regex patterns.
+- Source files for excerpts are read synchronously from disk under
+  `options.pathBase` (resolved to an absolute root for `readFile` only).
+  `injectMarkdown` still starts with an empty file-level `path-base`; set
+  instructions in the markdown extend paths passed to `readFile` from that root.
+- Supports `dryRun` (no writes). The CLI’s `--fail-on-update` exits non-zero
+  when `filesUpdated > 0` (often combined with `--dry-run` so CI fails if
+  markdown is out of date relative to sources).
 
 ### `src/index.ts`
 
@@ -113,8 +123,16 @@ programmatic use (library consumers). The CLI is a separate entry point.
 
 ### `src/cli.ts` (Phase 4)
 
+**Dart source:** `chalin/code_excerpt_updater` `UpdaterCLI` +
+`dart-lang/site-shared` `bin/excerpter.dart`
+
 CLI entry point using `commander`. Parses command-line arguments and invokes
-`update.ts`. Installed as the `code-excerpter` binary via `package.json` `bin`.
+`updatePaths` from `update.ts`. Installed as the `code-excerpter` binary via
+`package.json` `bin`.
+
+Key flags: `--path-base` / `-p`, `--exclude`, `--dry-run`, `--fail-on-update`,
+`--no-escape-ng-interpolation`, `--replace`, `--plaster`. Run
+`code-excerpter --help` for the full list.
 
 ---
 

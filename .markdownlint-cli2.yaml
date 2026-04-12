@@ -1,4 +1,15 @@
 # https://github.com/DavidAnson/markdownlint-cli2
+
+# Lint targets and ignores (root-only; replaces passing globs on the CLI).
+globs:
+  - "**/*.md"
+
+ignores:
+  - "node_modules/**"
+  - "dist/**"
+  - "tmp/**"
+  - "test/fixtures/code-excerpt-updater/**"
+
 config:
   default: true
   line-length: false

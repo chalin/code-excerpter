@@ -57,18 +57,37 @@ transforms per code block.
 
 Directory walking, file updating, CLI entry point.
 
-- [ ] Implement `src/update.ts`
-- [ ] Implement `src/cli.ts`
-- [ ] Write `test/update.test.ts`
-- [ ] Update docs as needed
-- [ ] **Follow-up:** Vendor
-      [`dart-lang/site-shared` `pkgs/excerpter/test_data/`](https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data)
-      and add Vitest goldens aligned with
-      [`updater_test.dart`](https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/test/updater_test.dart)
-      (copy `src/` → run updater → compare to `expected/`). These complement
-      Phase 3’s
-      [`code_excerpt_updater` `test_data/`](https://github.com/chalin/code_excerpt_updater/tree/main/test_data)
-      goldens, which target `injectMarkdown` only.
+- [x] Implement `src/update.ts`
+- [x] Implement `src/cli.ts`
+- [x] Write `test/update.test.ts`
+- [x] Update docs as needed
+
+A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
+[code_excerpt_updater test_data][] inject-only goldens):
+
+1. [ ] Vendor [dart-lang/site-shared pkgs/excerpter test_data][] into this
+       repository for fixtures.
+2. [ ] Add Vitest goldens aligned with [updater_test.dart][] (copy `src/` → run
+       updater → compare to `expected/`).
+
+B. [ ] Optional follow-up items:
+
+1. [x] **Overlapping `paths`**: `updatePaths` dedupes collected absolute paths
+       before processing (same `.md` once per run).
+2. [x] **Invalid `--exclude` patterns**: CLI compiles patterns with a friendly
+       `error:` line on stderr and exit code 1 (see `src/excludePatterns.ts`).
+3. [ ] **`--no-escape-ng-interpolation`**: the CLI relies on Commander’s
+       handling of negated boolean flags; behavior must stay aligned with
+       `injectMarkdown` (`escapeNgInterpolation !== false` means escape).
+
+C. [ ] Test gaps:
+
+1. [x] CLI integration tests in `test/cli.integration.test.ts` (`--help`,
+       invalid `--exclude`, `--fail-on-update` with `--dry-run`).
+2. [ ] `updatePaths`: assert `log` is called for expected lines; assert
+       `warnings` in `UpdateResult` when `onWarning` fires.
+3. [x] `updatePaths`: duplicate / overlapping roots (dedupe; see
+       `test/update.test.ts`).
 
 ## Phase 5 — Integration Testing
 
@@ -83,3 +102,9 @@ diff output against the Dart tool.
 [`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
 [`chalin/code_excerpter/test/excerpter_test.dart`]:
   https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart
+[dart-lang/site-shared pkgs/excerpter test_data]:
+  https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data
+[updater_test.dart]:
+  https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/test/updater_test.dart
+[code_excerpt_updater test_data]:
+  https://github.com/chalin/code_excerpt_updater/tree/main/test_data

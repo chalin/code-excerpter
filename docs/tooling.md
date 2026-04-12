@@ -96,10 +96,11 @@ lint and format stay aligned.
 
 ### Markdown lint
 
-**markdownlint-cli2** runs [markdownlint][markdownlint] over `**/*.md` while
-excluding `node_modules/` and `dist/` (see `check:markdown` in `package.json`).
-Rule tweaks live in `.markdownlint-cli2.yaml`; **line-length** is off so
-Markdown layout can follow Prettier without duplicate line-length enforcement.
+**markdownlint-cli2** runs [markdownlint][markdownlint] over `**/*.md` (see
+`globs` in `.markdownlint-cli2.yaml`) while excluding `node_modules/`, `dist/`,
+`tmp/`, and vendored golden fixtures (`ignores` in the same file). Rule tweaks
+live there too; **line-length** is off so Markdown layout can follow Prettier
+without duplicate line-length enforcement.
 
 [markdownlint]: https://github.com/DavidAnson/markdownlint
 
@@ -128,8 +129,8 @@ type errors fail the gate even when formatting and lint are clean.
 ### NPM scripts
 
 For the full list of NPM scripts, see `package.json` under `scripts`. Each entry
-below states why it exists, not what it chains to (see `package.json` for that).
-`build` and `prepare` are also described under
+below states what it does / its purpose, not how it achieves that (see
+`package.json` for that). `build` and `prepare` are also described under
 [tsup + TypeScript](#tsup--typescript-build).
 
 - `_build`: Produces publishable JS plus `.d.ts` (see tsup section).
@@ -149,6 +150,9 @@ below states why it exists, not what it chains to (see `package.json` for that).
 - `check`: Provides one entry point through which humans and CI invoke every
   read-only quality gate before tests (exact steps and order live in
   `package.json`).
+- `clean-tmp-test-dir`: Removes every `tmp/ce-test-*` tree (scratch directories
+  produced by `test/update.test.ts`). Leaves the rest of `tmp/` unchanged. Does
+  nothing when no matching paths exist.
 - `dev`: Runs the CLI from TypeScript without a prior production build.
 - `fix`: Provides one entry point for supported auto-fixers so ESLint, Markdown,
   and Prettier fixes do not need separate invocations (there is no type or
@@ -169,9 +173,14 @@ below states why it exists, not what it chains to (see `package.json` for that).
 - `prepare`: Builds on install so git URL consumers get `dist/`.
 - `test`: Offers the default “trust this tree” path: full read-only gates, then
   unit tests (see `package.json` for how `check` composes).
+- `pretest:base` / `pretest:watch`: Run `build` so `dist/cli.js` exists before
+  Vitest. Needed for `test/cli.integration.test.ts`, which spawns the real CLI
+  with plain `node` (not `tsx`) for portability in restricted environments.
 - `test:base`: Runs Vitest only (matches the CI `test` job), including
   `test/updater-goldens.test.ts` against vendored `code_excerpt_updater`
-  `test_data/`.
+  `test_data/` and `test/update.test.ts` for the filesystem updater. The update
+  tests remove their `tmp/ce-test-*` trees after each test by default; set
+  `KEEP_TEST_TMP=1` to leave them for inspection.
 - `test:watch`: Re-runs Vitest during local iteration on tests.
 - `update:packages`: Refreshes dependency ranges via npm-check-updates; a manual
   review before commit is expected.
