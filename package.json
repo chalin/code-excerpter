@@ -12,16 +12,18 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup && tsc --emitDeclarationOnly",
+    "_build": "tsup && tsc --emitDeclarationOnly",
+    "build": "npm run _build",
     "check:spelling": "npx cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
     "check": "npm run check:spelling && npm run lint",
     "dev": "tsx src/cli.ts",
     "fix": "npm run lint:fix",
     "lint:fix": "biome check . --write",
     "lint": "biome check .",
+    "postbuild": "node scripts/verify-dist.mjs",
     "prepare": "npm run build",
-    "test:watch": "vitest",
     "test:base": "vitest run",
+    "test:watch": "vitest",
     "test": "npm run check && npm run test:base",
     "update:packages": "npx npm-check-updates -u"
   },
@@ -32,7 +34,7 @@
   "author": "Patrice Chalin",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "dependencies": {
     "commander": "^14.0.3"
