@@ -70,6 +70,8 @@ async function collectMarkdownFiles(
   const absRoot = resolve(root);
   const info = await stat(absRoot);
   if (!info.isDirectory()) {
+    const rel = relative(baseForRel, absRoot);
+    if (shouldExclude(rel, exclude)) return [];
     if (MD_EXT.test(absRoot)) return [absRoot];
     return [];
   }

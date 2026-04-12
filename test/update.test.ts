@@ -28,6 +28,8 @@
  * - Explicit `.hidden` / `vendor` roots vs dot-skip and `--exclude` (same
  *   rules as when those dirs appear under a parent root)
  * - Duplicate or overlapping roots (each `.md` processed once)
+ * - Single-file roots still honor dot-skip and `--exclude` on the relative path
+ *   (same `baseForRel` as directory roots: parent of the path)
  */
 import {
   existsSync,
@@ -380,6 +382,26 @@ describe("updatePaths", () => {
 
     expect(result.filesProcessed).toBe(1);
     expect(result.filesUpdated).toBe(0);
+  });
+
+  it("skips a dot-prefixed markdown file when passed as a single-file path", async () => {
+    const tmp = useTmp();
+    writeFixture(tmp, ".secret.md", "no PI\n");
+
+    const result = await updatePaths([join(tmp, ".secret.md")]);
+
+    expect(result.filesProcessed).toBe(0);
+  });
+
+  it("skips a single-file path when the basename matches --exclude", async () => {
+    const tmp = useTmp();
+    writeFixture(tmp, "skipme.md", "no PI\n");
+
+    const result = await updatePaths([join(tmp, "skipme.md")], {
+      exclude: [/skipme\.md$/],
+    });
+
+    expect(result.filesProcessed).toBe(0);
   });
 
   it("skips non-md files when given a directory", async () => {
