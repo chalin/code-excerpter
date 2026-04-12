@@ -12,19 +12,18 @@
     "dist"
   ],
   "scripts": {
-    "__check:format": "npx prettier --ignore-unknown",
+    "__check:format": "prettier --ignore-unknown",
     "_build": "tsup && tsc --emitDeclarationOnly",
-    "_diff:fail": "git diff --name-only --exit-code || exit 1",
-    "_fix:format:diff": "prettier --write --ignore-unknown --ignore-path .prettierignore",
-    "_list:diff:all": "(npm run -s _list:diff -- HEAD; git ls-files --others --exclude-standard) | sort -u",
-    "_list:diff": "git diff --name-only --diff-filter=AMR",
+    "_diff:fail": "git diff --name-only --exit-code",
+    "_list:diff:all": "(npm run -s _list:diff-never-empty; git ls-files --others --exclude-standard) | sort -u",
+    "_list:diff-never-empty": "git diff --name-only --diff-filter=AMR HEAD | awk 'NF{print;c++} END{if(c==0)print \"README.md\"}'",
     "build": "npm run _build",
     "check:format": "npm run __check:format -- --check .",
-    "check:spelling": "npx cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
+    "check:spelling": "cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
     "check:types": "tsc --noEmit",
     "check": "npm run check:format && npm run lint && npm run check:types && npm run check:spelling",
     "dev": "tsx src/cli.ts",
-    "fix:format:diff": "npm run _fix:format:diff -- $(npm -s run _list:diff:all)",
+    "fix:format:diff": "npm run __check:format -- --write $(npm -s run _list:diff:all)",
     "fix:format": "npm run check:format -- --write",
     "fix:lint": "biome check . --write",
     "fix": "npm run fix:lint && npm run fix:format",
@@ -34,7 +33,7 @@
     "test:base": "vitest run",
     "test:watch": "vitest",
     "test": "npm run check && npm run test:base",
-    "update:packages": "npx npm-check-updates -u"
+    "update:packages": "npm-check-updates -u"
   },
   "repository": {
     "type": "git",

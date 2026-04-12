@@ -83,8 +83,8 @@ owns lint + format for `src/` and `test/`.
 `npm run check:format` verifies Prettier formatting without writes;
 `npm run fix:format` applies it. Prettier follows `.gitignore` by default, then
 `.prettierignore` (see [Ignoring files](https://prettier.io/docs/ignore)). For
-`fix:format:diff` and the `_*` helpers that feed it, see
-[NPM scripts](#npm-scripts) below.
+`fix:format:diff` and the `_list:diff*` helpers, see [NPM scripts](#npm-scripts)
+below.
 
 ### CLI args
 
@@ -108,9 +108,10 @@ below states why it exists, not what it chains to (see `package.json` for that).
 - `_build`: Produce publishable JS plus `.d.ts` (see tsup section).
 - `_diff:fail`: Fail CI or local checks when the tree still differs from `HEAD`
   after fixers.
-- `_fix:format:diff`: Prettier worker used when paths are passed explicitly.
-- `_list:diff` / `_list:diff:all`: Feed diff-scoped Prettier with changed or
-  untracked paths.
+- `_list:diff-never-empty` / `_list:diff:all`: Feed diff-scoped Prettier with
+  changed or untracked paths. `_list:diff-never-empty` prints `README.md` when
+  there are no changed paths against `HEAD`, so downstream commands always
+  receive at least one path.
 - `build`: Public alias for `_build`.
 - `check:format`: Verify Prettier formatting (Markdown/YAML and other Prettier
   paths); does not write files.
@@ -121,7 +122,8 @@ below states why it exists, not what it chains to (see `package.json` for that).
 - `dev`: Run the CLI from TypeScript without a prior production build.
 - `fix`: Auto-fix what Biome and Prettier can rewrite across the repo.
 - `fix:format`: Apply Prettier to every supported path (respecting ignores).
-- `fix:format:diff`: Apply Prettier only on the diff/untracked path set above.
+- `fix:format:diff`: Apply Prettier (`__check:format --write`) on the
+  diff/untracked path set from `_list:diff*`.
 - `fix:lint`: Apply Biome auto-fixes for TS/JS and related files.
 - `lint`: Report Biome issues without writing files.
 - `postbuild`: Assert `dist/` contains the expected build artifacts.
