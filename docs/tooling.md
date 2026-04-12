@@ -9,14 +9,14 @@ rationale for each decision.
 
 Semver pins live in **`package.json`**; this table is orientation only.
 
-| Category | Stack |
-|---|---|
-| Runtime | Node.js ≥20, ESM (`"type": "module"`) |
+| Category              | Stack                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| Runtime               | Node.js ≥20, ESM (`"type": "module"`)                                                      |
 | Bundle + declarations | `tsup` (JS) then `tsc --emitDeclarationOnly` (`.d.ts`); [details](#tsup--typescript-build) |
-| Dev runner | `tsx` |
-| Tests | `vitest` |
-| Lint/format | `@biomejs/biome` |
-| CLI args | `commander` |
+| Dev runner            | `tsx`                                                                                      |
+| Tests                 | `vitest`                                                                                   |
+| Lint/format           | `@biomejs/biome`                                                                           |
+| CLI args              | `commander`                                                                                |
 
 ---
 
@@ -88,4 +88,4 @@ system needed.
 
 **Scripts** — names and commands: **`package.json` → `scripts`**. **`build`** and **`prepare`** are covered under [tsup + TypeScript](#tsup--typescript-build); the only other convention to call out is **`test`** (runs `check` then Vitest) versus **`test:base`** (Vitest only, as in CI).
 
-**Dependencies** — **`package.json`** (`dependencies` / `devDependencies`) is canonical. The rationale sections above explain *why* each tool is there, not a parallel package list.
+**Dependencies** — **`package.json`** (`dependencies` / `devDependencies`) is canonical. The rationale sections above explain _why_ each tool is there, not a parallel package list.

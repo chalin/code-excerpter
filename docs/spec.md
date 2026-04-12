@@ -34,11 +34,14 @@ Specifies a source file (and optionally a named region) to inject:
 
 **Example:**
 
-```markdown
+````markdown
 <?code-excerpt "lib/main.dart (setup)"?>
+
 ```dart
 // extracted content here
 ```
+````
+
 ```
 
 ### Set instruction
@@ -46,8 +49,10 @@ Specifies a source file (and optionally a named region) to inject:
 Sets a persistent value for the current file, such as `path-base`:
 
 ```
+
 <?code-excerpt path-base="examples/ng/doc"?>
-```
+
+````
 
 A set instruction has no path argument and no following code block. It affects
 all subsequent code fragment instructions in the same file.
@@ -101,7 +106,7 @@ the markdown file requires it (e.g., inside an HTML comment block):
 ```markdown
 // <?code-excerpt "lib/main.dart"?>
 /// <?code-excerpt "lib/main.dart"?>
-```
+````
 
 The tool strips leading `//` or `///` prefixes before parsing the instruction.
 
@@ -127,12 +132,12 @@ commas:
 
 The directive comment prefix depends on the file type:
 
-| File type | Directive form |
-|---|---|
-| Dart, JS, TS, SCSS | `// #docregion` |
-| HTML | `<!-- #docregion -->` |
-| CSS | `/* #docregion */` |
-| YAML | `# #docregion` |
+| File type          | Directive form        |
+| ------------------ | --------------------- |
+| Dart, JS, TS, SCSS | `// #docregion`       |
+| HTML               | `<!-- #docregion -->` |
+| CSS                | `/* #docregion */`    |
+| YAML               | `# #docregion`        |
 
 ### Default region
 
@@ -166,12 +171,12 @@ segments to indicate that content has been omitted.
 
 The default plaster text is language-specific:
 
-| Language | Plaster comment |
-|---|---|
-| Dart, JS, TS | `// ···` |
-| HTML | `<!-- ··· -->` |
-| CSS, SCSS | `/* ··· */` |
-| YAML | `# ···` |
+| Language     | Plaster comment |
+| ------------ | --------------- |
+| Dart, JS, TS | `// ···`        |
+| HTML         | `<!-- ··· -->`  |
+| CSS, SCSS    | `/* ··· */`     |
+| YAML         | `# ···`         |
 
 The plaster can be overridden per-instruction with the `plaster` argument, or
 disabled entirely with `plaster="none"`.
