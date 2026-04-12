@@ -1,14 +1,14 @@
 # Porting Plan
 
-This document tracks the phased porting of the Dart excerpter tooling to TypeScript.
+This document tracks the phased porting of the Dart excerpter tooling to
+TypeScript.
 
 ---
 
 ## Phase 1a — `directive.ts`
 
 Parse `#docregion`/`#enddocregion` directives from source lines. Pure string
-logic, no I/O. Port the `Directive` class from
-[`chalin/code_excerpter`][] with
+logic, no I/O. Port the `Directive` class from [`chalin/code_excerpter`][] with
 comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 
 - [x] Implement `src/directive.ts`
@@ -17,20 +17,20 @@ comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 
 ## Phase 1b — `extract.ts`
 
-Extract named code regions from source file content. Port the `Excerpter`
-class from [`chalin/code_excerpter`][].
+Extract named code regions from source file content. Port the `Excerpter` class
+from [`chalin/code_excerpter`][].
 
 - [x] Implement `src/extract.ts`
 - [x] Write `test/extract.test.ts`
 - [x] Port comprehensive test cases from
-      [`chalin/code_excerpter/test/excerpter_test.dart`][]
-      (edge cases, plaster, overlapping regions)
+      [`chalin/code_excerpter/test/excerpter_test.dart`][] (edge cases, plaster,
+      overlapping regions)
 - [x] Update docs as needed
 
 ## Phase 2 — `transform.ts`
 
-Transform pipeline: skip, take, from, to, remove, retain, replace, indent.
-All pure logic, no I/O.
+Transform pipeline: skip, take, from, to, remove, retain, replace, indent. All
+pure logic, no I/O.
 
 - [ ] Implement `src/transform.ts`
 - [ ] Write `test/transform.test.ts`
@@ -65,4 +65,5 @@ diff output against the Dart tool.
 - [ ] Document any discrepancies
 
 [`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
-[`chalin/code_excerpter/test/excerpter_test.dart`]: https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart
+[`chalin/code_excerpter/test/excerpter_test.dart`]:
+  https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart

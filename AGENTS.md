@@ -17,7 +17,7 @@ overview, installation, and clone workflow.
   transform order
 - [docs/plan.md](docs/plan.md) — Phased porting plan with progress checkboxes
 - [docs/scope.md](docs/scope.md) — Feature scoping for v1
-- [docs/tooling.md](docs/tooling.md) — Tooling stack, rationale, and how npm
-  scripts fit together (canonical script list: `package.json` → `scripts`)
+- [docs/tooling.md](docs/tooling.md) — Tooling stack, rationale, and how scripts
+  fit together (canonical script list: `package.json` → `scripts`)
 - [docs/conventions.md](docs/conventions.md) — Code style, Vitest testing style,
   documentation DRY rules, and how to extend AGENTS vs `docs/`

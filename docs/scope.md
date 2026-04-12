@@ -90,4 +90,5 @@ The v1 scope assumes we reuse upstream Dart material as follows:
 
 [`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
 [`chalin/code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
-[`dart-lang/site-shared`]: https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
+[`dart-lang/site-shared`]:
+  https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
