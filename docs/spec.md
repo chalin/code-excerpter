@@ -2,7 +2,8 @@
 
 This document specifies the `<?code-excerpt?>` processing instruction syntax
 used to inject code excerpts into markdown documentation files. It is adapted
-from the [`chalin/code_excerpt_updater`](https://github.com/chalin/code_excerpt_updater)
+from the
+[`chalin/code_excerpt_updater`](https://github.com/chalin/code_excerpt_updater)
 README, which is the canonical reference.
 
 ---
@@ -10,9 +11,9 @@ README, which is the canonical reference.
 ## Overview
 
 `code-excerpter` processes markdown files looking for XML processing
-instructions of the form `<?code-excerpt?>`. When found, the tool extracts
-the referenced code from the source file, applies any transforms, and replaces
-the fenced code block that immediately follows the instruction.
+instructions of the form `<?code-excerpt?>`. When found, the tool extracts the
+referenced code from the source file, applies any transforms, and replaces the
+fenced code block that immediately follows the instruction.
 
 ---
 
@@ -142,8 +143,8 @@ The directive comment prefix depends on the file type:
 ### Default region
 
 A `#docregion` without a region name (or with an empty name) opens the default
-region. The entire file (minus directive lines) is also available as the
-default region even without explicit directives.
+region. The entire file (minus directive lines) is also available as the default
+region even without explicit directives.
 
 ### Overlapping regions
 
@@ -165,9 +166,9 @@ first.
 
 ## Plaster Handling
 
-When a region is composed of non-contiguous segments (e.g., a region opened
-and closed multiple times), a _plaster_ comment is inserted between the
-segments to indicate that content has been omitted.
+When a region is composed of non-contiguous segments (e.g., a region opened and
+closed multiple times), a _plaster_ comment is inserted between the segments to
+indicate that content has been omitted.
 
 The default plaster text is language-specific:
 

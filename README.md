@@ -49,8 +49,7 @@ cd code-excerpter
 npm install
 ```
 
-For more details, see
-[docs/tooling.md](docs/tooling.md#npm-scripts-and-dependencies). Conventions
+For more details, see [docs/tooling.md](docs/tooling.md#scripts). Conventions
 (code, docs, and AI guidance): [docs/conventions.md](docs/conventions.md).
 Contributor orientation: [CONTRIBUTING.md](CONTRIBUTING.md).
 

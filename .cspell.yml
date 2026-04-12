@@ -1,10 +1,10 @@
 # For settings, see
 # https://www.streetsidesoftware.com/vscode-spell-checker/docs/configuration/
-version: '0.2'
+version: "0.2"
 language: en-US
 caseSensitive: true
 ignorePaths:
-  - '*.svg'
+  - "*.svg"
 patterns:
   - name: CodeBlock
     pattern: |
@@ -28,6 +28,7 @@ dictionaries:
   # Other
   - companies
 words:
+  - postbuild
   - chalin
   - docregion
   - enddocregion

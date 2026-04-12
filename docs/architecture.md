@@ -25,8 +25,8 @@ Each part of this port maps to upstream Dart work in one of these repositories:
 
 **Dart source:** `chalin/code_excerpter/lib/src/directive.dart`
 
-Parses `#docregion` and `#enddocregion` directives from individual source
-lines. Key porting notes:
+Parses `#docregion` and `#enddocregion` directives from individual source lines.
+Key porting notes:
 
 - Dart's `Pattern` type maps to `string | RegExp` in TypeScript.
 - The comment-stripping regex covers HTML (`-->`), CSS (`*/`), and standard
@@ -81,16 +81,17 @@ orchestrates the extraction + transform pipeline for each code block.
 
 - Identifies `<?code-excerpt "path/file.ext (region)" arg="val" ...?>` lines.
 - Supports set instructions (`<?code-excerpt path-base="..."?>`).
-- Handles comment-prefixed instructions (`//` or `///` before `<?code-excerpt?>`).
+- Handles comment-prefixed instructions (`//` or `///` before
+  `<?code-excerpt?>`).
 - See [`docs/spec.md`](spec.md) for the full instruction syntax.
 
 ### `src/update.ts` (Phase 4)
 
 **Dart source:** `dart-lang/site-shared/pkgs/excerpter/bin/excerpter.dart`
 
-Walks directory trees, finds markdown files matching configured extensions,
-and runs the updater (from `inject.ts`) on each file. Writes updated content
-back if changed.
+Walks directory trees, finds markdown files matching configured extensions, and
+runs the updater (from `inject.ts`) on each file. Writes updated content back if
+changed.
 
 ### `src/index.ts`
 
@@ -144,4 +145,5 @@ src/update.ts — walk filesystem, update files, write changes
 
 [`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
 [`chalin/code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
-[`dart-lang/site-shared`]: https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
+[`dart-lang/site-shared`]:
+  https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
