@@ -15,6 +15,11 @@ instructions of the form `<?code-excerpt?>`. When found, the tool extracts the
 referenced code from the source file, applies any transforms, and replaces the
 fenced code block that immediately follows the instruction.
 
+A matching line must contain **only** the processing instruction (optional
+trailing whitespace). Any non-whitespace after the closing `?>` is ignored: the
+line is not treated as an instruction and a **warning** is reported (the
+document is unchanged for that line).
+
 ---
 
 ## Instruction Forms
@@ -42,6 +47,10 @@ Specifies a source file (and optionally a named region) to inject:
 // extracted content here
 ```
 ````
+
+Supported fences are Markdown backtick fences (` ``` ` … ` ``` `) and Liquid
+`{% prettify … %}` … `{% endprettify %}` pairs. Other Liquid tags (for example
+`{% if %}`) are not treated as code fences.
 
 ### Set instruction
 

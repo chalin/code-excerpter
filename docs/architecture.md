@@ -56,7 +56,7 @@ Extracts named code regions from source file content (a `string[]` of lines).
 Implements the transform pipeline applied to extracted lines before injection.
 All transforms are pure functions: `(lines: string[]) => string[]`.
 
-Supported transforms (in processing order):
+Supported transforms:
 
 | Transform   | Description                                                       |
 | ----------- | ----------------------------------------------------------------- |

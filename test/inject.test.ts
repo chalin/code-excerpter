@@ -27,6 +27,17 @@ describe("inject", () => {
       expect(x?.groups?.unnamed).toBeUndefined();
       expect(x?.groups?.named?.trim()).toBe('path-base="ex"');
     });
+
+    it("does not match when non-whitespace follows the closing ?>", () => {
+      expect(
+        '<?code-excerpt "a.dart"?> trailing'.match(PROC_INSTR_RE),
+      ).toBeNull();
+    });
+
+    it("allows trailing whitespace after ?>", () => {
+      const m = '<?code-excerpt "a.dart"?>   \t'.match(PROC_INSTR_RE);
+      expect(m?.groups?.unnamed).toBe("a.dart");
+    });
   });
 
   describe("injectMarkdown", () => {
@@ -209,6 +220,31 @@ aa
       expect(onError).toHaveBeenCalledWith(
         expect.stringContaining("invalid processing instruction"),
       );
+    });
+
+    it("warns when text follows ?> on the same line and does not inject", () => {
+      const onWarning = vi.fn();
+      const onError = vi.fn();
+      const src = `// #docregion\nNEVER\n// #enddocregion\n`;
+      const md = [
+        '<?code-excerpt "t.dart"?> trailing junk',
+        "",
+        "```",
+        "KEEP",
+        "```",
+        "",
+      ].join("\n");
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === "t.dart" ? src : null),
+        onWarning,
+        onError,
+      });
+      expect(onWarning).toHaveBeenCalledWith(
+        expect.stringContaining('extraneous text after closing "?>"'),
+      );
+      expect(onError).not.toHaveBeenCalled();
+      expect(out).toContain("KEEP");
+      expect(out).not.toContain("NEVER");
     });
 
     it("warns when PI is not closed with ?>", () => {
@@ -502,6 +538,21 @@ liquid
       ].join("\n");
       const out = injectMarkdown(md, ctx({ "liq.dart": src }));
       expect(out).toContain("liquid");
+    });
+
+    it("does not treat non-prettify Liquid blocks as code fences", () => {
+      const src = `// #docregion\nINJECTED\n// #enddocregion\n`;
+      const md = [
+        '<?code-excerpt "x.dart"?>',
+        "",
+        "{% if true %}",
+        "SHOULD_STAY",
+        "{% endif %}",
+        "",
+      ].join("\n");
+      const out = injectMarkdown(md, ctx({ "x.dart": src }));
+      expect(out).toContain("SHOULD_STAY");
+      expect(out).not.toContain("INJECTED");
     });
 
     it("chains multiple replace steps in file-level set replace", () => {

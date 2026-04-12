@@ -75,11 +75,12 @@ export function parseIndentBy(
   onError?: (msg: string) => void,
 ): number {
   if (s === undefined) return 0;
-  const n = Number.parseInt(s, 10);
-  if (Number.isNaN(n)) {
+  // Match Dart `int.tryParse`: the entire value must be an integer (no `2abc` → 2).
+  if (!/^[-+]?\d+$/.test(s)) {
     onError?.(`indent-by: error parsing integer value: ${JSON.stringify(s)}`);
     return 0;
   }
+  const n = Number.parseInt(s, 10);
   if (n < 0 || n > 100) {
     onError?.(`indent-by: integer out of range: ${n}`);
     return 0;

@@ -29,6 +29,7 @@ dictionaries:
   # Other
   - companies
 words:
+  - endprettify
   - goldens
   - postbuild
   - chalin

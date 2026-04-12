@@ -10,9 +10,25 @@ import {
   parseReplacePipeline,
 } from "./transform.js";
 
-/** Matches a `<?code-excerpt ...?>` line (ported from Dart `procInstrRE`). */
-export const PROC_INSTR_RE =
+/**
+ * Core `<?code-excerpt ...?>` match from the start of a line (no end-of-line rule).
+ * Composed into {@link PROC_INSTR_RE}; also used alone so `injectMarkdown` can detect
+ * a well-formed PI followed by **non-whitespace after `?>`** — that case does not match
+ * {@link PROC_INSTR_RE}, triggers `onWarning`, and the line is skipped as an instruction.
+ */
+const PROC_INSTR_BODY =
   /^(?<linePrefix>\s*((?:\/\/\/?|-|\*)\s*)?)?<\?code-excerpt\s*(?:"(?<unnamed>[^"]+)")?(?<named>(?:\s+[-\w]+(?:\s*=\s*"[^"]*")?\s*)*)\??>/;
+
+/**
+ * Strict match: the **entire line** is only a `<?code-excerpt ...?>` plus optional trailing
+ * whitespace (Dart `procInstrRE` semantics with a `$` anchor). Export for tests and
+ * tooling; lines with extra text after `?>` do not match — see `injectMarkdown`’s
+ * `onWarning` path (`processing instruction ignored: extraneous text after closing "?>"`).
+ */
+export const PROC_INSTR_RE = new RegExp(
+  `${PROC_INSTR_BODY.source}\\s*$`,
+  PROC_INSTR_BODY.flags,
+);
 
 const NAMED_ARG_RE = /^([-\w]+)\s*(=\s*"([^"]*)"\s*|\b)\s*/;
 
@@ -32,10 +48,11 @@ interface ParsedNamedArgs {
   keyOrder: string[];
 }
 
-const CODE_BLOCK_START =
-  /^\s*(?:\/\/\/?)?\s*(```|{%-?\s*\w+\s*(\w*)(\s+.*)?-?%})/;
+/** Backtick fences or Liquid `{% prettify ... %}` only (not arbitrary `{% ... %}` tags). */
+const CODE_BLOCK_START = /^\s*(?:\/\/\/?)?\s*(```|{%-?\s*prettify(\s+.*)?-?%})/;
 const CODE_BLOCK_END = /^\s*(?:\/\/\/?)?\s*(```)/;
-const CODE_BLOCK_END_PRETTIFY = /^\s*(?:\/\/\/?)?\s*({%-?\s*end\w+\s*-?%})/;
+const CODE_BLOCK_END_PRETTIFY =
+  /^\s*(?:\/\/\/?)?\s*({%-?\s*endprettify\s*-?%})/;
 
 const REGION_IN_PATH = /\s*\((.+)\)\s*$/;
 const NON_WORD = /[^\w]+/g;
@@ -440,6 +457,15 @@ export function injectMarkdown(
 
     const match = PROC_INSTR_RE.exec(line);
     if (match === null || match.groups === undefined) {
+      const loose = PROC_INSTR_BODY.exec(line);
+      const restAfterPi =
+        loose !== null ? line.slice(loose[0].length).trim() : "";
+      if (loose !== null && restAfterPi !== "") {
+        warn(
+          'processing instruction ignored: extraneous text after closing "?>"',
+        );
+        continue;
+      }
       err(`invalid processing instruction: ${line}`);
       continue;
     }
