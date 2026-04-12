@@ -1,6 +1,7 @@
 /**
- * Spawns the real CLI (`tsx` + `src/cli.ts`) so Commander wiring, exit codes,
- * and stderr shape are covered beyond unit tests.
+ * Spawns the published CLI entry (`dist/cli.js` via `node`) so tests match the
+ * `code-excerpter` binary and avoid `tsx` IPC restrictions in sandboxes. Run
+ * `npm run test:base` / `npm run test:watch` so `pretest:*` builds `dist/` first.
  */
 import { spawn } from "node:child_process";
 import {
@@ -13,12 +14,19 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const TMP_ROOT = join(repoRoot, "tmp");
-const tsxCli = join(repoRoot, "node_modules", "tsx", "dist", "cli.mjs");
-const cliEntry = join(repoRoot, "src", "cli.ts");
+const cliDist = join(repoRoot, "dist", "cli.js");
+
+beforeAll(() => {
+  if (!existsSync(cliDist)) {
+    throw new Error(
+      `Missing ${cliDist}. Run \`npm run build\` first, or use \`npm run test:base\` / \`npm run test:watch\` (pretest builds dist).`,
+    );
+  }
+});
 
 function runCli(args: string[]): Promise<{
   stdout: string;
@@ -26,7 +34,7 @@ function runCli(args: string[]): Promise<{
   status: number | null;
 }> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [tsxCli, cliEntry, ...args], {
+    const child = spawn(process.execPath, [cliDist, ...args], {
       cwd: repoRoot,
       stdio: ["ignore", "pipe", "pipe"],
     });

@@ -173,6 +173,9 @@ below states what it does / its purpose, not how it achieves that (see
 - `prepare`: Builds on install so git URL consumers get `dist/`.
 - `test`: Offers the default “trust this tree” path: full read-only gates, then
   unit tests (see `package.json` for how `check` composes).
+- `pretest:base` / `pretest:watch`: Run `build` so `dist/cli.js` exists before
+  Vitest. Needed for `test/cli.integration.test.ts`, which spawns the real CLI
+  with plain `node` (not `tsx`) for portability in restricted environments.
 - `test:base`: Runs Vitest only (matches the CI `test` job), including
   `test/updater-goldens.test.ts` against vendored `code_excerpt_updater`
   `test_data/` and `test/update.test.ts` for the filesystem updater. The update

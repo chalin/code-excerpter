@@ -35,6 +35,8 @@
     "lint": "eslint .",
     "postbuild": "node scripts/verify-dist.mjs",
     "prepare": "npm run build",
+    "pretest:base": "npm run build",
+    "pretest:watch": "npm run build",
     "seq": "bash -c 'for cmd in \"$@\"; do npm run $cmd || exit 1; done' - ",
     "test:base": "KEEP_TEST_TMP=${KEEP_TEST_TMP:-0} vitest run",
     "test:watch": "vitest",
