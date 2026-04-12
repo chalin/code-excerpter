@@ -19,7 +19,7 @@ Semver pins live in `package.json`; this table is orientation only.
 | Format                | `prettier`                                                           |
 | Markdown lint         | `markdownlint-cli2`                                                  |
 | Type checking         | `tsc` - see [Type checking](#type-checking)                          |
-| CLI args              | `commander`                                                          |
+| Command-line args     | `commander`                                                          |
 
 ---
 
@@ -78,17 +78,21 @@ TypeScript compiler; see [Format](#format) and [Type checking](#type-checking)).
 out here in favor of the more common ESLint + Prettier split and richer lint
 ecosystems.
 
+`typescript-eslint` currently peers TypeScript `>=4.8.4 <6.1.0`. Raising the
+TypeScript range past 6.0.x requires a matching `typescript-eslint` upgrade (and
+a fresh pass over `eslint.config.js`) once releases support TypeScript 6.1+.
+
 ### Format
 
 **Prettier** is the layout formatter for the repository.
 **eslint-config-prettier** turns off ESLint rules that disagree with Prettier so
 lint and format stay aligned.
 
-`npm run check:format` verifies Prettier formatting without writes;
+`npm run check:format` verifies Prettier formatting without writes, and
 `npm run fix:format` applies it. Prettier follows `.gitignore` by default, then
-`.prettierignore` (see [Ignoring files](https://prettier.io/docs/ignore)). For
-`fix:format:diff` and the `_list:diff*` helpers, see [NPM scripts](#npm-scripts)
-below.
+`.prettierignore` (see [Ignoring files](https://prettier.io/docs/ignore)). The
+`fix:format:diff` and `_list:diff*` helpers are described under
+[NPM scripts](#npm-scripts) below.
 
 ### Markdown lint
 
@@ -109,7 +113,7 @@ intentionally separate from the [build](#tsup--typescript-build) pipeline:
 `src/` entrypoints. CI and `npm test` run `check:types` as part of `check` so
 type errors fail the gate even when formatting and lint are clean.
 
-### CLI args
+### Command-line arguments
 
 - `commander` is the most widely used Node.js CLI argument parsing library. It
   is simple, stable, and right-sized for this project. No complex plugin system
@@ -128,39 +132,44 @@ below states why it exists, not what it chains to (see `package.json` for that).
 `build` and `prepare` are also described under
 [tsup + TypeScript](#tsup--typescript-build).
 
-- `_build`: Produce publishable JS plus `.d.ts` (see tsup section).
-- `_diff:fail`: Fail CI or local checks when the tree still differs from `HEAD`
+- `_build`: Produces publishable JS plus `.d.ts` (see tsup section).
+- `_diff:fail`: Fails CI or local checks when the tree still differs from `HEAD`
   after fixers.
-- `_list:diff-never-empty` / `_list:diff:all`: Feed diff-scoped Prettier with
-  changed or untracked paths. `_list:diff-never-empty` prints `README.md` when
+- `_list:diff-never-empty` / `_list:diff:all`: Supply changed or untracked paths
+  to diff-scoped Prettier. `_list:diff-never-empty` prints `README.md` when
   there are no changed paths against `HEAD`, so downstream commands always
   receive at least one path.
-- `build`: Public alias for `_build`.
-- `check:format`: Verify Prettier formatting across supported paths; does not
-  write files.
-- `check:markdown`: Lint Markdown with markdownlint-cli2 (see
-  [Markdown lint](#markdown-lint)).
-- `check:spelling`: Spell-check the Markdown set the cspell config cares about.
-- `check:types`: Type-check with `tsc --noEmit` (no build artifacts).
-- `check`: Runs the read-only gates in order via `seq`: `check:format`, `lint`,
-  `check:types`, `check:markdown`, `check:spelling`.
-- `dev`: Run the CLI from TypeScript without a prior production build.
-- `fix`: Runs auto-fix scripts in order via `seq`: `fix:lint`, `fix:markdown`,
-  `fix:format` (no type or spelling fixers).
-- `fix:format`: Apply Prettier to every supported path (respecting ignores).
-- `fix:format:diff`: Apply Prettier (`__check:format --write`) on the
+- `build`: Serves as the public alias for `_build`.
+- `check:format`: Verifies Prettier formatting across supported paths without
+  writing files.
+- `check:markdown`: Catches Markdown structure and style rules that Prettier
+  does not cover (see [Markdown lint](#markdown-lint)).
+- `check:spelling`: Spell-checks the Markdown set the cspell config cares about.
+- `check:types`: Type-checks with `tsc --noEmit` (no build artifacts).
+- `check`: Provides one entry point through which humans and CI invoke every
+  read-only quality gate before tests (exact steps and order live in
+  `package.json`).
+- `dev`: Runs the CLI from TypeScript without a prior production build.
+- `fix`: Provides one entry point for supported auto-fixers so ESLint, Markdown,
+  and Prettier fixes do not need separate invocations (there is no type or
+  spelling auto-fix here).
+- `fix:format`: Applies Prettier to every supported path (respecting ignores).
+- `fix:format:diff`: Applies Prettier (`__check:format --write`) on the
   diff/untracked path set from `_list:diff*`.
-- `fix:lint`: Apply ESLint auto-fixes where rules support `--fix`.
-- `fix:markdown`: Apply markdownlint-cli2 `--fix`, then strip trailing
-  whitespace in `*.md` (see `_fix:trailing-spaces`).
-- `lint`: Report ESLint issues without writing files.
-- `seq`: Run a list of npm scripts in order, stopping on first failure (used by
-  `check` and `fix`).
-- `postbuild`: Assert `dist/` contains the expected build artifacts.
-- `prepare`: Build on install so git URL consumers get `dist/`.
-- `test`: Verify behavior after format, lint, types, Markdown lint, spelling,
-  and unit-test gates (`check` then Vitest).
-- `test:base`: Run unit tests only (matches the CI `test` job).
-- `test:watch`: Re-run Vitest while iterating on tests.
-- `update:packages`: Refresh dependency ranges via npm-check-updates (review
-  before committing).
+- `fix:lint`: Applies ESLint auto-fixes where rules support `--fix`.
+- `fix:markdown`: Normalizes Markdown after edits using markdownlint’s fix mode
+  and a trailing-whitespace cleanup pass on `*.md` (markdownlint does not
+  address line endings alone).
+- `lint`: Reports ESLint issues without writing files.
+- `seq`: Keeps `package.json` readable by centralizing “run these scripts in
+  order, stop on the first failure” instead of long `&&` chains. Uses **bash**;
+  on Windows, Git Bash, WSL, or another environment where `bash` is on `PATH` is
+  required.
+- `postbuild`: Asserts `dist/` contains the expected build artifacts.
+- `prepare`: Builds on install so git URL consumers get `dist/`.
+- `test`: Offers the default “trust this tree” path: full read-only gates, then
+  unit tests (see `package.json` for how `check` composes).
+- `test:base`: Runs unit tests only (matches the CI `test` job).
+- `test:watch`: Re-runs Vitest during local iteration on tests.
+- `update:packages`: Refreshes dependency ranges via npm-check-updates; a manual
+  review before commit is expected.

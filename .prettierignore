@@ -1,2 +1,1 @@
-# Prettier also applies `.gitignore` (see https://prettier.io/docs/ignore )
-# List only tracked paths we still skip. None yet.
+# https://prettier.io/docs/ignore. None yet.

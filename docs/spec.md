@@ -100,8 +100,10 @@ When multiple transform arguments are present, they are applied in this order:
 `<?code-excerpt?>` instructions may be preceded by a comment prefix when the
 markdown file requires it (e.g., inside an HTML comment block):
 
+<!-- prettier-ignore -->
 ```markdown
-// <?code-excerpt "lib/main.dart"?> /// <?code-excerpt "lib/main.dart"?>
+// <?code-excerpt "lib/main.dart"?>
+/// <?code-excerpt "lib/main.dart"?>
 ```
 
 The tool strips leading `//` or `///` prefixes before parsing the instruction.
