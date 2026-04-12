@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { tryParseDirective } from "../src/directive.js";
+import { expectDirective } from "./helpers.js";
 
 describe("directive", () => {
   describe("basic", () => {
@@ -10,7 +11,7 @@ describe("directive", () => {
 
     it("startRegion", () => {
       const d = tryParseDirective("#docregion");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("startRegion");
       expect(d.rawArgs).toBe("");
       expect(d.args).toEqual([]);
@@ -18,7 +19,7 @@ describe("directive", () => {
 
     it("endRegion", () => {
       const d = tryParseDirective("#enddocregion");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("endRegion");
       expect(d.rawArgs).toBe("");
       expect(d.args).toEqual([]);
@@ -30,7 +31,7 @@ describe("directive", () => {
     it("startRegion", () => {
       const spaces = "  ";
       const d = tryParseDirective(`${spaces}// #docregion`);
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("startRegion");
       expect(d.rawArgs).toBe("");
       expect(d.args).toEqual([]);
@@ -39,7 +40,7 @@ describe("directive", () => {
 
     it("endRegion", () => {
       const d = tryParseDirective(" #enddocregion a,b,  c  ");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("endRegion");
       expect(d.rawArgs).toBe("a,b,  c");
       expect(d.args).toEqual(["a", "b", "c"]);
@@ -51,7 +52,7 @@ describe("directive", () => {
     describe("HTML:", () => {
       it("startRegion", () => {
         const d = tryParseDirective("<!--#docregion-->");
-        expect(d).not.toBeNull();
+        expectDirective(d);
         expect(d.kind).toBe("startRegion");
         expect(d.rawArgs).toBe("");
         expect(d.args).toEqual([]);
@@ -60,7 +61,7 @@ describe("directive", () => {
 
       it("endRegion", () => {
         const d = tryParseDirective("<!-- #enddocregion a -->  ");
-        expect(d).not.toBeNull();
+        expectDirective(d);
         expect(d.kind).toBe("endRegion");
         expect(d.rawArgs).toBe("a");
         expect(d.args).toEqual(["a"]);
@@ -71,7 +72,7 @@ describe("directive", () => {
     describe("CSS:", () => {
       it("startRegion", () => {
         const d = tryParseDirective("/*#docregion*/");
-        expect(d).not.toBeNull();
+        expectDirective(d);
         expect(d.kind).toBe("startRegion");
         expect(d.rawArgs).toBe("");
         expect(d.args).toEqual([]);
@@ -80,7 +81,7 @@ describe("directive", () => {
 
       it("endRegion", () => {
         const d = tryParseDirective("/* #enddocregion a */  ");
-        expect(d).not.toBeNull();
+        expectDirective(d);
         expect(d.kind).toBe("endRegion");
         expect(d.rawArgs).toBe("a");
         expect(d.args).toEqual(["a"]);
@@ -92,7 +93,7 @@ describe("directive", () => {
   describe("problem cases:", () => {
     it("Deprecated unquoted default region name", () => {
       const d = tryParseDirective("#docregion ,a");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("startRegion");
       expect(d.rawArgs).toBe(",a");
       expect(d.args).toEqual(["", "a"]);
@@ -101,7 +102,7 @@ describe("directive", () => {
 
     it('Duplicate "a" region', () => {
       const d = tryParseDirective("#docregion a,b,c,a");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("startRegion");
       expect(d.rawArgs).toBe("a,b,c,a");
       expect(d.args).toEqual(["a", "b", "c"]);
@@ -110,7 +111,7 @@ describe("directive", () => {
 
     it('Duplicate "" region', () => {
       const d = tryParseDirective("#docregion '',''");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("startRegion");
       expect(d.rawArgs).toBe("'',''");
       expect(d.args).toEqual([""]);
@@ -126,7 +127,7 @@ describe("directive", () => {
 
     it("#docregion '' parses as default region with no issues", () => {
       const d = tryParseDirective("#docregion ''");
-      expect(d).not.toBeNull();
+      expectDirective(d);
       expect(d.kind).toBe("startRegion");
       expect(d.args).toEqual([""]);
       expect(d.issues).toEqual([]);
