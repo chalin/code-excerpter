@@ -7,7 +7,7 @@
 
 import { readFileSync } from "node:fs";
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { injectMarkdown, type MarkdownInjectContext } from "./inject.js";
 
 const MD_EXT = /\.md$/;
@@ -112,7 +112,9 @@ export async function updatePaths(
   for (const p of paths) {
     const abs = resolve(p);
     try {
-      allFiles.push(...(await collectMarkdownFiles(abs, abs, exclude)));
+      allFiles.push(
+        ...(await collectMarkdownFiles(abs, dirname(abs), exclude)),
+      );
     } catch (err) {
       const msg = `error: ${abs}: ${err instanceof Error ? err.message : String(err)}`;
       result.errors.push(msg);

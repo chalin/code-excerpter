@@ -25,6 +25,8 @@
  * - `globalReplace` pass-through
  * - Relative `pathBase` (same as CLI `-p path/to/src` from cwd)
  * - Missing root path (no rejection; `errors` populated)
+ * - Explicit `.hidden` / `vendor` roots vs dot-skip and `--exclude` (same
+ *   rules as when those dirs appear under a parent root)
  */
 import {
   existsSync,
@@ -253,6 +255,28 @@ describe("updatePaths", () => {
     });
 
     expect(result.filesProcessed).toBe(1);
+  });
+
+  it("skips markdown when the sole root is a dot-prefixed directory", async () => {
+    const tmp = useTmp();
+    const root = join(tmp, ".hidden");
+    mkdirSync(root, { recursive: true });
+    writeFixture(root, "x.md", "no PI\n");
+
+    const result = await updatePaths([root]);
+
+    expect(result.filesProcessed).toBe(0);
+  });
+
+  it("skips markdown when the sole root matches --exclude", async () => {
+    const tmp = useTmp();
+    const root = join(tmp, "vendor");
+    mkdirSync(root, { recursive: true });
+    writeFixture(root, "x.md", "no PI\n");
+
+    const result = await updatePaths([root], { exclude: [/vendor/] });
+
+    expect(result.filesProcessed).toBe(0);
   });
 
   it("dry-run does not write files", async () => {
