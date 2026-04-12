@@ -65,10 +65,10 @@ Directory walking, file updating, CLI entry point.
 A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
 [code_excerpt_updater test_data][] inject-only goldens):
 
-- [ ] Vendor [dart-lang/site-shared pkgs/excerpter test_data][] into this
-      repository for fixtures.
-- [ ] Add Vitest goldens aligned with [updater_test.dart][] (copy `src/` → run
-      updater → compare to `expected/`).
+1. [ ] Vendor [dart-lang/site-shared pkgs/excerpter test_data][] into this
+       repository for fixtures.
+2. [ ] Add Vitest goldens aligned with [updater_test.dart][] (copy `src/` → run
+       updater → compare to `expected/`).
 
 B. [ ] Optional follow-up items:
 

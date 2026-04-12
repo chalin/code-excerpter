@@ -108,9 +108,10 @@ Walks directory trees (or individual files), collects `.md` files, and runs
 - `updatePaths(paths, options?)` — async entry point; returns `UpdateResult`
   with `filesProcessed`, `filesUpdated`, `errors[]`, `warnings[]`.
 - Skips dot-prefixed segments and user-supplied `exclude` regex patterns.
-- Source files for excerpts are read synchronously from disk relative to
-  `pathBase` (resolved to an absolute root), matching how `injectMarkdown` calls
-  `readFile(resolvedPath)`.
+- Source files for excerpts are read synchronously from disk under
+  `options.pathBase` (resolved to an absolute root for `readFile` only).
+  `injectMarkdown` still starts with an empty file-level `path-base`; set
+  instructions in the markdown extend paths passed to `readFile` from that root.
 - Supports `dryRun` (no writes). The CLI’s `--fail-on-update` exits non-zero
   when `filesUpdated > 0` (often combined with `--dry-run` so CI fails if
   markdown is out of date relative to sources).

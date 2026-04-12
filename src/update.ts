@@ -14,7 +14,12 @@ const MD_EXT = /\.md$/;
 const DOT_SEGMENT = /(^|[/\\])\./;
 
 export interface UpdateOptions {
-  /** Base path for resolving excerpt source files (default `""`). */
+  /**
+   * Directory used as the root when reading excerpt sources from disk (default
+   * `""`, i.e. cwd). Resolved once for `readFile`; not forwarded to
+   * `injectMarkdown` as `MarkdownInjectContext.pathBase`, so relative values are
+   * not joined twice with paths from processing instructions.
+   */
   pathBase?: string;
   /** Regex patterns; paths matching any are skipped (tested against the relative path). */
   exclude?: RegExp[];
@@ -113,7 +118,6 @@ export async function updatePaths(
   for (const filePath of allFiles) {
     const ctx: MarkdownInjectContext = {
       readFile: createDiskReadFile(srcRoot),
-      pathBase: opts.pathBase,
       escapeNgInterpolation: opts.escapeNgInterpolation,
       globalReplace: opts.globalReplace,
       globalPlasterTemplate: opts.globalPlasterTemplate,

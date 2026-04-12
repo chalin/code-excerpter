@@ -23,6 +23,7 @@
  * - Single-file paths
  * - Non-`.md` file skipping
  * - `globalReplace` pass-through
+ * - Relative `pathBase` (same as CLI `-p path/to/src` from cwd)
  */
 import {
   existsSync,
@@ -31,7 +32,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { updatePaths } from "../src/update.js";
 
@@ -136,6 +137,43 @@ describe("updatePaths", () => {
     const updated = readFileSync(join(docs, "guide.md"), "utf8");
     expect(updated).toContain("var greeting = 'hello';");
     expect(updated).not.toContain("old content");
+  });
+
+  it("resolves excerpts when pathBase is relative to cwd (CLI -p)", async () => {
+    const tmp = useTmp();
+    const src = join(tmp, "src");
+    const docs = join(tmp, "docs");
+
+    writeFixture(
+      src,
+      "lib/a.dart",
+      ["// #docregion", "const k = 42;", "// #enddocregion"].join("\n"),
+    );
+
+    writeFixture(
+      docs,
+      "page.md",
+      [
+        '<?code-excerpt "lib/a.dart"?>',
+        "",
+        "```dart",
+        "placeholder",
+        "```",
+        "",
+      ].join("\n"),
+    );
+
+    const pathBaseRel = relative(process.cwd(), src);
+    expect(pathBaseRel).not.toMatch(/^\.\.($|[/\\])/);
+    expect(pathBaseRel.length).toBeGreaterThan(0);
+
+    const result = await updatePaths([docs], { pathBase: pathBaseRel });
+
+    expect(result.errors, result.errors.join("\n")).toEqual([]);
+    expect(result.filesUpdated).toBe(1);
+    expect(readFileSync(join(docs, "page.md"), "utf8")).toContain(
+      "const k = 42;",
+    );
   });
 
   it("leaves unchanged files untouched (no write)", async () => {
