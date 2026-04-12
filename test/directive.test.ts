@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { tryParseDirective } from "../src/directive.js";
-import { expectDirective } from "./helpers.js";
+import { expectDirective } from "./helpers/index.js";
 
 describe("directive", () => {
   describe("basic", () => {

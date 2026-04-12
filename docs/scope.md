@@ -31,16 +31,8 @@ This document defines the feature scope for `code-excerpter` v1.
 
 ### Code transforms
 
-Applied in order:
-
-1. `skip` — skip the first N lines
-2. `take` — keep only the first N lines
-3. `from` — start from the first line matching a pattern
-4. `to` — stop before the first line matching a pattern
-5. `remove` — remove all lines matching a pattern
-6. `retain` — keep only lines matching a pattern
-7. `replace` — regex replace within lines
-8. `indent-by` — prepend N spaces to every line
+`skip`, `take`, `from`, `to`, `remove`, `retain`, `replace`, `indent-by`. See
+[`docs/spec.md`](spec.md#processing-order-of-arguments) for ordering rules.
 
 ### Path-base set instructions
 
@@ -62,10 +54,12 @@ syntax).
 
 ## Deferred (post-v1)
 
-| Feature                        | Reason                                               |
-| ------------------------------ | ---------------------------------------------------- |
-| `diff-with` / `diff-u`         | Complex output format, low priority for initial port |
-| Angular interpolation escaping | Specific to Angular docs, not general-purpose        |
+| Feature                | Reason                                               |
+| ---------------------- | ---------------------------------------------------- |
+| `diff-with` / `diff-u` | Complex output format, low priority for initial port |
+
+Angular interpolation escaping (`{{` / `}}` in injected lines) is implemented in
+`inject.ts` to match the Dart updater default (`escapeNgInterpolation`).
 
 ---
 

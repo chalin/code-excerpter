@@ -3,6 +3,9 @@
 This document tracks the phased porting of the Dart excerpter tooling to
 TypeScript.
 
+Product-wide deferrals are in **Deferred** in [`docs/scope.md`](scope.md). Each
+section may list limitations that apply to that phase.
+
 ---
 
 ## Phase 1a — `directive.ts`
@@ -27,6 +30,11 @@ from [`chalin/code_excerpter`][].
       overlapping regions)
 - [x] Update docs as needed
 
+Limitations:
+
+- `#docplaster` resolves to directive kind `plaster` in `directive.ts`, but
+  `extract.ts` does not handle that kind yet (throws on those lines).
+
 ## Phase 2 — `transform.ts`
 
 Transform pipeline: skip, take, from, to, remove, retain, replace, indent. All
@@ -41,9 +49,9 @@ pure logic, no I/O.
 Parse `<?code-excerpt?>` instructions in markdown, orchestrate extraction +
 transforms per code block.
 
-- [ ] Implement `src/inject.ts`
-- [ ] Write `test/inject.test.ts`
-- [ ] Update docs as needed
+- [x] Implement `src/inject.ts`
+- [x] Write `test/inject.test.ts`
+- [x] Update docs as needed
 
 ## Phase 4 — `update.ts` + `cli.ts`
 
@@ -53,6 +61,14 @@ Directory walking, file updating, CLI entry point.
 - [ ] Implement `src/cli.ts`
 - [ ] Write `test/update.test.ts`
 - [ ] Update docs as needed
+- [ ] **Follow-up:** Vendor
+      [`dart-lang/site-shared` `pkgs/excerpter/test_data/`](https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data)
+      and add Vitest goldens aligned with
+      [`updater_test.dart`](https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/test/updater_test.dart)
+      (copy `src/` → run updater → compare to `expected/`). These complement
+      Phase 3’s
+      [`code_excerpt_updater` `test_data/`](https://github.com/chalin/code_excerpt_updater/tree/main/test_data)
+      goldens, which target `injectMarkdown` only.
 
 ## Phase 5 — Integration Testing
 

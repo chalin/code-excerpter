@@ -21,7 +21,7 @@
     "_list:diff:all": "(npm run -s _list:diff-never-empty; git ls-files --others --exclude-standard) | sort -u",
     "build": "npm run _build",
     "check:format": "npm run __check:format -- --check .",
-    "check:markdown": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#dist\"",
+    "check:markdown": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#dist\" \"#test/fixtures/code-excerpt-updater/**\"",
     "check:spelling": "cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
     "check:types": "tsc --noEmit",
     "check": "npm run seq -- check:format lint check:types check:markdown check:spelling",
@@ -65,6 +65,7 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.1",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "yaml": "^2.8.3"
   }
 }

@@ -176,6 +176,15 @@ describe("transform", () => {
       expect(onError).toHaveBeenCalled();
     });
 
+    it("indent-by rejects non-integer strings (no parseInt prefix)", () => {
+      const onError = vi.fn();
+      const out = applyExcerptTransforms(["a"], { indentBy: "2abc" }, onError);
+      expect(out).toEqual(["a"]);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining("indent-by: error parsing integer value"),
+      );
+    });
+
     it("omit replace when invalid", () => {
       const onError = vi.fn();
       const out = applyExcerptTransforms(["ab"], { replace: "bad" }, onError);

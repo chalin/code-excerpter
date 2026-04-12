@@ -13,7 +13,12 @@ README, which is the canonical reference.
 `code-excerpter` processes markdown files looking for XML processing
 instructions of the form `<?code-excerpt?>`. When found, the tool extracts the
 referenced code from the source file, applies any transforms, and replaces the
-fenced code block that immediately follows the instruction.
+fenced or prettify code block that immediately follows the instruction.
+
+A matching line must contain **only** the processing instruction (optional
+trailing whitespace). Any non-whitespace after the closing `?>` is ignored: the
+line is not treated as an instruction and a **warning** is reported (the
+document is unchanged for that line).
 
 ---
 
@@ -42,6 +47,10 @@ Specifies a source file (and optionally a named region) to inject:
 // extracted content here
 ```
 ````
+
+Supported fences are Markdown backtick fences (` ``` ` … ` ``` `) and Liquid
+`{% prettify … %}` … `{% endprettify %}` pairs. Other Liquid tags (for example
+`{% if %}`) are not treated as code fences.
 
 ### Set instruction
 
@@ -82,7 +91,12 @@ all subsequent code fragment instructions in the same file.
 
 ## Processing Order of Arguments
 
-When multiple transform arguments are present, they are applied in this order:
+When multiple transform arguments are present, `injectMarkdown` applies them in
+**the order they appear** in the processing instruction (Dart `Map.forEach`
+insertion order on named arguments), not a fixed global ordering. For example,
+`replace` before `retain` runs replace first, then retain.
+
+The usual relative order in docs is:
 
 1. `skip`
 2. `take`
@@ -91,7 +105,8 @@ When multiple transform arguments are present, they are applied in this order:
 5. `remove`
 6. `retain`
 7. `replace`
-8. `indent-by`
+
+`indent-by` is handled separately after the transform chain (Dart `indent-by`).
 
 ---
 

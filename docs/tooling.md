@@ -169,7 +169,9 @@ below states why it exists, not what it chains to (see `package.json` for that).
 - `prepare`: Builds on install so git URL consumers get `dist/`.
 - `test`: Offers the default “trust this tree” path: full read-only gates, then
   unit tests (see `package.json` for how `check` composes).
-- `test:base`: Runs unit tests only (matches the CI `test` job).
+- `test:base`: Runs Vitest only (matches the CI `test` job), including
+  `test/updater-goldens.test.ts` against vendored `code_excerpt_updater`
+  `test_data/`.
 - `test:watch`: Re-runs Vitest during local iteration on tests.
 - `update:packages`: Refreshes dependency ranges via npm-check-updates; a manual
   review before commit is expected.

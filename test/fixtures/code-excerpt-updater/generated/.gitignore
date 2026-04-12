@@ -1,0 +1,4 @@
+# Ignore test output here; keep only tracked placeholders (see parent README).
+*
+!.gitignore
+!.gitkeep

@@ -1,6 +1,11 @@
 /**
- * Excerpt transform pipeline: skip → take → from → to → remove → retain → replace → indent-by
- * (see repository `docs/spec.md`; ported from `chalin/code_excerpt_updater` `code_transformer`).
+ * Excerpt transform pipeline (ported from `chalin/code_excerpt_updater` `code_transformer`).
+ *
+ * {@link applyExcerptTransforms} applies transforms in the default spec order
+ * (skip → take → from → to → remove → retain → replace → indent-by).
+ * {@link applyExcerptTransformsInOrder} applies them in PI attribute order instead,
+ * matching how the Dart updater iterates its `LinkedHashMap` of named args.
+ * See `docs/spec.md` for details.
  */
 
 const escapedSlashRe = /\\\//g;
@@ -31,16 +36,51 @@ function parseIntArg(s: string | undefined): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-function parseIndentBy(
+/** Keys that participate in the Dart-style per-argument transform chain. */
+const ORDERED_TRANSFORM_KEYS = new Set([
+  "skip",
+  "take",
+  "from",
+  "to",
+  "remove",
+  "retain",
+  "replace",
+]);
+
+/**
+ * Applies transform arguments in **PI attribute order** (Dart `Map.forEach`
+ * insertion order on named args), not a fixed global ordering.
+ */
+export function applyExcerptTransformsInOrder(
+  lines: string[],
+  keyOrder: string[],
+  map: Map<string, string>,
+  onError?: (msg: string) => void,
+): string[] {
+  let cur = [...lines];
+  for (const key of keyOrder) {
+    if (!ORDERED_TRANSFORM_KEYS.has(key)) continue;
+    const val = map.get(key);
+    if (val === undefined) continue;
+    const opts: ExcerptTransformOptions = {};
+    (opts as Record<string, string | undefined>)[key] = val;
+    cur = applyExcerptTransforms(cur, opts, onError);
+  }
+  return cur;
+}
+
+/** Parses `indent-by` attribute values (Dart `Updater._getIndentBy`). */
+export function parseIndentBy(
   s: string | undefined,
   onError?: (msg: string) => void,
 ): number {
   if (s === undefined) return 0;
-  const n = Number.parseInt(s, 10);
-  if (Number.isNaN(n)) {
+  // Match Dart `int.tryParse`: the entire value must be an integer (no `2abc` → 2).
+  if (!/^[-+]?\d+$/.test(s)) {
     onError?.(`indent-by: error parsing integer value: ${JSON.stringify(s)}`);
     return 0;
   }
+  const n = Number.parseInt(s, 10);
   if (n < 0 || n > 100) {
     onError?.(`indent-by: integer out of range: ${n}`);
     return 0;

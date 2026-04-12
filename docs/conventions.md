@@ -12,7 +12,8 @@ Project conventions for code, documentation, and tests.
 - **TypeScript**: Strict mode enabled (`"strict": true` in `tsconfig.json`).
 - **Built-in imports**: Always use the `node:` prefix (e.g., `node:fs/promises`,
   `node:path`, `node:url`).
-- **Async I/O**: Prefer `node:fs/promises` for all file operations.
+- **Async I/O**: Prefer `node:fs/promises` for all file operations in `src/`.
+  Test helpers may use synchronous `node:fs` when running in setup/assertions.
 - **Naming**: Use camelCase for variables/functions, PascalCase for classes and
   types/interfaces.
 - **Formatting**: 2-space indentation, 100-character line width. **Prettier**

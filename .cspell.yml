@@ -5,6 +5,7 @@ language: en-US
 caseSensitive: true
 ignorePaths:
   - "*.svg"
+  - "test/fixtures/code-excerpt-updater/**"
 patterns:
   - name: CodeBlock
     pattern: |
@@ -28,9 +29,12 @@ dictionaries:
   # Other
   - companies
 words:
+  - endprettify
+  - goldens
   - postbuild
   - chalin
   - docregion
+  - docplaster
   - enddocregion
   - excerpter
   - nvmrc

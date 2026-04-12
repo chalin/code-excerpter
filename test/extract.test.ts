@@ -4,6 +4,7 @@ import {
   DEFAULT_PLASTER,
   dropTrailingBlankLines,
   extractExcerpts,
+  getExcerptRegionLines,
   maxUnindent,
 } from "../src/extract.js";
 
@@ -115,6 +116,31 @@ describe("extract", () => {
           #enddocregion b
         `;
         expect(stripDirectives(content)).toEqual(["  abc", "  def"]);
+      });
+    });
+
+    describe("getExcerptRegionLines", () => {
+      it("uses extract map when directives exist", () => {
+        const s = dedent`
+          // #docregion
+          x
+          // #enddocregion
+        `;
+        expect(getExcerptRegionLines(uri, s, "")).toEqual(["x"]);
+      });
+
+      it("falls back to full file when there are no directives", () => {
+        expect(getExcerptRegionLines(uri, "plain\n", "")).toEqual(["plain"]);
+      });
+
+      it("returns null for unknown named region", () => {
+        expect(
+          getExcerptRegionLines(
+            uri,
+            "// #docregion a\n// #enddocregion a\n",
+            "b",
+          ),
+        ).toBeNull();
       });
     });
   });
