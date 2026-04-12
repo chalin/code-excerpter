@@ -12,14 +12,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsc --emitDeclarationOnly",
     "check:spelling": "npx cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
     "check": "npm run check:spelling && npm run lint",
     "dev": "tsx src/cli.ts",
     "fix": "npm run lint:fix",
     "lint:fix": "biome check . --write",
     "lint": "biome check .",
-    "prepare": "tsup",
+    "prepare": "npm run build",
     "test:watch": "vitest",
     "test:base": "vitest run",
     "test": "npm run check && npm run test:base",
