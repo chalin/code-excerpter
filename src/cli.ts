@@ -5,6 +5,7 @@
  */
 
 import { Command } from "commander";
+import { compileExcludePatterns } from "./excludePatterns.js";
 import { updatePaths } from "./update.js";
 
 const program = new Command();
@@ -47,10 +48,18 @@ program
         plaster?: string;
       },
     ) => {
-      const exclude = opts.exclude.map((s) => new RegExp(s));
+      const compiled = compileExcludePatterns(opts.exclude);
+      if (!compiled.ok) {
+        console.error(compiled.error);
+        console.error(
+          "0 file(s) processed, 0 updated, 0 error(s), 0 warning(s)",
+        );
+        process.exitCode = 1;
+        return;
+      }
       const result = await updatePaths(paths, {
         pathBase: opts.pathBase || undefined,
-        exclude,
+        exclude: compiled.patterns,
         dryRun: opts.dryRun,
         escapeNgInterpolation: opts.escapeNgInterpolation,
         globalReplace: opts.replace,
