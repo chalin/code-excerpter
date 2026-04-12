@@ -32,9 +32,9 @@ from [`chalin/code_excerpter`][].
 Transform pipeline: skip, take, from, to, remove, retain, replace, indent. All
 pure logic, no I/O.
 
-- [ ] Implement `src/transform.ts`
-- [ ] Write `test/transform.test.ts`
-- [ ] Update docs as needed
+- [x] Implement `src/transform.ts`
+- [x] Write `test/transform.test.ts`
+- [x] Update docs as needed
 
 ## Phase 3 — `inject.ts`
 

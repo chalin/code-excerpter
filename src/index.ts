@@ -10,3 +10,17 @@ export {
   extractExcerpts,
   maxUnindent,
 } from "./extract.js";
+export {
+  applyExcerptTransforms,
+  applyFrom,
+  applyRemove,
+  applyRetain,
+  applySkip,
+  applyTake,
+  applyTo,
+  encodeSlashChar,
+  type ExcerptTransformOptions,
+  type LinePredicate,
+  parseReplacePipeline,
+  patternToLinePredicate,
+} from "./transform.js";
