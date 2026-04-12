@@ -91,6 +91,8 @@ async function collectMarkdownFiles(
 /**
  * Processes one or more paths (files or directories): finds `.md` files, runs
  * {@link injectMarkdown} on each, and writes back when content changed.
+ * Collected files are deduped by absolute path (overlapping or repeated roots
+ * do not run inject twice on the same file).
  */
 export async function updatePaths(
   paths: string[],
@@ -122,8 +124,9 @@ export async function updatePaths(
     }
   }
   allFiles.sort();
+  const uniqueFiles = [...new Set(allFiles)];
 
-  for (const filePath of allFiles) {
+  for (const filePath of uniqueFiles) {
     const ctx: MarkdownInjectContext = {
       readFile: createDiskReadFile(srcRoot),
       escapeNgInterpolation: opts.escapeNgInterpolation,

@@ -27,6 +27,7 @@
  * - Missing root path (no rejection; `errors` populated)
  * - Explicit `.hidden` / `vendor` roots vs dot-skip and `--exclude` (same
  *   rules as when those dirs appear under a parent root)
+ * - Duplicate or overlapping roots (each `.md` processed once)
  */
 import {
   existsSync,
@@ -254,6 +255,22 @@ describe("updatePaths", () => {
       exclude: [/vendor/],
     });
 
+    expect(result.filesProcessed).toBe(1);
+  });
+
+  it("dedupes the same root passed more than once", async () => {
+    const tmp = useTmp();
+    const docs = join(tmp, "docs");
+    writeFixture(docs, "a.md", "no PI\n");
+    const result = await updatePaths([docs, docs]);
+    expect(result.filesProcessed).toBe(1);
+  });
+
+  it("dedupes overlapping roots when a subdirectory is also listed", async () => {
+    const tmp = useTmp();
+    const docs = join(tmp, "docs");
+    writeFixture(docs, "sub/page.md", "no PI\n");
+    const result = await updatePaths([docs, join(docs, "sub")]);
     expect(result.filesProcessed).toBe(1);
   });
 

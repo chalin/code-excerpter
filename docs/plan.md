@@ -72,25 +72,22 @@ A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
 
 B. [ ] Optional follow-up items:
 
-1. [ ] **Overlapping `paths`**: `updatePaths` does not dedupe `allFiles`.
-       Passing the same directory twice (or a directory and its subdirectory)
-       can process the same markdown file more than once in one run.
-2. [ ] **Invalid `--exclude` patterns**: the CLI builds `new RegExp(pattern)`
-       per flag; a bad pattern throws before `updatePaths` runs (no friendly
-       error yet).
+1. [x] **Overlapping `paths`**: `updatePaths` dedupes collected absolute paths
+       before processing (same `.md` once per run).
+2. [x] **Invalid `--exclude` patterns**: CLI compiles patterns with a friendly
+       `error:` line on stderr and exit code 1 (see `src/excludePatterns.ts`).
 3. [ ] **`--no-escape-ng-interpolation`**: the CLI relies on Commander’s
        handling of negated boolean flags; behavior must stay aligned with
        `injectMarkdown` (`escapeNgInterpolation !== false` means escape).
 
 C. [ ] Test gaps:
 
-1. [ ] Vitest coverage for `src/cli.ts` (e.g. `--help`, exit code on inject
-       errors, `--fail-on-update` with and without `--dry-run`, invalid
-       `--exclude` regex).
+1. [x] CLI integration tests in `test/cli.integration.test.ts` (`--help`,
+       invalid `--exclude`, `--fail-on-update` with `--dry-run`).
 2. [ ] `updatePaths`: assert `log` is called for expected lines; assert
        `warnings` in `UpdateResult` when `onWarning` fires.
-3. [ ] `updatePaths`: overlapping or duplicate root paths (expect dedupe or
-       document one processing pass per file).
+3. [x] `updatePaths`: duplicate / overlapping roots (dedupe; see
+       `test/update.test.ts`).
 
 ## Phase 5 — Integration Testing
 
