@@ -83,6 +83,17 @@ orchestrates the extraction + transform pipeline for each code block.
 - Supports set instructions (`<?code-excerpt path-base="..."?>`).
 - Handles comment-prefixed instructions (`//` or `///` before
   `<?code-excerpt?>`).
+- Blank lines between an instruction and the opening fence are copied to the
+  output then skipped so the fence is recognized (common in authored markdown).
+- File-level set `replace` and optional programmatic `globalReplace` on the
+  inject context compose on the joined excerpt string after per-instruction
+  transforms (Dart `Updater` `fileAndCmdLineCodeTransformer` order).
+- `readFile(path, region?)` mirrors Dart `ExcerptGetter` when the callback
+  resolves `.txt` fragments and `.excerpt.yaml` regions; optional
+  `escapeNgInterpolation` / `globalPlasterTemplate` match updater defaults.
+- Golden parity: `test/updater-goldens.test.ts` drives `injectMarkdown` against
+  vendored `test/fixtures/code-excerpt-updater/test_data/` from
+  [`chalin/code_excerpt_updater`][] (see that directory’s `README.md`).
 - See [`docs/spec.md`](spec.md) for the full instruction syntax.
 
 ### `src/update.ts` (Phase 4)

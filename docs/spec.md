@@ -82,7 +82,12 @@ all subsequent code fragment instructions in the same file.
 
 ## Processing Order of Arguments
 
-When multiple transform arguments are present, they are applied in this order:
+When multiple transform arguments are present, `injectMarkdown` applies them in
+**the order they appear** in the processing instruction (Dart `Map.forEach`
+insertion order on named arguments), not a fixed global ordering. For example,
+`replace` before `retain` runs replace first, then retain.
+
+The usual relative order in docs is:
 
 1. `skip`
 2. `take`
@@ -91,7 +96,8 @@ When multiple transform arguments are present, they are applied in this order:
 5. `remove`
 6. `retain`
 7. `replace`
-8. `indent-by`
+
+`indent-by` is handled separately after the transform chain (Dart `indent-by`).
 
 ---
 

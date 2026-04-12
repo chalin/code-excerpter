@@ -19,6 +19,18 @@ export function dropTrailingBlankLines(lines: string[]): string[] {
 }
 
 /**
+ * Returns a new array with leading blank lines removed (Dart-style excerpt
+ * normalization before injection).
+ */
+export function dropLeadingBlankLines(lines: string[]): string[] {
+  let i = 0;
+  while (i < lines.length && blankLineRe.test(lines[i]!)) {
+    i++;
+  }
+  return lines.slice(i);
+}
+
+/**
  * Returns lines shifted left by the minimum indentation of all non-blank lines.
  * Blank lines are not shifted and are ignored when computing the minimum indent.
  */
@@ -200,4 +212,29 @@ export function extractExcerpts(
   }
 
   return excerpts;
+}
+
+/**
+ * Returns excerpt lines for `region` after {@link extractExcerpts}, or `null` if the
+ * region is missing. When the file has no directives and `region` is the default (`""`),
+ * returns the full file minus directive-looking lines, then trailing blank drop + max unindent
+ * (matches how tests build the implicit default region).
+ */
+export function getExcerptRegionLines(
+  uri: string,
+  content: string,
+  region: string,
+  onWarning?: (msg: string) => void,
+): string[] | null {
+  const excerpts = extractExcerpts(uri, content, onWarning);
+  if (excerpts.has(region)) {
+    return excerpts.get(region)!;
+  }
+  if (excerpts.size === 0) {
+    const raw = content
+      .split("\n")
+      .filter((line) => tryParseDirective(line) === null);
+    return maxUnindent(dropTrailingBlankLines(raw));
+  }
+  return null;
 }

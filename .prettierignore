@@ -1,1 +1,4 @@
 # https://prettier.io/docs/ignore. None yet.
+
+# Golden fixtures from chalin/code_excerpt_updater (preserve exact bytes).
+test/fixtures/code-excerpt-updater/

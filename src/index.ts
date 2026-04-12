@@ -6,12 +6,20 @@ export {
 } from "./directive.js";
 export {
   DEFAULT_PLASTER,
+  dropLeadingBlankLines,
   dropTrailingBlankLines,
   extractExcerpts,
+  getExcerptRegionLines,
   maxUnindent,
 } from "./extract.js";
 export {
+  injectMarkdown,
+  type MarkdownInjectContext,
+  PROC_INSTR_RE,
+} from "./inject.js";
+export {
   applyExcerptTransforms,
+  applyExcerptTransformsInOrder,
   applyFrom,
   applyRemove,
   applyRetain,
