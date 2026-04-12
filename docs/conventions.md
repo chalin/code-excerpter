@@ -52,8 +52,8 @@ This includes project README, AGENTS, and other docs, as well as code comments.
 ### AI guidance
 
 - Keep **[AGENTS.md](../AGENTS.md)** minimal: add depth in the appropriate
-  `docs/*.md` file and link from AGENTS; do not duplicate architecture tables,
-  data-flow diagrams, or `package.json` script listings here.
+  `docs/*.md` file and link from AGENTS; do not duplicate long architecture or
+  lineage write-ups, data-flow diagrams, or `package.json` script listings here.
 
 [DRY]: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 [otel-testing]: https://github.com/open-telemetry/opentelemetry.io/blob/c48fe2d260c56d6f60916db3b804e67372b3df8d/content/en/site/testing/_index.md

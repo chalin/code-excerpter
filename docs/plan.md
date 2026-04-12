@@ -8,7 +8,7 @@ This document tracks the phased porting of the Dart excerpter tooling to TypeScr
 
 Parse `#docregion`/`#enddocregion` directives from source lines. Pure string
 logic, no I/O. Port the `Directive` class from
-[`chalin/code_excerpter`](https://github.com/chalin/code_excerpter) with
+[`chalin/code_excerpter`][] with
 comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 
 - [x] Implement `src/directive.ts`
@@ -18,13 +18,13 @@ comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 ## Phase 1b — `extract.ts`
 
 Extract named code regions from source file content. Port the `Excerpter`
-class from [`chalin/code_excerpter`](https://github.com/chalin/code_excerpter).
+class from [`chalin/code_excerpter`][].
 
 - [x] Implement `src/extract.ts`
 - [x] Write `test/extract.test.ts`
 - [x] Port comprehensive test cases from
-  [`chalin/code_excerpter/test/excerpter_test.dart`](https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart)
-  (edge cases, plaster, overlapping regions)
+      [`chalin/code_excerpter/test/excerpter_test.dart`][]
+      (edge cases, plaster, overlapping regions)
 - [x] Update docs as needed
 
 ## Phase 2 — `transform.ts`
@@ -63,3 +63,6 @@ diff output against the Dart tool.
 - [ ] Run against `dart-lang/site-www`
 - [ ] Compare output with the Dart excerpter
 - [ ] Document any discrepancies
+
+[`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
+[`chalin/code_excerpter/test/excerpter_test.dart`]: https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart

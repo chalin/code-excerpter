@@ -7,11 +7,15 @@ its relationship to the original Dart repositories, and key porting decisions.
 
 ## Relationship to the Dart Repositories
 
-| Dart repo | Role in this port |
-|---|---|
-| [`chalin/code_excerpter`](https://github.com/chalin/code_excerpter) | Source for `directive.ts` and `extract.ts`: `Directive` class + `Excerpter` class + test suite |
-| [`chalin/code_excerpt_updater`](https://github.com/chalin/code_excerpt_updater) | Source for `inject.ts`, `update.ts`, `cli.ts`: `<?code-excerpt?>` syntax + updater logic. README is the canonical spec. |
-| [`dart-lang/site-shared` (`pkgs/excerpter`)](https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter) | Reference implementation combining both of the above. Implementation is the primary guide for this port. |
+Each part of this port maps to upstream Dart work in one of these repositories:
+
+- [`chalin/code_excerpter`][]: source for `directive.ts` and `extract.ts`
+  (`Directive` class, `Excerpter` class, and the extraction test suite).
+- [`chalin/code_excerpt_updater`][]: source for `inject.ts`, `update.ts`, and
+  `cli.ts` (`<?code-excerpt?>` syntax and updater logic; its README is the
+  canonical spec).
+- [`dart-lang/site-shared`][] (`pkgs/excerpter`): reference implementation that
+  combines both of the above; its code is the primary guide for this port.
 
 ---
 
@@ -54,16 +58,16 @@ All transforms are pure functions: `(lines: string[]) => string[]`.
 
 Supported transforms (in processing order):
 
-| Transform | Description |
-|---|---|
-| `skip` | Skip the first N lines |
-| `take` | Keep only the first N lines |
-| `from` | Start from the first line matching a pattern |
-| `to` | Stop at (and exclude) the first line matching a pattern |
-| `remove` | Remove all lines matching a pattern |
-| `retain` | Keep only lines matching a pattern |
-| `replace` | Replace pattern matches with a substitution string |
-| `indent-by` | Prepend N spaces to every line |
+| Transform   | Description                                             |
+| ----------- | ------------------------------------------------------- |
+| `skip`      | Skip the first N lines                                  |
+| `take`      | Keep only the first N lines                             |
+| `from`      | Start from the first line matching a pattern            |
+| `to`        | Stop at (and exclude) the first line matching a pattern |
+| `remove`    | Remove all lines matching a pattern                     |
+| `retain`    | Keep only lines matching a pattern                      |
+| `replace`   | Replace pattern matches with a substitution string      |
+| `indent-by` | Prepend N spaces to every line                          |
 
 Key porting note: `BackReferenceReplaceTransform` in Dart already targets JS
 regex back-reference semantics (`$1`, `$2`), so this is a straightforward port.
@@ -137,3 +141,7 @@ src/update.ts — walk filesystem, update files, write changes
 
 4. **`node:` prefix**: All Node.js built-in imports use the `node:` prefix to
    make the import origin explicit and avoid any potential name conflicts.
+
+[`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
+[`chalin/code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
+[`dart-lang/site-shared`]: https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter

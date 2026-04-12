@@ -62,25 +62,32 @@ syntax).
 
 ## Deferred (post-v1)
 
-| Feature | Reason |
-|---|---|
-| `diff-with` / `diff-u` | Complex output format, low priority for initial port |
-| Angular interpolation escaping | Specific to Angular docs, not general-purpose |
+| Feature                        | Reason                                               |
+| ------------------------------ | ---------------------------------------------------- |
+| `diff-with` / `diff-u`         | Complex output format, low priority for initial port |
+| Angular interpolation escaping | Specific to Angular docs, not general-purpose        |
 
 ---
 
 ## Dropped
 
-| Feature | Reason |
-|---|---|
+| Feature              | Reason                                 |
+| -------------------- | -------------------------------------- |
 | `.jade` file support | Jade/Pug is obsolete; no current users |
 
 ---
 
 ## What to Carry Forward from Each Source Repo
 
-| Source | What we carry forward |
-|---|---|
-| [`chalin/code_excerpter`](https://github.com/chalin/code_excerpter) | Test cases for the `Excerpter` and `Directive` classes (edge cases, plaster, overlapping regions) |
-| [`chalin/code_excerpt_updater`](https://github.com/chalin/code_excerpt_updater) | The `<?code-excerpt?>` syntax specification (README is the canonical spec); updater logic |
-| [`dart-lang/site-shared`](https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter) | Reference implementation — primary guide for this TypeScript port |
+The v1 scope assumes we reuse upstream Dart material as follows:
+
+- [`chalin/code_excerpter`][]: test cases for the `Excerpter` and `Directive`
+  classes (edge cases, plaster, overlapping regions).
+- [`chalin/code_excerpt_updater`][]: the `<?code-excerpt?>` syntax specification
+  (that repo’s README is the canonical spec) and updater logic.
+- [`dart-lang/site-shared`][]: reference implementation and primary guide for
+  this TypeScript port.
+
+[`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
+[`chalin/code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
+[`dart-lang/site-shared`]: https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
