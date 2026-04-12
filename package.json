@@ -8,18 +8,22 @@
   "bin": {
     "code-excerpter": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup",
+    "_build": "tsup && tsc --emitDeclarationOnly",
+    "build": "npm run _build",
     "check:spelling": "npx cspell --no-progress -c .cspell.yml *.md 'docs/**/*.md'",
     "check": "npm run check:spelling && npm run lint",
     "dev": "tsx src/cli.ts",
     "fix": "npm run lint:fix",
     "lint:fix": "biome check . --write",
     "lint": "biome check .",
-    "prepare": "tsup",
-    "test:watch": "vitest",
+    "postbuild": "node scripts/verify-dist.mjs",
+    "prepare": "npm run build",
     "test:base": "vitest run",
+    "test:watch": "vitest",
     "test": "npm run check && npm run test:base",
     "update:packages": "npx npm-check-updates -u"
   },
@@ -30,18 +34,18 @@
   "author": "Patrice Chalin",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "dependencies": {
-    "commander": "^13.0.0"
+    "commander": "^14.0.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "cspell": "^9.7.0",
-    "npm-check-updates": "^19.6.6",
-    "tsup": "^8.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "@biomejs/biome": "^2.4.11",
+    "cspell": "^10.0.0",
+    "npm-check-updates": "^20.0.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }
