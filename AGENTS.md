@@ -20,4 +20,5 @@ overview, installation, and clone workflow.
 - [docs/tooling.md](docs/tooling.md) — Tooling stack, rationale, and how scripts
   fit together (canonical script list: `package.json` → `scripts`)
 - [docs/conventions.md](docs/conventions.md) — Code style, Vitest testing style,
-  documentation DRY rules, and how to extend AGENTS vs `docs/`
+  documentation DRY rules, commit and PR expectations, and how to extend AGENTS
+  vs `docs/`

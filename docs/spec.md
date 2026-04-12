@@ -64,7 +64,7 @@ all subsequent code fragment instructions in the same file.
 | `path-base`     | string                       | Sets the base directory for source file paths (set instruction) |
 | `region`        | string                       | Named region to extract (alternative to inline `(region)`)      |
 | `from`          | string/regex                 | Start extraction from the first line matching this pattern      |
-| `to`            | string/regex                 | End extraction before the first line matching this pattern      |
+| `to`            | string/regex                 | End after the first line matching this pattern (that line kept) |
 | `skip`          | integer                      | Skip the first N lines of the extracted region                  |
 | `take`          | integer                      | Take only the first N lines of the extracted region             |
 | `remove`        | string/regex                 | Remove all lines matching this pattern                          |

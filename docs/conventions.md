@@ -51,6 +51,25 @@ and `.github/copilot-instructions.md`.
   (for example `package.json` for scripts and dependency pins).
 - Use simple, multilingual prose. Avoid idiomatic English.
 
+## Commits and pull requests
+
+Use the same bar as for any technical write-up: **complete sentences**, solid
+**grammar**, and **only detail that helps a reader** understand what changed and
+why. Prefer **plain language** over a dump of identifiers or internal jargon.
+
+- **Scope**: One commit (or one PR) should carry a **single logical change**
+  when practical; avoid mixing unrelated fixes and refactors.
+- **Size of message**: Match **depth to the size of the change**—a trivial fix
+  needs a short summary; a non-obvious change deserves a short **why** in the
+  body.
+- **Body format**: When there is a body beyond the subject line, write it as a
+  **Markdown list** (`-` items). Each item should be a **complete clause in
+  third person present tense** (for example: "Adds ...", "Documents ...",
+  "Refactors ...").
+- **Pull requests**: The description should stand alone: enough context for
+  review (motivation, trade-offs if any), without filler, repetition, or
+  marketing-style prose.
+
 ### AI guidance
 
 - Keep **[AGENTS.md](../AGENTS.md)** minimal: add depth in the appropriate

@@ -58,16 +58,16 @@ All transforms are pure functions: `(lines: string[]) => string[]`.
 
 Supported transforms (in processing order):
 
-| Transform   | Description                                             |
-| ----------- | ------------------------------------------------------- |
-| `skip`      | Skip the first N lines                                  |
-| `take`      | Keep only the first N lines                             |
-| `from`      | Start from the first line matching a pattern            |
-| `to`        | Stop at (and exclude) the first line matching a pattern |
-| `remove`    | Remove all lines matching a pattern                     |
-| `retain`    | Keep only lines matching a pattern                      |
-| `replace`   | Replace pattern matches with a substitution string      |
-| `indent-by` | Prepend N spaces to every line                          |
+| Transform   | Description                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| `skip`      | Skip the first N lines                                            |
+| `take`      | Keep only the first N lines                                       |
+| `from`      | Start from the first line matching a pattern                      |
+| `to`        | Truncate after the first line matching a pattern (that line kept) |
+| `remove`    | Remove all lines matching a pattern                               |
+| `retain`    | Keep only lines matching a pattern                                |
+| `replace`   | Replace pattern matches with a substitution string                |
+| `indent-by` | Prepend N spaces to every line                                    |
 
 Key porting note: `BackReferenceReplaceTransform` in Dart already targets JS
 regex back-reference semantics (`$1`, `$2`), so this is a straightforward port.
