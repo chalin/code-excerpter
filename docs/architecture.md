@@ -107,7 +107,7 @@ CLI entry point using `commander`. Parses command-line arguments and invokes
 
 ## Data Flow
 
-```
+```text
 Input source files (*.dart, *.ts, *.html, etc.)
   │
   ▼
@@ -137,8 +137,8 @@ src/update.ts — walk filesystem, update files, write changes
 2. **Pure transforms**: All transforms in `transform.ts` are stateless pure
    functions, making them easy to test and compose without side effects.
 
-3. **ESM-only**: The project targets Node.js 20+ ESM exclusively. No CommonJS
-   compatibility shims.
+3. **ESM-only**: Node.js minimum is pinned under `engines` in `package.json`;
+   the package is ESM-only. No CommonJS compatibility shims.
 
 4. **`node:` prefix**: All Node.js built-in imports use the `node:` prefix to
    make the import origin explicit and avoid any potential name conflicts.

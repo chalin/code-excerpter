@@ -8,7 +8,14 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist");
 
-const required = ["index.js", "cli.js", "index.d.ts", "cli.d.ts", "index.d.ts.map", "cli.d.ts.map"];
+const required = [
+  "index.js",
+  "cli.js",
+  "index.d.ts",
+  "cli.d.ts",
+  "index.d.ts.map",
+  "cli.d.ts.map",
+];
 
 const missing = required.filter((name) => !existsSync(join(dist, name)));
 

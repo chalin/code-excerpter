@@ -1,3 +1,5 @@
+# Copilot instructions
+
 See [AGENTS.md](../AGENTS.md) for project instructions applicable to all AI
 coding agents.
 
