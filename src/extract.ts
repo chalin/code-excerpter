@@ -216,9 +216,12 @@ export function extractExcerpts(
 
 /**
  * Returns excerpt lines for `region` after {@link extractExcerpts}, or `null` if the
- * region is missing. When the file has no directives and `region` is the default (`""`),
- * returns the full file minus directive-looking lines, then trailing blank drop + max unindent
- * (matches how tests build the implicit default region).
+ * region is missing.
+ *
+ * When {@link extractExcerpts} yields an empty map (no `#docregion` in the source, e.g.
+ * legacy `.txt` fragments or YAML excerpt bodies), returns the full file minus
+ * directive-looking lines, then trailing blank drop + {@link maxUnindent} — for any
+ * `region` name in that mode (Dart `ExcerptGetter`–style body content).
  */
 export function getExcerptRegionLines(
   uri: string,

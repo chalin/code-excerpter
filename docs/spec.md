@@ -13,7 +13,7 @@ README, which is the canonical reference.
 `code-excerpter` processes markdown files looking for XML processing
 instructions of the form `<?code-excerpt?>`. When found, the tool extracts the
 referenced code from the source file, applies any transforms, and replaces the
-fenced code block that immediately follows the instruction.
+fenced or prettify code block that immediately follows the instruction.
 
 A matching line must contain **only** the processing instruction (optional
 trailing whitespace). Any non-whitespace after the closing `?>` is ignored: the

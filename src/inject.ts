@@ -264,7 +264,8 @@ function consumeFenceBlock(queue: string[]): {
 
 /**
  * Updates markdown in memory: each `<?code-excerpt ...?>` followed by a fenced
- * code block is replaced with freshly extracted (and transformed) lines.
+ * (backtick) or Liquid `{% prettify %}` code block is replaced with freshly extracted
+ * (and transformed) lines.
  */
 export function injectMarkdown(
   markdown: string,
