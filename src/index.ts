@@ -32,3 +32,8 @@ export {
   parseReplacePipeline,
   patternToLinePredicate,
 } from "./transform.js";
+export {
+  type UpdateOptions,
+  type UpdateResult,
+  updatePaths,
+} from "./update.js";

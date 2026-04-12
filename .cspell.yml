@@ -5,6 +5,7 @@ language: en-US
 caseSensitive: true
 ignorePaths:
   - "*.svg"
+  - "tmp/**"
   - "test/fixtures/code-excerpt-updater/**"
 patterns:
   - name: CodeBlock

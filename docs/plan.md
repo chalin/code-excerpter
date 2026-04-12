@@ -57,18 +57,40 @@ transforms per code block.
 
 Directory walking, file updating, CLI entry point.
 
-- [ ] Implement `src/update.ts`
-- [ ] Implement `src/cli.ts`
-- [ ] Write `test/update.test.ts`
-- [ ] Update docs as needed
-- [ ] **Follow-up:** Vendor
-      [`dart-lang/site-shared` `pkgs/excerpter/test_data/`](https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data)
-      and add Vitest goldens aligned with
-      [`updater_test.dart`](https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/test/updater_test.dart)
-      (copy `src/` → run updater → compare to `expected/`). These complement
-      Phase 3’s
-      [`code_excerpt_updater` `test_data/`](https://github.com/chalin/code_excerpt_updater/tree/main/test_data)
-      goldens, which target `injectMarkdown` only.
+- [x] Implement `src/update.ts`
+- [x] Implement `src/cli.ts`
+- [x] Write `test/update.test.ts`
+- [x] Update docs as needed
+
+A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
+[code_excerpt_updater test_data][] inject-only goldens):
+
+- [ ] Vendor [dart-lang/site-shared pkgs/excerpter test_data][] into this
+      repository for fixtures.
+- [ ] Add Vitest goldens aligned with [updater_test.dart][] (copy `src/` → run
+      updater → compare to `expected/`).
+
+B. [ ] Optional follow-up items:
+
+1. [ ] **Overlapping `paths`**: `updatePaths` does not dedupe `allFiles`.
+       Passing the same directory twice (or a directory and its subdirectory)
+       can process the same markdown file more than once in one run.
+2. [ ] **Invalid `--exclude` patterns**: the CLI builds `new RegExp(pattern)`
+       per flag; a bad pattern throws before `updatePaths` runs (no friendly
+       error yet).
+3. [ ] **`--no-escape-ng-interpolation`**: the CLI relies on Commander’s
+       handling of negated boolean flags; behavior must stay aligned with
+       `injectMarkdown` (`escapeNgInterpolation !== false` means escape).
+
+C. [ ] Test gaps:
+
+1. [ ] Vitest coverage for `src/cli.ts` (e.g. `--help`, exit code on inject
+       errors, `--fail-on-update` with and without `--dry-run`, invalid
+       `--exclude` regex).
+2. [ ] `updatePaths`: assert `log` is called for expected lines; assert
+       `warnings` in `UpdateResult` when `onWarning` fires.
+3. [ ] `updatePaths`: overlapping or duplicate root paths (expect dedupe or
+       document one processing pass per file).
 
 ## Phase 5 — Integration Testing
 
@@ -83,3 +105,9 @@ diff output against the Dart tool.
 [`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
 [`chalin/code_excerpter/test/excerpter_test.dart`]:
   https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart
+[dart-lang/site-shared pkgs/excerpter test_data]:
+  https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data
+[updater_test.dart]:
+  https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/test/updater_test.dart
+[code_excerpt_updater test_data]:
+  https://github.com/chalin/code_excerpt_updater/tree/main/test_data
