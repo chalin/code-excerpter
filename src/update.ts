@@ -111,7 +111,13 @@ export async function updatePaths(
   const allFiles: string[] = [];
   for (const p of paths) {
     const abs = resolve(p);
-    allFiles.push(...(await collectMarkdownFiles(abs, abs, exclude)));
+    try {
+      allFiles.push(...(await collectMarkdownFiles(abs, abs, exclude)));
+    } catch (err) {
+      const msg = `error: ${abs}: ${err instanceof Error ? err.message : String(err)}`;
+      result.errors.push(msg);
+      log(msg);
+    }
   }
   allFiles.sort();
 

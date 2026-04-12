@@ -24,6 +24,7 @@
  * - Non-`.md` file skipping
  * - `globalReplace` pass-through
  * - Relative `pathBase` (same as CLI `-p path/to/src` from cwd)
+ * - Missing root path (no rejection; `errors` populated)
  */
 import {
   existsSync,
@@ -295,6 +296,39 @@ describe("updatePaths", () => {
 
     expect(result.errors.length).toBeGreaterThan(0);
     expect(result.errors[0]).toMatch(/cannot read source file/);
+  });
+
+  it("records an error when a root path does not exist", async () => {
+    const missing = join(
+      process.cwd(),
+      `no-such-dir-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    expect(existsSync(missing)).toBe(false);
+
+    const result = await updatePaths([missing]);
+
+    expect(result.filesProcessed).toBe(0);
+    expect(result.filesUpdated).toBe(0);
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.errors[0]).toMatch(/ENOENT|no such file|not found/i);
+  });
+
+  it("still processes existing roots when another root path is missing", async () => {
+    const tmp = useTmp();
+    const docs = join(tmp, "docs");
+    writeFixture(docs, "ok.md", "no PI\n");
+
+    const missing = join(
+      process.cwd(),
+      `no-such-dir-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    expect(existsSync(missing)).toBe(false);
+
+    const result = await updatePaths([missing, docs]);
+
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.filesProcessed).toBe(1);
+    expect(result.filesUpdated).toBe(0);
   });
 
   it("accepts individual files as paths", async () => {
