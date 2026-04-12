@@ -20,12 +20,12 @@ comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 Extract named code regions from source file content. Port the `Excerpter`
 class from [`chalin/code_excerpter`](https://github.com/chalin/code_excerpter).
 
-- [ ] Implement `src/extract.ts`
-- [ ] Write `test/extract.test.ts`
-- [ ] Port comprehensive test cases from
+- [x] Implement `src/extract.ts`
+- [x] Write `test/extract.test.ts`
+- [x] Port comprehensive test cases from
   [`chalin/code_excerpter/test/excerpter_test.dart`](https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart)
   (edge cases, plaster, overlapping regions)
-- [ ] Update docs as needed
+- [x] Update docs as needed
 
 ## Phase 2 — `transform.ts`
 
