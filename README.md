@@ -10,15 +10,8 @@ A line-based tool for extracting and injecting code excerpts into documentation.
 regions, and updates markdown files containing `<?code-excerpt?>` processing
 instructions.
 
-The tool draws from three original Dart repositories:
-
-- **[chalin/code_excerpter](https://github.com/chalin/code_excerpter)** — the
-  original Dart extraction library with comprehensive tests
-- **[chalin/code_excerpt_updater](https://github.com/chalin/code_excerpt_updater)** —
-  the original Dart updater CLI with full `<?code-excerpt?>` syntax
-- **[dart-lang/site-shared (`pkgs/excerpter`)](https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter)** —
-  a simplified Dart rewrite combining both tools, currently used by
-  `dart-lang/site-www`
+Lineage and upstream Dart repositories are summarized in
+[docs/architecture.md](docs/architecture.md#relationship-to-the-dart-repositories).
 
 The `<?code-excerpt?>` instruction syntax is documented in
 [docs/spec.md](docs/spec.md).
@@ -56,31 +49,11 @@ cd code-excerpter
 npm install
 ```
 
-### Build
-
-```sh
-npm run build
-```
-
-### Test
-
-```sh
-npm test
-```
-
-### Lint
-
-```sh
-npm run lint
-```
-
-To auto-fix lint issues:
-
-```sh
-npm run lint:fix
-```
+For more details, see
+[docs/tooling.md](docs/tooling.md#npm-scripts-and-dependencies). Conventions
+(code, docs, and AI guidance): [docs/conventions.md](docs/conventions.md).
+Contributor orientation: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
-
