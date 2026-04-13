@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog][], and this project adheres to
 ### Added
 
 - CLI **`--version`**, reporting `version` from `package.json`.
+- Plaster templates for common fenced-code language identifiers, including
+  `javascript`, `typescript`, `csharp`, `cs`, and more.
 
 ### Changed
 
