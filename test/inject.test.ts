@@ -74,6 +74,26 @@ final x = 1;
       expect(out).toContain("// ok");
     });
 
+    it("increments instructionStats for parsed set and fragment directives", () => {
+      const instructionStats = { set: 0, fragment: 0 };
+      const src = "// ok\n";
+      const md = [
+        '<?code-excerpt path-base="p"?>',
+        '<?code-excerpt "b.dart"?>',
+        "",
+        "```",
+        ".",
+        "```",
+        "",
+      ].join("\n");
+      injectMarkdown(md, {
+        ...ctx({ "p/b.dart": src }),
+        instructionStats,
+      });
+      expect(instructionStats.set).toBe(1);
+      expect(instructionStats.fragment).toBe(1);
+    });
+
     it("applies skip transform", () => {
       const src = `// #docregion
 a

@@ -125,7 +125,9 @@ describe("CLI (integration)", () => {
     expect(status, "exit code").toBe(1);
     expect(stdout).toBe("");
     expect(stderr).toMatch(/needs update:/);
-    expect(stderr).toMatch(/1 file\(s\) processed,\s*1 updated/);
+    expect(stderr).toMatch(
+      /1 file\(s\) processed, 1 updated, \d+ error\(s\), \d+ warning\(s\); \d+ set directive\(s\), 1 fragment directive\(s\)/,
+    );
     expect(readFileSync(mdPath, "utf8")).toBe(md);
   });
 });

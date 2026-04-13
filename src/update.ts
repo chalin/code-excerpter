@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { injectMarkdown, type MarkdownInjectContext } from "./inject.js";
+import type { InstructionStats } from "./instructionStats.js";
 
 const MD_EXT = /\.md$/;
 const DOT_SEGMENT = /(^|[/\\])\./;
@@ -34,11 +35,15 @@ export interface UpdateOptions {
   log?: (msg: string) => void;
 }
 
+export type { InstructionStats } from "./instructionStats.js";
+
 export interface UpdateResult {
   filesProcessed: number;
   filesUpdated: number;
   errors: string[];
   warnings: string[];
+  /** Totals across all processed markdown files. */
+  instructionStats: InstructionStats;
 }
 
 function shouldExclude(relPath: string, patterns: RegExp[]): boolean {
@@ -105,11 +110,13 @@ export async function updatePaths(
   const dryRun = opts.dryRun ?? false;
   const log = opts.log ?? (() => {});
   const srcRoot = resolve(opts.pathBase ?? "");
+  const instructionStats: InstructionStats = { set: 0, fragment: 0 };
   const result: UpdateResult = {
     filesProcessed: 0,
     filesUpdated: 0,
     errors: [],
     warnings: [],
+    instructionStats,
   };
 
   const allFiles: string[] = [];
@@ -134,6 +141,7 @@ export async function updatePaths(
       escapeNgInterpolation: opts.escapeNgInterpolation,
       globalReplace: opts.globalReplace,
       globalPlasterTemplate: opts.globalPlasterTemplate,
+      instructionStats,
       onWarning: (msg) => {
         const w = `warning: ${filePath}: ${msg}`;
         result.warnings.push(w);

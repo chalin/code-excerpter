@@ -119,6 +119,7 @@ describe("directive", () => {
     });
   });
 
+  // cSpell:ignore docregionfoo
   describe("edge cases", () => {
     it("word boundary: #docregionfoo is not a directive", () => {
       const d = tryParseDirective("the word #docregionfoo is not a directive");

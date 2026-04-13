@@ -89,6 +89,20 @@ C. [ ] Test gaps:
 3. [x] `updatePaths`: duplicate / overlapping roots (dedupe; see
        `test/update.test.ts`).
 
+D. [ ] **Revisit — `<?code-excerpt` in prose (e.g. markdown tables):** Today
+`injectMarkdown` treats any line **containing** the substring `<?code-excerpt`
+as a candidate PI; if the strict full-line regex does not match and the
+line-start `PROC_INSTR_BODY` regex also does not match (e.g. the PI text appears
+**mid-line** in documentation), the tool reports **invalid processing
+instruction**. That is awkward for docs that quote the syntax literally.
+**Current workaround:** escape the opening angle bracket in prose (e.g.
+`&lt;?code-excerpt …?>`) so the raw line does not contain `<?code-excerpt`.
+**Possible later change:** only run PI parsing / errors when there is a real
+line-start PI attempt (`PROC_INSTR_BODY` matches), so mid-line mentions are left
+alone; add a regression test and optionally document `&lt;` in
+[`docs/spec.md`](spec.md) for rare line-start edge cases (aligned with XML PI
+rules).
+
 ## Phase 5 — Integration Testing
 
 Run against [`dart-lang/site-www`](https://github.com/dart-lang/site-www) and

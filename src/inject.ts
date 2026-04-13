@@ -4,6 +4,7 @@ import {
   dropTrailingBlankLines,
   getExcerptRegionLines,
 } from "./extract.js";
+import type { InstructionStats } from "./instructionStats.js";
 import {
   applyExcerptTransformsInOrder,
   parseIndentBy,
@@ -21,7 +22,7 @@ const PROC_INSTR_BODY =
 
 /**
  * Strict match: the **entire line** is only a `<?code-excerpt ...?>` plus optional trailing
- * whitespace (Dart `procInstrRE` semantics with a `$` anchor). Export for tests and
+ * whitespace (whole-line match with a `$` anchor). Export for tests and
  * tooling; lines with extra text after `?>` do not match — see `injectMarkdown`’s
  * `onWarning` path (`processing instruction ignored: extraneous text after closing "?>"`).
  */
@@ -42,9 +43,9 @@ const SET_KNOWN_KEYS = new Set([
 
 interface ParsedNamedArgs {
   map: Map<string, string>;
-  /** Keys present as bare flags (`plaster` with no `=`), matching Dart `argValue == null`. */
+  /** Keys present as bare flags (`plaster` with no `=`). */
   flags: Set<string>;
-  /** First-occurrence order of every named key (Dart `LinkedHashMap` iteration). */
+  /** First-occurrence order of every named key (insertion order in the PI). */
   keyOrder: string[];
 }
 
@@ -59,43 +60,51 @@ const NON_WORD = /[^\w]+/g;
 
 export interface MarkdownInjectContext {
   /**
-   * Reads source text for a path relative to the current `path-base`
-   * (POSIX-style join of `pathBase` + relative path). Return `null` if the file is missing.
+   * Reads source text for a path relative to the current `path-base`. Returns
+   * `null` if the file is missing or cannot be read.
    *
-   * When `region` is non-empty, callers mirroring Dart `ExcerptGetter` should resolve
-   * `basename-region.ext` fragment files (legacy mode) or the matching key in
-   * `.excerpt.yaml` (YAML mode).
+   * When `region` is non-empty, callers using fragment or YAML excerpt sources
+   * may resolve `basename-region.ext` files (legacy mode) or the matching key
+   * in `.excerpt.yaml` (YAML mode).
    *
-   * The optional `region` parameter was added for Dart `ExcerptGetter` parity;
-   * simple callers that rely on `getExcerptRegionLines` for region extraction
-   * may ignore it.
+   * Callers that only use `getExcerptRegionLines` on the returned file text may
+   * ignore `region`.
    */
   readFile: (relativePath: string, region?: string) => string | null;
   /** Initial `path-base` (directory prefix for excerpt sources). */
   pathBase?: string;
   /**
-   * When `true`, applies language plaster templates like the Dart YAML excerpt
-   * path (default `false`, matching legacy fragment mode).
+   * When `true`, applies language-specific plaster templates in YAML excerpt
+   * mode (default `false`, legacy fragment-style behavior).
    */
   excerptsYaml?: boolean;
-  /** Default extra spaces when `indent-by` is omitted (Dart `defaultIndentation`). */
+  /** Default extra spaces when `indent-by` is omitted on a fragment directive. */
   defaultIndentation?: number;
   /**
-   * Global replace expression (Dart CLI `globalReplaceExpr`). Applied after
-   * per-instruction transforms and after file-level set `replace`, on the joined
-   * excerpt string (same compose order as Dart `fileAndCmdLineCodeTransformer`).
+   * Global replace expression. Applied after per-instruction transforms and
+   * file-level set `replace`, on the joined excerpt string.
    */
   globalReplace?: string;
   /**
    * Default plaster template when neither the PI nor a file-level `plaster` set
-   * instruction overrides it (Dart `globalPlasterTemplate`).
+   * instruction overrides it.
    */
   globalPlasterTemplate?: string;
   /**
-   * When `true` (default), escape Angular-style `{{` / `}}` in injected lines
-   * like the Dart updater (`escapeNgInterpolation`).
+   * When `true` (default), escape Angular-style `{{` / `}}` in injected lines.
    */
   escapeNgInterpolation?: boolean;
+  /**
+   * When provided, incremented for each **strict-line** `<?code-excerpt …?>`
+   * that is **parsed** (`set` for set-only, `fragment` for quoted path + fence);
+   * processing may still report errors for that directive afterward.
+   * Aggregated on `UpdateResult` by `updatePaths`.
+   *
+   * Reusing the same {@link InstructionStats} object across multiple
+   * `injectMarkdown` calls **accumulates** counts; reset `set` and `fragment` to
+   * `0` first if you want per-call totals.
+   */
+  instructionStats?: InstructionStats;
   onWarning?: (msg: string) => void;
   onError?: (msg: string) => void;
 }
@@ -176,7 +185,7 @@ function codeLang(openingFenceLine: string, path: string): string {
   return fileExtensionLower(path);
 }
 
-/** Dart `escapeNgInterpolation`: `{{` → `{!{`, `}}` → `}!}`. */
+/** Escapes Angular-style `{{` / `}}` as `{!{` / `}!}` when enabled. */
 function escapeNgLine(line: string, enabled: boolean): string {
   if (!enabled) return line;
   return line.replace(/\{\{|\}\}/g, (m) => (m === "{{" ? "{!{" : "}!}"));
@@ -201,7 +210,11 @@ function plasterTemplateForLang(lang: string): string | null {
   }
 }
 
-/** Dart `PlasterCodeTransformer`: `none`, legacy (no-op except `none`), or yaml templates. */
+/**
+ * Plaster pass: `plaster="none"` removes default-plaster lines; if `excerptsYaml`
+ * is false, returns lines unchanged; otherwise substitutes language templates
+ * around `DEFAULT_PLASTER`.
+ */
 function applyPlasterToLines(
   lines: string[],
   plasterTemplate: string | undefined,
@@ -476,6 +489,12 @@ export function injectMarkdown(
 
     const { linePrefix, unnamed, named } = match.groups;
     const namedStr = named ?? "";
+
+    const st = ctx.instructionStats;
+    if (st) {
+      if (unnamed === undefined) st.set++;
+      else st.fragment++;
+    }
 
     if (unnamed === undefined) {
       handleSetInstruction(parseNamedArgs(namedStr, err));

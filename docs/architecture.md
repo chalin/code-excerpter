@@ -98,6 +98,12 @@ orchestrates the extraction + transform pipeline for each code block.
   [`chalin/code_excerpt_updater`][] (see that directory’s `README.md`).
 - See [`docs/spec.md`](spec.md) for the full instruction syntax.
 
+### `src/instructionStats.ts`
+
+Shared **`InstructionStats`** type (`set` / `fragment` parsed-directive counts).
+Imported by `inject.ts` (optional context field) and `update.ts` (aggregated on
+`UpdateResult`); re-exported from the package root in `index.ts`.
+
 ### `src/update.ts` (Phase 4)
 
 **Dart source:** `dart-lang/site-shared/pkgs/excerpter/lib/src/update.dart`
@@ -106,7 +112,9 @@ Walks directory trees (or individual files), collects `.md` files, and runs
 `injectMarkdown` on each. Writes updated content back when changed.
 
 - `updatePaths(paths, options?)` — async entry point; returns `UpdateResult`
-  with `filesProcessed`, `filesUpdated`, `errors[]`, `warnings[]`.
+  with `filesProcessed`, `filesUpdated`, `errors[]`, `warnings[]`, and
+  `instructionStats` (`set` / `fragment` counts of **parsed** strict-line
+  directives for the run).
 - Skips dot-prefixed segments and user-supplied `exclude` regex patterns.
 - Source files for excerpts are read synchronously from disk under
   `options.pathBase` (resolved to an absolute root for `readFile` only).

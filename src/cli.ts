@@ -52,7 +52,7 @@ program
       if (!compiled.ok) {
         console.error(compiled.error);
         console.error(
-          "0 file(s) processed, 0 updated, 0 error(s), 0 warning(s)",
+          "0 file(s) processed, 0 updated, 0 error(s), 0 warning(s); 0 set directive(s), 0 fragment directive(s)",
         );
         process.exitCode = 1;
         return;
@@ -67,13 +67,16 @@ program
         log: (msg) => console.error(msg),
       });
 
+      const { set, fragment } = result.instructionStats;
       const summary = [
         `${result.filesProcessed} file(s) processed`,
         `${result.filesUpdated} updated`,
         `${result.errors.length} error(s)`,
         `${result.warnings.length} warning(s)`,
       ].join(", ");
-      console.error(summary);
+      console.error(
+        `${summary}; ${set} set directive(s), ${fragment} fragment directive(s)`,
+      );
 
       if (result.errors.length > 0) {
         process.exitCode = 1;

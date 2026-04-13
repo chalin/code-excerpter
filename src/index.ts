@@ -12,6 +12,7 @@ export {
   getExcerptRegionLines,
   maxUnindent,
 } from "./extract.js";
+export { type InstructionStats } from "./instructionStats.js";
 export {
   injectMarkdown,
   type MarkdownInjectContext,
