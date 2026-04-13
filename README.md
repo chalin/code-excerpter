@@ -4,28 +4,23 @@ A line-based tool for extracting and injecting code excerpts into documentation.
 
 ## Overview
 
-`code-excerpter` is a TypeScript port of the Dart excerpter tooling used by
-[dart-lang/site-www][]. It parses `#docregion`/`#enddocregion` directives in
-source files, extracts named code regions, and updates markdown files containing
+`code-excerpter` parses `#docregion`/`#enddocregion` directives in source files,
+extracts named code regions, and updates markdown files containing
 `<?code-excerpt?>` processing instructions.
-
-Lineage and upstream Dart repositories are summarized in
-[docs/architecture.md][].
 
 The `<?code-excerpt?>` instruction syntax is documented in [docs/spec.md][].
 
+`code-excerpter` is a TypeScript port of the Dart excerpter tooling. For
+details, see [docs/architecture.md][].
+
 ## Installation
 
-Install directly from the GitHub repository using npm:
+Install as a global CLI or a project dependency in the usual way, for example:
 
 ```sh
-npm install github:chalin/code-excerpter
-```
-
-Once published to npm, installation will be:
-
-```sh
-npm install -g code-excerpter
+npm install --global code-excerpter
+npm install --save-dev code-excerpter
+npm install --save-dev github:chalin/code-excerpter
 ```
 
 ## Usage
@@ -60,7 +55,6 @@ guidance): [docs/conventions.md][]. Contributor orientation:
 
 Apache 2.0 — see [LICENSE][].
 
-[dart-lang/site-www]: https://github.com/dart-lang/site-www
 [docs/architecture.md]:
   docs/architecture.md#relationship-to-the-dart-repositories
 [docs/spec.md]: docs/spec.md
