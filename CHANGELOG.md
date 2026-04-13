@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog][], and this project adheres to
 
 ## v0.2.0-dev - unreleased
 
+### Added
+
+- CLI **`--version`**, reporting `version` from `package.json`.
+
 ### Changed
 
 - Development `package.json` version set to **0.2.0-dev** after the **0.1.0**
