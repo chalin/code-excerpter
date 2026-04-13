@@ -13,13 +13,20 @@ The `<?code-excerpt?>` instruction syntax is documented in [docs/spec.md][].
 `code-excerpter` is a TypeScript port of the Dart excerpter tooling. For
 details, see [docs/architecture.md][].
 
+The package is published on npm as `code-excerpter` ([npm package][]).
+
 ## Installation
 
-Install as a global CLI or a project dependency in the usual way, for example:
+From the [npm registry][npm package], for example:
 
 ```sh
-npm install --global code-excerpter
-npm install --save-dev code-excerpter
+npm install --global code-excerpter   # global CLI
+npm install --save-dev code-excerpter # project dependency
+```
+
+To install a specific commit from GitHub instead of the registry:
+
+```sh
 npm install --save-dev github:chalin/code-excerpter
 ```
 
@@ -27,15 +34,12 @@ npm install --save-dev github:chalin/code-excerpter
 
 Run the `code-excerpter` binary on directories and/or markdown files. Excerpt
 sources are resolved relative to `--path-base` / `-p` (defaults to the current
-working directory).
+working directory). For example, if you did a project-local install:
 
 ```sh
 npx code-excerpter --help
 npx code-excerpter -p path/to/src path/to/docs
 ```
-
-Library API: import `updatePaths` and `injectMarkdown` from `code-excerpter`
-(see [docs/architecture.md][]). Scripts and quality gates: [docs/tooling.md][].
 
 ## Development
 
@@ -44,17 +48,20 @@ Clone the repository and install dependencies:
 ```sh
 git clone https://github.com/chalin/code-excerpter.git
 cd code-excerpter
-npm install
+npm install && npm test
 ```
 
-For more details, see [docs/tooling.md][]. Conventions (code, docs, and AI
-guidance): [docs/conventions.md][]. Contributor orientation:
-[CONTRIBUTING.md][].
+For more details, see:
+
+- [docs/tooling.md][]
+- Repo conventions (code, docs, and AI guidance): [docs/conventions.md][]
+- [CONTRIBUTING.md][]
 
 ## License
 
 Apache 2.0 — see [LICENSE][].
 
+[npm package]: https://www.npmjs.com/package/code-excerpter
 [docs/architecture.md]:
   docs/architecture.md#relationship-to-the-dart-repositories
 [docs/spec.md]: docs/spec.md
