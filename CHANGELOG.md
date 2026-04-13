@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog][], and this project adheres to
 [Semantic Versioning][].
 
+## v0.2.0-dev - unreleased
+
+### Changed
+
+- Development `package.json` version set to **0.2.0-dev** after the **0.1.0**
+  npm release.
+- README: improved installation instructions and Overview wording.
+
 ## [v0.1.0][] - 2026-04-13
 
 ### Feature summary

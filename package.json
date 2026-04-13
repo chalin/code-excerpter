@@ -1,6 +1,6 @@
 {
   "name": "code-excerpter",
-  "version": "0.1.0",
+  "version": "0.2.0-dev",
   "description": "A line-based tool for extracting and injecting code excerpts into documentation.",
   "type": "module",
   "main": "./dist/index.js",
