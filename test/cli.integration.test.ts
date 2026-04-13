@@ -19,6 +19,9 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const TMP_ROOT = join(repoRoot, "tmp");
 const cliDist = join(repoRoot, "dist", "cli.js");
+const pkgVersion = JSON.parse(
+  readFileSync(join(repoRoot, "package.json"), "utf8"),
+).version as string;
 
 beforeAll(() => {
   if (!existsSync(cliDist)) {
@@ -80,6 +83,20 @@ describe("CLI (integration)", () => {
     expect(stdout).toMatch(/Usage:\s+code-excerpter/);
     expect(stdout).toMatch(/--dry-run/);
     expect(stderr, "help should not spam stderr").toBe("");
+  });
+
+  it("prints --version on stdout and exits 0", async () => {
+    const { stdout, stderr, status } = await runCli(["--version"]);
+    expect(status, "exit code").toBe(0);
+    expect(stdout.trim()).toBe(pkgVersion);
+    expect(stderr, "version should not spam stderr").toBe("");
+  });
+
+  it("rejects -V (no short version flag)", async () => {
+    const { stdout, stderr, status } = await runCli(["-V"]);
+    expect(status, "exit code").not.toBe(0);
+    expect(stdout).toBe("");
+    expect(stderr).toMatch(/unknown option|error:/i);
   });
 
   it("reports invalid --exclude on stderr and exits 1 without a stack trace", async () => {

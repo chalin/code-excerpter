@@ -4,9 +4,27 @@
  * Installed as the `code-excerpter` binary via `package.json` `bin`.
  */
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { compileExcludePatterns } from "./excludePatterns.js";
 import { updatePaths } from "./update.js";
+
+function readPkgVersion(): string {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const pkgPath = join(here, "..", "package.json");
+  try {
+    const raw = readFileSync(pkgPath, "utf8");
+    const data = JSON.parse(raw) as { version?: string };
+    if (typeof data.version === "string" && data.version.length > 0) {
+      return data.version;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "0.0.0-unknown";
+}
 
 const program = new Command();
 
@@ -15,6 +33,7 @@ program
   .description(
     "Update fenced code blocks in markdown files with extracted code excerpts.",
   )
+  .version(readPkgVersion(), "--version")
   .argument("<path...>", "files or directories to process")
   .option("-p, --path-base <dir>", "base path for source file resolution", "")
   .option(
