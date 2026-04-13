@@ -4,6 +4,8 @@ import {
   PROC_INSTR_RE,
   type MarkdownInjectContext,
 } from "../src/inject.js";
+import { dedent } from "./helpers/dedent.js";
+import { re } from "./helpers/re.js";
 
 function ctx(files: Record<string, string>, base = ""): MarkdownInjectContext {
   return {
@@ -500,9 +502,57 @@ after
       const fence = out.match(/```dart[\s\S]*?```/)?.[0] ?? "";
       expect(fence).toContain("before");
       expect(fence).toContain("after");
-      expect(fence).toMatch(/\/\/\s+···/);
+      expect(fence).toMatch(re`//\s+···`);
       expect(fence).not.toMatch(/\n···\n/);
     });
+
+    it.each([
+      // Plaster line: comment start + whitespace + DEFAULT_PLASTER (···)
+      ["python", re`#\s+···`],
+      ["py", re`#\s+···`],
+      ["ruby", re`#\s+···`],
+      ["rb", re`#\s+···`],
+      ["erlang", re`%\s+···`],
+      ["go", re`//\s+···`],
+      ["rust", re`//\s+···`],
+      ["rs", re`//\s+···`],
+      ["cpp", re`//\s+···`],
+      ["csharp", re`//\s+···`],
+      ["cs", re`//\s+···`],
+      ["javascript", re`//\s+···`],
+      ["typescript", re`//\s+···`],
+      ["kotlin", re`//\s+···`],
+      ["kt", re`//\s+···`],
+      ["java", re`//\s+···`],
+      ["php", re`//\s+···`],
+      ["swift", re`//\s+···`],
+    ] as const)(
+      "substitutes plaster for excerptsYaml with %s fence",
+      (lang, pattern) => {
+        const src = dedent`
+          // #docregion
+          x
+          // #enddocregion
+          // #docregion
+          y
+          // #enddocregion
+        `;
+        const md = dedent`
+          <?code-excerpt "snippet.txt"?>
+
+          \`\`\`${lang}
+          .
+          \`\`\`
+        `;
+        const out = injectMarkdown(md, {
+          readFile: (p) => (p === "snippet.txt" ? src : null),
+          excerptsYaml: true,
+        });
+        const fence =
+          out.match(new RegExp("```" + lang + "[\\s\\S]*?```"))?.[0] ?? "";
+        expect(fence).toMatch(pattern);
+      },
+    );
 
     it("strips DEFAULT_PLASTER lines when plaster=none with excerptsYaml", () => {
       const src = `// #docregion

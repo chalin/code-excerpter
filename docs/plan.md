@@ -11,7 +11,7 @@ section may list limitations that apply to that phase.
 ## Phase 1a — `directive.ts`
 
 Parse `#docregion`/`#enddocregion` directives from source lines. Pure string
-logic, no I/O. Port the `Directive` class from [`chalin/code_excerpter`][] with
+logic, no I/O. Port the `Directive` class from [chalin/code_excerpter][] with
 comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 
 - [x] Implement `src/directive.ts`
@@ -21,12 +21,12 @@ comment-syntax-aware regex (HTML `-->`, CSS `*/`).
 ## Phase 1b — `extract.ts`
 
 Extract named code regions from source file content. Port the `Excerpter` class
-from [`chalin/code_excerpter`][].
+from [chalin/code_excerpter][].
 
 - [x] Implement `src/extract.ts`
 - [x] Write `test/extract.test.ts`
 - [x] Port comprehensive test cases from
-      [`chalin/code_excerpter/test/excerpter_test.dart`][] (edge cases, plaster,
+      [chalin/code_excerpter/test/excerpter_test.dart][] (edge cases, plaster,
       overlapping regions)
 - [x] Update docs as needed
 
@@ -61,6 +61,8 @@ Directory walking, file updating, CLI entry point.
 - [x] Implement `src/cli.ts`
 - [x] Write `test/update.test.ts`
 - [x] Update docs as needed
+
+## Phase 5a - follow-ups
 
 A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
 [code_excerpt_updater test_data][] inject-only goldens):
@@ -103,18 +105,44 @@ alone; add a regression test and optionally document `&lt;` in
 [`docs/spec.md`](spec.md) for rare line-start edge cases (aligned with XML PI
 rules).
 
-## Phase 5 — Integration Testing
+## Phase 5b - extra behavior
 
-Run against [`dart-lang/site-www`](https://github.com/dart-lang/site-www) and
-diff output against the Dart tool.
+### Refreshing code excerpts in non-md files
 
-- [ ] Set up integration test harness
-- [ ] Run against `dart-lang/site-www`
-- [ ] Compare output with the Dart excerpter
-- [ ] Document any discrepancies
+- Currently, `updatePaths` / CLI only processes `.md` files.
+- Upstream [chalin/code_excerpt_updater CLI][] also processed `.dart` and
+  `.jade` (`_validExt`).
+- Newer [dart-lang/site-shared excerpter][]: [excerpter `update.dart`][] uses
+  configurable `validTargetExtensions`; [excerpter `bin/excerpter.dart`][]
+  passes `{'.md'}` only. Fixture shape:
+  `test/fixtures/code-excerpt-updater/test_data/src/basic_with_region.dart`.
+- Consider bringing in this new behavior into `code-excerpter`.
+- If/once this is added, update [docs/spec.md](spec.md#pi-line-prefixes) to
+  reflect the new behavior, in particular the list bullet prefix, add:
+  > - Multiline comment continuation prefix: `*`
 
-[`chalin/code_excerpter`]: https://github.com/chalin/code_excerpter
-[`chalin/code_excerpter/test/excerpter_test.dart`]:
+[chalin/code_excerpt_updater CLI]:
+  https://github.com/chalin/code_excerpt_updater/blob/main/lib/code_excerpt_updater_cli.dart
+[dart-lang/site-shared excerpter]:
+  https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
+[excerpter `update.dart`]:
+  https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/lib/src/update.dart
+[excerpter `bin/excerpter.dart`]:
+  https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/bin/excerpter.dart
+
+## Phase 6 - Integration Testing
+
+Run the code-excerpter against a repo that uses one of the other excerpter tool
+versions, such as:
+
+- [ ] (IN PROGRESS) [open-telemetry/opentelemetry.io][]
+- [ ] [dart-lang/site-www][]
+
+[open-telemetry/opentelemetry.io]:
+  https://github.com/open-telemetry/opentelemetry.io
+[dart-lang/site-www]: https://github.com/dart-lang/site-www
+[chalin/code_excerpter]: https://github.com/chalin/code_excerpter
+[chalin/code_excerpter/test/excerpter_test.dart]:
   https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart
 [dart-lang/site-shared pkgs/excerpter test_data]:
   https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data
@@ -122,3 +150,5 @@ diff output against the Dart tool.
   https://github.com/dart-lang/site-shared/blob/main/pkgs/excerpter/test/updater_test.dart
 [code_excerpt_updater test_data]:
   https://github.com/chalin/code_excerpt_updater/tree/main/test_data
+
+<!-- cSpell:ignore opentelemetry -->

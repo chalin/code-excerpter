@@ -191,23 +191,56 @@ function escapeNgLine(line: string, enabled: boolean): string {
   return line.replace(/\{\{|\}\}/g, (m) => (m === "{{" ? "{!{" : "}!}"));
 }
 
+/**
+ * Comment delimiters around the plaster marker. Omit `end` for a line
+ * comment (start, space, then marker).
+ */
+interface PlasterCommentDelims {
+  start: string;
+  end?: string;
+}
+
+/** Fence / file language id → comment delimiters for default plaster. */
+const PLASTER_COMMENT_DELIMS_BY_LANG = new Map<string, PlasterCommentDelims>([
+  ["cpp", { start: "//" }],
+  ["cs", { start: "//" }],
+  ["csharp", { start: "//" }],
+  ["css", { start: "/*", end: "*/" }],
+  ["dart", { start: "//" }],
+  ["erlang", { start: "%" }],
+  ["go", { start: "//" }],
+  ["html", { start: "<!--", end: "-->" }],
+  ["java", { start: "//" }],
+  ["javascript", { start: "//" }],
+  ["js", { start: "//" }],
+  ["kt", { start: "//" }],
+  ["kotlin", { start: "//" }],
+  ["php", { start: "//" }],
+  ["py", { start: "#" }],
+  ["python", { start: "#" }],
+  ["rb", { start: "#" }],
+  ["rs", { start: "//" }],
+  ["ruby", { start: "#" }],
+  ["rust", { start: "//" }],
+  ["scss", { start: "/*", end: "*/" }],
+  ["swift", { start: "//" }],
+  ["ts", { start: "//" }],
+  ["typescript", { start: "//" }],
+  ["yaml", { start: "#" }],
+  ["yml", { start: "#" }],
+]);
+
+function formatPlasterWithDelims(
+  marker: string,
+  d: PlasterCommentDelims,
+): string {
+  return [d.start, marker, ...(d.end ? [d.end] : [])].join(" ");
+}
+
 function plasterTemplateForLang(lang: string): string | null {
-  switch (lang) {
-    case "css":
-    case "scss":
-      return `/* ${DEFAULT_PLASTER} */`;
-    case "html":
-      return `<!-- ${DEFAULT_PLASTER} -->`;
-    case "dart":
-    case "js":
-    case "ts":
-      return `// ${DEFAULT_PLASTER}`;
-    case "yaml":
-    case "yml":
-      return `# ${DEFAULT_PLASTER}`;
-    default:
-      return null;
-  }
+  const d = PLASTER_COMMENT_DELIMS_BY_LANG.get(lang.toLowerCase());
+  if (d === undefined) return null;
+  return formatPlasterWithDelims(DEFAULT_PLASTER, d);
 }
 
 /**
