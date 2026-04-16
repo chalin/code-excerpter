@@ -4,15 +4,15 @@
  * cSpell:ignore mundo
  */
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 import {
   injectMarkdown,
   PROC_INSTR_RE,
   type MarkdownInjectContext,
-} from "../src/inject.js";
-import { dedent } from "./helpers/dedent.js";
+} from '../src/inject.js';
+import { dedent } from './helpers/dedent.js';
 
-function ctx(files: Record<string, string>, base = ""): MarkdownInjectContext {
+function ctx(files: Record<string, string>, base = ''): MarkdownInjectContext {
   return {
     readFile: (p) => files[p] ?? null,
     pathBase: base,
@@ -21,56 +21,56 @@ function ctx(files: Record<string, string>, base = ""): MarkdownInjectContext {
 
 /** Expected plaster separator line inside ` ```lang ` fences for `it.each` plaster tests. */
 const PLASTER_LINE_BY_FENCE_LANG: Record<string, string> = {
-  python: "# ···",
-  py: "# ···",
-  ruby: "# ···",
-  rb: "# ···",
-  erlang: "% ···",
-  go: "// ···",
-  rust: "// ···",
-  rs: "// ···",
-  cpp: "// ···",
-  csharp: "// ···",
-  cs: "// ···",
-  javascript: "// ···",
-  typescript: "// ···",
-  kotlin: "// ···",
-  kt: "// ···",
-  java: "// ···",
-  php: "// ···",
-  swift: "// ···",
+  python: '# ···',
+  py: '# ···',
+  ruby: '# ···',
+  rb: '# ···',
+  erlang: '% ···',
+  go: '// ···',
+  rust: '// ···',
+  rs: '// ···',
+  cpp: '// ···',
+  csharp: '// ···',
+  cs: '// ···',
+  javascript: '// ···',
+  typescript: '// ···',
+  kotlin: '// ···',
+  kt: '// ···',
+  java: '// ···',
+  php: '// ···',
+  swift: '// ···',
 };
 
-describe("inject", () => {
-  describe("PROC_INSTR_RE", () => {
-    it("matches quoted path and named args", () => {
+describe('inject', () => {
+  describe('PROC_INSTR_RE', () => {
+    it('matches quoted path and named args', () => {
       const m = '<?code-excerpt "lib/a.dart (r)" skip="1"?>'.match(
         PROC_INSTR_RE,
       );
-      expect(m?.groups?.unnamed).toBe("lib/a.dart (r)");
+      expect(m?.groups?.unnamed).toBe('lib/a.dart (r)');
       expect(m?.groups?.named?.trim()).toBe('skip="1"');
     });
 
-    it("matches set instruction", () => {
+    it('matches set instruction', () => {
       const x = '<?code-excerpt path-base="ex"?>'.match(PROC_INSTR_RE);
       expect(x?.groups?.unnamed).toBeUndefined();
       expect(x?.groups?.named?.trim()).toBe('path-base="ex"');
     });
 
-    it("does not match when non-whitespace follows the closing ?>", () => {
+    it('does not match when non-whitespace follows the closing ?>', () => {
       expect(
         '<?code-excerpt "a.dart"?> trailing'.match(PROC_INSTR_RE),
       ).toBeNull();
     });
 
-    it("allows trailing whitespace after ?>", () => {
+    it('allows trailing whitespace after ?>', () => {
       const m = '<?code-excerpt "a.dart"?>   \t'.match(PROC_INSTR_RE);
-      expect(m?.groups?.unnamed).toBe("a.dart");
+      expect(m?.groups?.unnamed).toBe('a.dart');
     });
   });
 
-  describe("injectMarkdown", () => {
-    it("injects default region from dart source", () => {
+  describe('injectMarkdown', () => {
+    it('injects default region from dart source', () => {
       const src = dedent`
         // #docregion
         final x = 1;
@@ -84,7 +84,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "lib/a.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'lib/a.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "lib/a.dart"?>
 
@@ -95,7 +95,7 @@ describe("inject", () => {
       `);
     });
 
-    it("injects through tilde markdown fences", () => {
+    it('injects through tilde markdown fences', () => {
       const src = dedent`
         // #docregion
         tilde-body
@@ -109,7 +109,7 @@ describe("inject", () => {
         ~~~
 
       `;
-      const out = injectMarkdown(md, ctx({ "tilde.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'tilde.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "tilde.dart"?>
 
@@ -119,7 +119,7 @@ describe("inject", () => {
       `);
     });
 
-    it("injects excerpt containing nested markdown code fences when outer fence is tilde", () => {
+    it('injects excerpt containing nested markdown code fences when outer fence is tilde', () => {
       // Outer `~~~` is required so inner ``` lines are not mistaken for the
       // closing fence (fence-end matching is by kind: backtick vs tilde).
       const src = dedent`
@@ -152,12 +152,12 @@ describe("inject", () => {
         Trailing prose.
         ~~~
       `;
-      const out = injectMarkdown(md, ctx({ "nested-fences.md": src }));
+      const out = injectMarkdown(md, ctx({ 'nested-fences.md': src }));
       expect(out).toStrictEqual(expected);
     });
 
-    it("applies path-base before resolving path", () => {
-      const src = "// ok\n";
+    it('applies path-base before resolving path', () => {
+      const src = '// ok\n';
       const md = dedent`
         <?code-excerpt path-base="p"?>
         <?code-excerpt "b.dart"?>
@@ -167,7 +167,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "p/b.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'p/b.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt path-base="p"?>
         <?code-excerpt "b.dart"?>
@@ -179,9 +179,9 @@ describe("inject", () => {
       `);
     });
 
-    it("increments instructionStats for parsed set and fragment directives", () => {
+    it('increments instructionStats for parsed set and fragment directives', () => {
       const instructionStats = { set: 0, fragment: 0 };
-      const src = "// ok\n";
+      const src = '// ok\n';
       const md = dedent`
         <?code-excerpt path-base="p"?>
         <?code-excerpt "b.dart"?>
@@ -192,14 +192,14 @@ describe("inject", () => {
 
       `;
       injectMarkdown(md, {
-        ...ctx({ "p/b.dart": src }),
+        ...ctx({ 'p/b.dart': src }),
         instructionStats,
       });
       expect(instructionStats.set).toBe(1);
       expect(instructionStats.fragment).toBe(1);
     });
 
-    it("applies skip transform", () => {
+    it('applies skip transform', () => {
       const src = dedent`
         // #docregion
         a
@@ -214,7 +214,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "f.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'f.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "f.dart" skip="1"?>
 
@@ -225,7 +225,7 @@ describe("inject", () => {
       `);
     });
 
-    it("strips list marker prefix in linePrefix", () => {
+    it('strips list marker prefix in linePrefix', () => {
       const src = dedent`
         // #docregion
         z
@@ -239,7 +239,7 @@ describe("inject", () => {
           \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "x.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'x.dart': src }));
       expect(out).toStrictEqual(dedent`
         - <?code-excerpt "x.dart"?>
 
@@ -250,7 +250,7 @@ describe("inject", () => {
       `);
     });
 
-    it("returns original block when source is missing", () => {
+    it('returns original block when source is missing', () => {
       const onError = vi.fn();
       const md = dedent`
         <?code-excerpt "missing.dart"?>
@@ -265,7 +265,7 @@ describe("inject", () => {
       expect(onError).toHaveBeenCalled();
     });
 
-    it("leaves block unchanged for diff-with with error", () => {
+    it('leaves block unchanged for diff-with with error', () => {
       const onError = vi.fn();
       const md = dedent`
         <?code-excerpt "a.dart" diff-with="b.dart"?>
@@ -276,15 +276,15 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: () => "//\n",
+        readFile: () => '//\n',
         onError,
       });
       expect(out).toStrictEqual(md);
       expect(onError).toHaveBeenCalled();
     });
 
-    it("reads implicit default region when file has no directives", () => {
-      const src = "plain line\n";
+    it('reads implicit default region when file has no directives', () => {
+      const src = 'plain line\n';
       const md = dedent`
         <?code-excerpt "plain.txt"?>
 
@@ -293,7 +293,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "plain.txt": src }));
+      const out = injectMarkdown(md, ctx({ 'plain.txt': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "plain.txt"?>
 
@@ -304,7 +304,7 @@ describe("inject", () => {
       `);
     });
 
-    it("applies file-level set replace after excerpt transforms", () => {
+    it('applies file-level set replace after excerpt transforms', () => {
       const src = dedent`
         // #docregion
         SRC_TOKEN
@@ -319,7 +319,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "r.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'r.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt replace="/SRC_TOKEN/NEW/g"?>
         <?code-excerpt "r.dart"?>
@@ -331,7 +331,7 @@ describe("inject", () => {
       `);
     });
 
-    it("applies globalReplace from context after file-level replace", () => {
+    it('applies globalReplace from context after file-level replace', () => {
       const src = dedent`
         // #docregion
         aa
@@ -347,7 +347,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "g.dart" ? src : null),
+        readFile: (p) => (p === 'g.dart' ? src : null),
         globalReplace: `/bb/cc/g`,
       });
       expect(out).toStrictEqual(dedent`
@@ -361,16 +361,16 @@ describe("inject", () => {
       `);
     });
 
-    it("throws on invalid globalReplace", () => {
+    it('throws on invalid globalReplace', () => {
       expect(() =>
-        injectMarkdown("x", {
+        injectMarkdown('x', {
           readFile: () => null,
-          globalReplace: "not-valid",
+          globalReplace: 'not-valid',
         }),
       ).toThrow(/invalid global replace/);
     });
 
-    it("reports invalid processing instruction when regex does not match", () => {
+    it('reports invalid processing instruction when regex does not match', () => {
       const onError = vi.fn();
       const bad = '<?code-excerpt "broken.dart skip="1"?>';
       const md = dedent`
@@ -382,15 +382,15 @@ describe("inject", () => {
 
       `;
       injectMarkdown(md, {
-        readFile: () => "//\n",
+        readFile: () => '//\n',
         onError,
       });
       expect(onError).toHaveBeenCalledWith(
-        expect.stringContaining("invalid processing instruction"),
+        expect.stringContaining('invalid processing instruction'),
       );
     });
 
-    it("warns when text follows ?> on the same line and does not inject", () => {
+    it('warns when text follows ?> on the same line and does not inject', () => {
       const onWarning = vi.fn();
       const onError = vi.fn();
       const src = dedent`
@@ -407,7 +407,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "t.dart" ? src : null),
+        readFile: (p) => (p === 't.dart' ? src : null),
         onWarning,
         onError,
       });
@@ -418,7 +418,7 @@ describe("inject", () => {
       expect(onError).not.toHaveBeenCalled();
     });
 
-    it("warns when PI is not closed with ?>", () => {
+    it('warns when PI is not closed with ?>', () => {
       const onWarning = vi.fn();
       const src = dedent`
         // #docregion
@@ -434,7 +434,7 @@ describe("inject", () => {
 
       `;
       injectMarkdown(md, {
-        readFile: (p) => (p === "c.dart" ? src : null),
+        readFile: (p) => (p === 'c.dart' ? src : null),
         onWarning,
       });
       expect(onWarning).toHaveBeenCalledWith(
@@ -442,7 +442,7 @@ describe("inject", () => {
       );
     });
 
-    it("errors on unterminated markdown fence and keeps original block", () => {
+    it('errors on unterminated markdown fence and keeps original block', () => {
       const onError = vi.fn();
       const src = dedent`
         // #docregion
@@ -456,18 +456,18 @@ describe("inject", () => {
         keep-inner
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "u.dart" ? src : null),
+        readFile: (p) => (p === 'u.dart' ? src : null),
         onError,
       });
       expect(out).toStrictEqual(md);
       expect(onError).toHaveBeenCalledWith(
-        expect.stringContaining("unterminated markdown code block"),
+        expect.stringContaining('unterminated markdown code block'),
       );
     });
 
-    it("errors when code block does not immediately follow excerpt PI", () => {
+    it('errors when code block does not immediately follow excerpt PI', () => {
       const onError = vi.fn();
-      const src = "//\n";
+      const src = '//\n';
       const md = dedent`
         <?code-excerpt "q.dart"?>
 
@@ -478,7 +478,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "q.dart" ? src : null),
+        readFile: (p) => (p === 'q.dart' ? src : null),
         onError,
       });
       expect(out).toStrictEqual(md);
@@ -487,7 +487,7 @@ describe("inject", () => {
       );
     });
 
-    it("errors on set instruction with more than one argument", () => {
+    it('errors on set instruction with more than one argument', () => {
       const onError = vi.fn();
       const md = dedent`
         <?code-excerpt path-base="a" replace="/x/y/g"?>
@@ -499,15 +499,15 @@ describe("inject", () => {
 
       `;
       injectMarkdown(md, {
-        readFile: () => "//\n",
+        readFile: () => '//\n',
         onError,
       });
       expect(onError).toHaveBeenCalledWith(
-        "set instruction should have at most one argument",
+        'set instruction should have at most one argument',
       );
     });
 
-    it("warns and ignores unrecognized set instruction argument", () => {
+    it('warns and ignores unrecognized set instruction argument', () => {
       const onWarning = vi.fn();
       const md = dedent`
         <?code-excerpt foo="abc"?>
@@ -519,7 +519,7 @@ describe("inject", () => {
 
       `;
       injectMarkdown(md, {
-        readFile: () => "//\n",
+        readFile: () => '//\n',
         onWarning,
       });
       expect(onWarning).toHaveBeenCalledWith(
@@ -527,7 +527,7 @@ describe("inject", () => {
       );
     });
 
-    it("clears file-level replace when set replace is empty", () => {
+    it('clears file-level replace when set replace is empty', () => {
       const src = dedent`
         // #docregion
         SRC_TOKEN
@@ -543,7 +543,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "clr.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'clr.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt replace="/SRC_TOKEN/NEW/g"?>
         <?code-excerpt replace=""?>
@@ -556,7 +556,7 @@ describe("inject", () => {
       `);
     });
 
-    it("does not apply invalid file-level set replace (reports error)", () => {
+    it('does not apply invalid file-level set replace (reports error)', () => {
       const onError = vi.fn();
       const src = dedent`
         // #docregion
@@ -573,7 +573,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "inv.dart" ? src : null),
+        readFile: (p) => (p === 'inv.dart' ? src : null),
         onError,
       });
       expect(out).toStrictEqual(dedent`
@@ -590,7 +590,7 @@ describe("inject", () => {
       );
     });
 
-    it("applies globalReplace without file-level set replace", () => {
+    it('applies globalReplace without file-level set replace', () => {
       const src = dedent`
         // #docregion
         hello
@@ -605,7 +605,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "only-gr.dart" ? src : null),
+        readFile: (p) => (p === 'only-gr.dart' ? src : null),
         globalReplace: `/hello/mundo/g`,
       });
       expect(out).toStrictEqual(dedent`
@@ -618,7 +618,7 @@ describe("inject", () => {
       `);
     });
 
-    it("treats set class-only and title-only as no-ops (no warning)", () => {
+    it('treats set class-only and title-only as no-ops (no warning)', () => {
       const onWarning = vi.fn();
       const src = dedent`
         // #docregion
@@ -636,7 +636,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "noop.dart" ? src : null),
+        readFile: (p) => (p === 'noop.dart' ? src : null),
         onWarning,
       });
       expect(onWarning).not.toHaveBeenCalled();
@@ -652,7 +652,7 @@ describe("inject", () => {
       `);
     });
 
-    it("uses region= named argument when path has no (region) suffix", () => {
+    it('uses region= named argument when path has no (region) suffix', () => {
       const src = dedent`
         // #docregion r1
         in-r1
@@ -666,7 +666,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "reg.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'reg.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "reg.dart" region="r1"?>
 
@@ -693,7 +693,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "a.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'a.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "a.dart (greeting)" region=""?>
 
@@ -706,7 +706,7 @@ describe("inject", () => {
       `);
     });
 
-    it("substitutes plaster markers when excerptsYaml is true", () => {
+    it('substitutes plaster markers when excerptsYaml is true', () => {
       const src = dedent`
         // #docregion
         before
@@ -724,7 +724,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "pl.dart" ? src : null),
+        readFile: (p) => (p === 'pl.dart' ? src : null),
         excerptsYaml: true,
       });
       expect(out).toStrictEqual(dedent`
@@ -740,26 +740,26 @@ describe("inject", () => {
     });
 
     it.each([
-      "python",
-      "py",
-      "ruby",
-      "rb",
-      "erlang",
-      "go",
-      "rust",
-      "rs",
-      "cpp",
-      "csharp",
-      "cs",
-      "javascript",
-      "typescript",
-      "kotlin",
-      "kt",
-      "java",
-      "php",
-      "swift",
+      'python',
+      'py',
+      'ruby',
+      'rb',
+      'erlang',
+      'go',
+      'rust',
+      'rs',
+      'cpp',
+      'csharp',
+      'cs',
+      'javascript',
+      'typescript',
+      'kotlin',
+      'kt',
+      'java',
+      'php',
+      'swift',
     ] as const)(
-      "substitutes plaster for excerptsYaml with %s fence",
+      'substitutes plaster for excerptsYaml with %s fence',
       (lang) => {
         const src = dedent`
           // #docregion
@@ -777,7 +777,7 @@ describe("inject", () => {
           \`\`\`
         `;
         const out = injectMarkdown(md, {
-          readFile: (p) => (p === "snippet.txt" ? src : null),
+          readFile: (p) => (p === 'snippet.txt' ? src : null),
           excerptsYaml: true,
         });
         const plasterLine = PLASTER_LINE_BY_FENCE_LANG[lang];
@@ -794,7 +794,7 @@ describe("inject", () => {
       },
     );
 
-    it("strips DEFAULT_PLASTER lines when plaster=none with excerptsYaml", () => {
+    it('strips DEFAULT_PLASTER lines when plaster=none with excerptsYaml', () => {
       const src = dedent`
         // #docregion
         a
@@ -813,7 +813,7 @@ describe("inject", () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === "pn.dart" ? src : null),
+        readFile: (p) => (p === 'pn.dart' ? src : null),
         excerptsYaml: true,
       });
       expect(out).toStrictEqual(dedent`
@@ -828,21 +828,21 @@ describe("inject", () => {
       `);
     });
 
-    it("errors when input ends after excerpt PI (no code block)", () => {
+    it('errors when input ends after excerpt PI (no code block)', () => {
       const onError = vi.fn();
       const md = dedent`
         <?code-excerpt "end.dart"?>
       `;
       injectMarkdown(md, {
-        readFile: () => "//\n",
+        readFile: () => '//\n',
         onError,
       });
       expect(onError).toHaveBeenCalledWith(
-        expect.stringContaining("reached end of input"),
+        expect.stringContaining('reached end of input'),
       );
     });
 
-    it("handles liquid prettify fences like backtick fences", () => {
+    it('handles liquid prettify fences like backtick fences', () => {
       const src = dedent`
         // #docregion
         liquid
@@ -856,7 +856,7 @@ describe("inject", () => {
         {% endprettify %}
 
       `;
-      const out = injectMarkdown(md, ctx({ "liq.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'liq.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "liq.dart"?>
 
@@ -867,7 +867,7 @@ describe("inject", () => {
       `);
     });
 
-    it("does not treat non-prettify Liquid blocks as code fences", () => {
+    it('does not treat non-prettify Liquid blocks as code fences', () => {
       const src = dedent`
         // #docregion
         INJECTED
@@ -881,11 +881,11 @@ describe("inject", () => {
         {% endif %}
 
       `;
-      const out = injectMarkdown(md, ctx({ "x.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'x.dart': src }));
       expect(out).toStrictEqual(md);
     });
 
-    it("chains multiple replace steps in file-level set replace", () => {
+    it('chains multiple replace steps in file-level set replace', () => {
       const src = dedent`
         // #docregion
         ab
@@ -900,7 +900,7 @@ describe("inject", () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, ctx({ "chain.dart": src }));
+      const out = injectMarkdown(md, ctx({ 'chain.dart': src }));
       expect(out).toStrictEqual(dedent`
         <?code-excerpt replace="/a/x/g;/b/y/g"?>
         <?code-excerpt "chain.dart"?>

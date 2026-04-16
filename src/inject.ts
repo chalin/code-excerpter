@@ -3,13 +3,13 @@ import {
   dropLeadingBlankLines,
   dropTrailingBlankLines,
   getExcerptRegionLines,
-} from "./extract.js";
-import type { InstructionStats } from "./instructionStats.js";
+} from './extract.js';
+import type { InstructionStats } from './instructionStats.js';
 import {
   applyExcerptTransformsInOrder,
   parseIndentBy,
   parseReplacePipeline,
-} from "./transform.js";
+} from './transform.js';
 
 /**
  * Core `<?code-excerpt ...?>` match from the start of a line (no end-of-line rule).
@@ -34,11 +34,11 @@ export const PROC_INSTR_RE = new RegExp(
 const NAMED_ARG_RE = /^([-\w]+)\s*(=\s*"([^"]*)"\s*|\b)\s*/;
 
 const SET_KNOWN_KEYS = new Set([
-  "path-base",
-  "replace",
-  "plaster",
-  "class",
-  "title",
+  'path-base',
+  'replace',
+  'plaster',
+  'class',
+  'title',
 ]);
 
 interface ParsedNamedArgs {
@@ -58,13 +58,13 @@ const CODE_BLOCK_START =
 /** Matches any code-block closing fence (backtick, tilde, or prettify). */
 const CODE_BLOCK_END = /^\s*(?:\/\/\/?)?\s*(```|~~~|{%-?\s*endprettify\s*-?%})/;
 
-type FenceKind = "backtick" | "tilde" | "prettify";
+type FenceKind = 'backtick' | 'tilde' | 'prettify';
 
 /** Classify an open or close fence token by kind. */
 function fenceKind(token: string): FenceKind {
-  if (token.startsWith("`")) return "backtick";
-  if (token.startsWith("~")) return "tilde";
-  return "prettify";
+  if (token.startsWith('`')) return 'backtick';
+  if (token.startsWith('~')) return 'tilde';
+  return 'prettify';
 }
 
 const REGION_IN_PATH = /\s*\((.+)\)\s*$/;
@@ -122,27 +122,27 @@ export interface MarkdownInjectContext {
 }
 
 function joinPathBase(pathBase: string, relPath: string): string {
-  const trimmed = relPath.trim().replace(/\\/g, "/");
-  const base = pathBase.trim().replace(/\\/g, "/");
-  if (!base) return trimmed.replace(/\/+/g, "/");
-  const sep = base.endsWith("/") ? "" : "/";
-  return `${base}${sep}${trimmed}`.replace(/\/+/g, "/");
+  const trimmed = relPath.trim().replace(/\\/g, '/');
+  const base = pathBase.trim().replace(/\\/g, '/');
+  if (!base) return trimmed.replace(/\/+/g, '/');
+  const sep = base.endsWith('/') ? '' : '/';
+  return `${base}${sep}${trimmed}`.replace(/\/+/g, '/');
 }
 
 function fileExtensionLower(path: string): string {
-  const normalized = path.replace(/\\/g, "/");
-  const base = normalized.includes("/")
-    ? normalized.slice(normalized.lastIndexOf("/") + 1)
+  const normalized = path.replace(/\\/g, '/');
+  const base = normalized.includes('/')
+    ? normalized.slice(normalized.lastIndexOf('/') + 1)
     : normalized;
-  const dot = base.lastIndexOf(".");
-  if (dot < 0) return "";
+  const dot = base.lastIndexOf('.');
+  if (dot < 0) return '';
   return base.slice(dot + 1).toLowerCase();
 }
 
 function normalizeListLinePrefix(prefix: string): string {
-  for (const c of ["-", "*"]) {
+  for (const c of ['-', '*']) {
     if (prefix.includes(c)) {
-      return prefix.replace(c, " ");
+      return prefix.replace(c, ' ');
     }
   }
   return prefix;
@@ -163,10 +163,10 @@ function parseNamedArgs(
       break;
     }
     const key = m[1]!;
-    const eqOrBare = m[2] ?? "";
+    const eqOrBare = m[2] ?? '';
     if (!keyOrder.includes(key)) keyOrder.push(key);
-    if (eqOrBare.trimStart().startsWith("=")) {
-      map.set(key, m[3] ?? "");
+    if (eqOrBare.trimStart().startsWith('=')) {
+      map.set(key, m[3] ?? '');
     } else {
       flags.add(key);
     }
@@ -176,13 +176,13 @@ function parseNamedArgs(
 }
 
 function normalizeRegionName(region: string): string {
-  return region.replace(NON_WORD, "-");
+  return region.replace(NON_WORD, '-');
 }
 
 function parsePathAndRegion(unnamed: string): { path: string; region: string } {
   const m = REGION_IN_PATH.exec(unnamed);
   if (m === null) {
-    return { path: unnamed.trim(), region: "" };
+    return { path: unnamed.trim(), region: '' };
   }
   const idx = m.index ?? 0;
   return {
@@ -200,7 +200,7 @@ function codeLang(openingFenceLine: string, path: string): string {
 /** Escapes Angular-style `{{` / `}}` as `{!{` / `}!}` when enabled. */
 function escapeNgLine(line: string, enabled: boolean): string {
   if (!enabled) return line;
-  return line.replace(/\{\{|\}\}/g, (m) => (m === "{{" ? "{!{" : "}!}"));
+  return line.replace(/\{\{|\}\}/g, (m) => (m === '{{' ? '{!{' : '}!}'));
 }
 
 /**
@@ -214,39 +214,39 @@ interface PlasterCommentDelims {
 
 /** Fence / file language id → comment delimiters for default plaster. */
 const PLASTER_COMMENT_DELIMS_BY_LANG = new Map<string, PlasterCommentDelims>([
-  ["cpp", { start: "//" }],
-  ["cs", { start: "//" }],
-  ["csharp", { start: "//" }],
-  ["css", { start: "/*", end: "*/" }],
-  ["dart", { start: "//" }],
-  ["erlang", { start: "%" }],
-  ["go", { start: "//" }],
-  ["html", { start: "<!--", end: "-->" }],
-  ["java", { start: "//" }],
-  ["javascript", { start: "//" }],
-  ["js", { start: "//" }],
-  ["kt", { start: "//" }],
-  ["kotlin", { start: "//" }],
-  ["php", { start: "//" }],
-  ["py", { start: "#" }],
-  ["python", { start: "#" }],
-  ["rb", { start: "#" }],
-  ["rs", { start: "//" }],
-  ["ruby", { start: "#" }],
-  ["rust", { start: "//" }],
-  ["scss", { start: "/*", end: "*/" }],
-  ["swift", { start: "//" }],
-  ["ts", { start: "//" }],
-  ["typescript", { start: "//" }],
-  ["yaml", { start: "#" }],
-  ["yml", { start: "#" }],
+  ['cpp', { start: '//' }],
+  ['cs', { start: '//' }],
+  ['csharp', { start: '//' }],
+  ['css', { start: '/*', end: '*/' }],
+  ['dart', { start: '//' }],
+  ['erlang', { start: '%' }],
+  ['go', { start: '//' }],
+  ['html', { start: '<!--', end: '-->' }],
+  ['java', { start: '//' }],
+  ['javascript', { start: '//' }],
+  ['js', { start: '//' }],
+  ['kt', { start: '//' }],
+  ['kotlin', { start: '//' }],
+  ['php', { start: '//' }],
+  ['py', { start: '#' }],
+  ['python', { start: '#' }],
+  ['rb', { start: '#' }],
+  ['rs', { start: '//' }],
+  ['ruby', { start: '#' }],
+  ['rust', { start: '//' }],
+  ['scss', { start: '/*', end: '*/' }],
+  ['swift', { start: '//' }],
+  ['ts', { start: '//' }],
+  ['typescript', { start: '//' }],
+  ['yaml', { start: '#' }],
+  ['yml', { start: '#' }],
 ]);
 
 function formatPlasterWithDelims(
   marker: string,
   d: PlasterCommentDelims,
 ): string {
-  return [d.start, marker, ...(d.end ? [d.end] : [])].join(" ");
+  return [d.start, marker, ...(d.end ? [d.end] : [])].join(' ');
 }
 
 function plasterTemplateForLang(lang: string): string | null {
@@ -266,23 +266,23 @@ function applyPlasterToLines(
   lang: string,
   excerptsYaml: boolean,
 ): string[] {
-  if (plasterTemplate === "none") {
+  if (plasterTemplate === 'none') {
     return lines.filter((line) => !line.includes(DEFAULT_PLASTER));
   }
   if (!excerptsYaml) {
     return lines;
   }
   let tpl: string | null =
-    plasterTemplate !== undefined && plasterTemplate !== ""
-      ? plasterTemplate.replaceAll("$defaultPlaster", DEFAULT_PLASTER)
+    plasterTemplate !== undefined && plasterTemplate !== ''
+      ? plasterTemplate.replaceAll('$defaultPlaster', DEFAULT_PLASTER)
       : null;
-  if (tpl === null || tpl === "") {
+  if (tpl === null || tpl === '') {
     const def = plasterTemplateForLang(lang);
     if (def === null) return lines;
     tpl = def;
   }
-  const joined = lines.join("\n");
-  return joined.split(DEFAULT_PLASTER).join(tpl).split("\n");
+  const joined = lines.join('\n');
+  return joined.split(DEFAULT_PLASTER).join(tpl).split('\n');
 }
 
 function parseIndentForBlock(
@@ -328,9 +328,9 @@ export function injectMarkdown(
   markdown: string,
   ctx: MarkdownInjectContext,
 ): string {
-  const lines = markdown.split("\n");
+  const lines = markdown.split('\n');
   const out: string[] = [];
-  let pathBase = ctx.pathBase ?? "";
+  let pathBase = ctx.pathBase ?? '';
   const excerptsYaml = ctx.excerptsYaml ?? false;
   const defaultIndentation = ctx.defaultIndentation ?? 0;
   let filePlasterTemplate: string | undefined;
@@ -345,7 +345,7 @@ export function injectMarkdown(
 
   let appReplacePipeline: ((code: string) => string) | null = null;
   const gr = ctx.globalReplace;
-  if (gr !== undefined && gr !== "") {
+  if (gr !== undefined && gr !== '') {
     const parsed = parseReplacePipeline(gr, err);
     if (parsed === null) {
       throw new Error(
@@ -358,19 +358,19 @@ export function injectMarkdown(
   const handleSetInstruction = (pn: ParsedNamedArgs): void => {
     const nKeys = pn.map.size + pn.flags.size;
     if (nKeys > 1) {
-      err("set instruction should have at most one argument");
+      err('set instruction should have at most one argument');
       return;
     }
     if (nKeys === 0) {
       return;
     }
-    if (pn.map.has("path-base")) {
-      pathBase = pn.map.get("path-base") ?? "";
+    if (pn.map.has('path-base')) {
+      pathBase = pn.map.get('path-base') ?? '';
       return;
     }
-    if (pn.map.has("replace")) {
-      const val = pn.map.get("replace") ?? "";
-      if (val === "") {
+    if (pn.map.has('replace')) {
+      const val = pn.map.get('replace') ?? '';
+      if (val === '') {
         fileReplacePipeline = null;
       } else {
         const parsed = parseReplacePipeline(val, err);
@@ -378,23 +378,23 @@ export function injectMarkdown(
       }
       return;
     }
-    if (pn.map.has("plaster") || pn.flags.has("plaster")) {
-      filePlasterTemplate = pn.flags.has("plaster")
+    if (pn.map.has('plaster') || pn.flags.has('plaster')) {
+      filePlasterTemplate = pn.flags.has('plaster')
         ? undefined
-        : pn.map.get("plaster");
+        : pn.map.get('plaster');
       return;
     }
-    if (nKeys === 1 && pn.map.has("class")) {
+    if (nKeys === 1 && pn.map.has('class')) {
       return;
     }
-    if (nKeys === 1 && (pn.map.has("title") || pn.flags.has("title"))) {
+    if (nKeys === 1 && (pn.map.has('title') || pn.flags.has('title'))) {
       return;
     }
     const unknown = [...pn.map.keys(), ...pn.flags].filter(
       (k) => !SET_KNOWN_KEYS.has(k),
     );
     warn(
-      `instruction ignored: unrecognized set instruction argument: ${unknown.join(", ")}`,
+      `instruction ignored: unrecognized set instruction argument: ${unknown.join(', ')}`,
     );
   };
 
@@ -408,8 +408,8 @@ export function injectMarkdown(
     const parsed = parsePathAndRegion(unnamed);
     let region = parsed.region;
     const relPath = parsed.path;
-    if (namedArgs.map.has("region")) {
-      region = normalizeRegionName(namedArgs.map.get("region")!);
+    if (namedArgs.map.has('region')) {
+      region = normalizeRegionName(namedArgs.map.get('region')!);
     }
 
     const fb = consumeFenceBlock(queue);
@@ -435,8 +435,8 @@ export function injectMarkdown(
     const closing = mid.pop()!;
     const oldInner = mid;
 
-    if (namedArgs.map.has("diff-with") || namedArgs.map.has("diff-u")) {
-      err("diff-with / diff-u are not supported in this port");
+    if (namedArgs.map.has('diff-with') || namedArgs.map.has('diff-u')) {
+      err('diff-with / diff-u are not supported in this port');
       return [opening, ...oldInner, closing];
     }
 
@@ -462,10 +462,10 @@ export function injectMarkdown(
     const lang = codeLang(opening, relPath);
 
     let plasterInput: string | undefined;
-    if (namedArgs.flags.has("plaster")) {
+    if (namedArgs.flags.has('plaster')) {
       plasterInput = undefined;
-    } else if (namedArgs.map.has("plaster")) {
-      plasterInput = namedArgs.map.get("plaster");
+    } else if (namedArgs.map.has('plaster')) {
+      plasterInput = namedArgs.map.get('plaster');
     } else {
       plasterInput = filePlasterTemplate ?? ctx.globalPlasterTemplate;
     }
@@ -478,29 +478,29 @@ export function injectMarkdown(
       err,
     );
 
-    let joined = working.join("\n");
+    let joined = working.join('\n');
     if (fileReplacePipeline !== null) {
       joined = fileReplacePipeline(joined);
     }
     if (appReplacePipeline !== null) {
       joined = appReplacePipeline(joined);
     }
-    working = dropLeadingBlankLines(dropTrailingBlankLines(joined.split("\n")));
+    working = dropLeadingBlankLines(dropTrailingBlankLines(joined.split('\n')));
 
     const indentExtra = parseIndentForBlock(
-      namedArgs.map.get("indent-by"),
+      namedArgs.map.get('indent-by'),
       defaultIndentation,
       err,
     );
-    const indentStr = " ".repeat(indentExtra);
+    const indentStr = ' '.repeat(indentExtra);
 
-    let linePrefix = linePrefixRaw ?? "";
+    let linePrefix = linePrefixRaw ?? '';
     linePrefix = normalizeListLinePrefix(linePrefix);
 
     const escapeNg = ctx.escapeNgInterpolation !== false;
     const innerOut = working.map((line) =>
       escapeNgLine(
-        `${linePrefix}${indentStr}${line}`.replace(/\s+$/, ""),
+        `${linePrefix}${indentStr}${line}`.replace(/\s+$/, ''),
         escapeNg,
       ),
     );
@@ -511,14 +511,14 @@ export function injectMarkdown(
   while (lines.length > 0) {
     const line = lines.shift()!;
     out.push(line);
-    if (!line.includes("<?code-excerpt")) continue;
+    if (!line.includes('<?code-excerpt')) continue;
 
     const match = PROC_INSTR_RE.exec(line);
     if (match === null || match.groups === undefined) {
       const loose = PROC_INSTR_BODY.exec(line);
       const restAfterPi =
-        loose !== null ? line.slice(loose[0].length).trim() : "";
-      if (loose !== null && restAfterPi !== "") {
+        loose !== null ? line.slice(loose[0].length).trim() : '';
+      if (loose !== null && restAfterPi !== '') {
         warn(
           'processing instruction ignored: extraneous text after closing "?>"',
         );
@@ -527,12 +527,12 @@ export function injectMarkdown(
       err(`invalid processing instruction: ${line}`);
       continue;
     }
-    if (!match[0].endsWith("?>")) {
+    if (!match[0].endsWith('?>')) {
       warn('processing instruction must be closed using "?>" syntax');
     }
 
     const { linePrefix, unnamed, named } = match.groups;
-    const namedStr = named ?? "";
+    const namedStr = named ?? '';
 
     const st = ctx.instructionStats;
     if (st) {
@@ -552,5 +552,5 @@ export function injectMarkdown(
     out.push(...processFragmentBlock(lines, unnamed, namedStr, linePrefix));
   }
 
-  return out.join("\n");
+  return out.join('\n');
 }

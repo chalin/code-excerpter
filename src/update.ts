@@ -5,11 +5,11 @@
  * Dart source: `dart-lang/site-shared/pkgs/excerpter/lib/src/update.dart`
  */
 
-import { readFileSync } from "node:fs";
-import { readdir, readFile, stat, writeFile } from "node:fs/promises";
-import { dirname, join, relative, resolve } from "node:path";
-import { injectMarkdown, type MarkdownInjectContext } from "./inject.js";
-import type { InstructionStats } from "./instructionStats.js";
+import { readFileSync } from 'node:fs';
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, resolve } from 'node:path';
+import { injectMarkdown, type MarkdownInjectContext } from './inject.js';
+import type { InstructionStats } from './instructionStats.js';
 
 const MD_EXT = /\.md$/;
 const DOT_SEGMENT = /(^|[/\\])\./;
@@ -35,7 +35,7 @@ export interface UpdateOptions {
   log?: (msg: string) => void;
 }
 
-export type { InstructionStats } from "./instructionStats.js";
+export type { InstructionStats } from './instructionStats.js';
 
 export interface UpdateResult {
   filesProcessed: number;
@@ -60,7 +60,7 @@ function createDiskReadFile(
 ): (resolvedPath: string, region?: string) => string | null {
   return (resolvedPath: string): string | null => {
     try {
-      return readFileSync(resolve(srcRoot, resolvedPath), "utf8");
+      return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
     } catch {
       return null;
     }
@@ -109,7 +109,7 @@ export async function updatePaths(
   const exclude = opts.exclude ?? [];
   const dryRun = opts.dryRun ?? false;
   const log = opts.log ?? (() => {});
-  const srcRoot = resolve(opts.pathBase ?? "");
+  const srcRoot = resolve(opts.pathBase ?? '');
   const instructionStats: InstructionStats = { set: 0, fragment: 0 };
   const result: UpdateResult = {
     filesProcessed: 0,
@@ -156,14 +156,14 @@ export async function updatePaths(
 
     result.filesProcessed++;
     try {
-      const original = await readFile(filePath, "utf8");
+      const original = await readFile(filePath, 'utf8');
       const updated = injectMarkdown(original, ctx);
       if (updated !== original) {
         result.filesUpdated++;
         if (!dryRun) {
-          await writeFile(filePath, updated, "utf8");
+          await writeFile(filePath, updated, 'utf8');
         }
-        log(`${dryRun ? "needs update" : "updated"}: ${filePath}`);
+        log(`${dryRun ? 'needs update' : 'updated'}: ${filePath}`);
       }
     } catch (err) {
       const msg = `error: ${filePath}: ${err instanceof Error ? err.message : String(err)}`;

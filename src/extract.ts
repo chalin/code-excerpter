@@ -1,9 +1,9 @@
-import { type Directive, tryParseDirective } from "./directive.js";
+import { type Directive, tryParseDirective } from './directive.js';
 
-export const DEFAULT_PLASTER = "···";
+export const DEFAULT_PLASTER = '···';
 
-const fullFileKey = "\0";
-const defaultRegionKey = "";
+const fullFileKey = '\0';
+const defaultRegionKey = '';
 const blankLineRe = /^\s*$/;
 const leadingWhitespaceRe = /^[ \t]*/;
 
@@ -73,7 +73,7 @@ export function extractExcerpts(
   content: string,
   onWarning?: (msg: string) => void,
 ): Map<string, string[]> {
-  const lines = content.split("\n");
+  const lines = content.split('\n');
   const excerpts = new Map<string, string[]>();
   const openExcerpts = new Set<string>();
   let lineIdx = 0;
@@ -95,10 +95,10 @@ export function extractExcerpts(
 
   const warnRegions = (regions: string[], msg: (r: string) => string): void => {
     if (regions.length === 0) return;
-    const joinedRegions = regions.join(", ");
+    const joinedRegions = regions.join(', ');
     let s: string;
-    if (joinedRegions === "") {
-      s = "";
+    if (joinedRegions === '') {
+      s = '';
     } else if (regions.length > 1) {
       s = `s (${joinedRegions})`;
     } else {
@@ -165,11 +165,11 @@ export function extractExcerpts(
     }
 
     switch (directive.kind) {
-      case "startRegion":
+      case 'startRegion':
         containsDirectives = true;
         startRegion(directive);
         break;
-      case "endRegion":
+      case 'endRegion':
         containsDirectives = true;
         endRegion(directive);
         break;
@@ -235,7 +235,7 @@ export function getExcerptRegionLines(
   }
   if (excerpts.size === 0) {
     const raw = content
-      .split("\n")
+      .split('\n')
       .filter((line) => tryParseDirective(line) === null);
     return maxUnindent(dropTrailingBlankLines(raw));
   }

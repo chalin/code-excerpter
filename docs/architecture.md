@@ -88,7 +88,10 @@ orchestrates the extraction + transform pipeline for each code block.
   `<?code-excerpt?>`).
 - Blank lines between an instruction and the opening fence are copied to the
   output then skipped so the fence is recognized (common in authored markdown).
-  Fenced blocks may use **backticks** (` ``` `) or **tildes** (`~~~`).
+  Fenced blocks may use **backticks** (` ``` `), **tildes** (`~~~`), or Liquid
+  **prettify** (`{% prettify %}…{% endprettify %}`); see
+  [Supported fences](spec.md#code-fragment-instruction) in the spec for the full
+  list.
 - File-level set `replace` and optional programmatic `globalReplace` on the
   inject context compose on the joined excerpt string after per-instruction
   transforms (Dart `Updater` `fileAndCmdLineCodeTransformer` order).

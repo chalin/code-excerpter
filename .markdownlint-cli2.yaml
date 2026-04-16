@@ -2,13 +2,13 @@
 
 # Lint targets and ignores (root-only; replaces passing globs on the CLI).
 globs:
-  - "**/*.md"
+  - '**/*.md'
 
 ignores:
-  - "node_modules/**"
-  - "dist/**"
-  - "tmp/**"
-  - "test/fixtures/code-excerpt-updater/**"
+  - 'node_modules/**'
+  - 'dist/**'
+  - 'tmp/**'
+  - 'test/fixtures/code-excerpt-updater/**'
 
 config:
   default: true

@@ -12,16 +12,16 @@ const argSeparator = /\s*,\s*/;
 
 const lexemeIndex = 3;
 
-export type DirectiveKind = "startRegion" | "endRegion" | "plaster";
+export type DirectiveKind = 'startRegion' | 'endRegion' | 'plaster';
 
 function tryParseKind(lexeme: string | undefined): DirectiveKind | null {
   switch (lexeme) {
-    case "docregion":
-      return "startRegion";
-    case "enddocregion":
-      return "endRegion";
-    case "docplaster":
-      return "plaster";
+    case 'docregion':
+      return 'startRegion';
+    case 'enddocregion':
+      return 'endRegion';
+    case 'docplaster':
+      return 'plaster';
     default:
       return null;
   }
@@ -54,19 +54,19 @@ export function tryParseDirective(line: string): Directive | null {
   const kind = tryParseKind(lexeme);
   if (kind === null) return null;
 
-  const rawArgs = match[4] ?? "";
+  const rawArgs = match[4] ?? '';
   const issues: string[] = [];
 
   const argsMaybeWithDups: string[] =
-    rawArgs === "" ? [] : rawArgs.split(argSeparator);
+    rawArgs === '' ? [] : rawArgs.split(argSeparator);
 
   const argCounts = new Map<string, number>();
 
   for (let arg of argsMaybeWithDups) {
-    if (arg === "") {
-      issues.push("unquoted default region name is deprecated");
+    if (arg === '') {
+      issues.push('unquoted default region name is deprecated');
     } else if (arg === "''") {
-      arg = "";
+      arg = '';
     }
 
     const count = (argCounts.get(arg) ?? 0) + 1;
@@ -82,7 +82,7 @@ export function tryParseDirective(line: string): Directive | null {
     kind,
     line: match[0],
     indentation: match[1],
-    prefix: match[1] + (match[2] ?? ""),
+    prefix: match[1] + (match[2] ?? ''),
     lexeme,
     rawArgs,
     args,
