@@ -3,7 +3,7 @@ export {
   type Directive,
   type DirectiveKind,
   tryParseDirective,
-} from "./directive.js";
+} from './directive.js';
 export {
   DEFAULT_PLASTER,
   dropLeadingBlankLines,
@@ -11,13 +11,13 @@ export {
   extractExcerpts,
   getExcerptRegionLines,
   maxUnindent,
-} from "./extract.js";
-export { type InstructionStats } from "./instructionStats.js";
+} from './extract.js';
+export { type InstructionStats } from './instructionStats.js';
 export {
   injectMarkdown,
   type MarkdownInjectContext,
   PROC_INSTR_RE,
-} from "./inject.js";
+} from './inject.js';
 export {
   applyExcerptTransforms,
   applyExcerptTransformsInOrder,
@@ -32,9 +32,9 @@ export {
   type LinePredicate,
   parseReplacePipeline,
   patternToLinePredicate,
-} from "./transform.js";
+} from './transform.js';
 export {
   type UpdateOptions,
   type UpdateResult,
   updatePaths,
-} from "./update.js";
+} from './update.js';

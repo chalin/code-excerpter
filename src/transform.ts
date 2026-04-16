@@ -9,7 +9,7 @@
  */
 
 const escapedSlashRe = /\\\//g;
-const zeroChar = "\u0000";
+const zeroChar = '\u0000';
 const endRe = /^g;?\s*$/;
 const matchDollarNumRe = /(\$+)(&|\d*)/g;
 const slashLetterRe = /\\([\\nt])/g;
@@ -38,13 +38,13 @@ function parseIntArg(s: string | undefined): number | null {
 
 /** Keys that participate in the Dart-style per-argument transform chain. */
 const ORDERED_TRANSFORM_KEYS = new Set([
-  "skip",
-  "take",
-  "from",
-  "to",
-  "remove",
-  "retain",
-  "replace",
+  'skip',
+  'take',
+  'from',
+  'to',
+  'remove',
+  'retain',
+  'replace',
 ]);
 
 /**
@@ -96,7 +96,7 @@ export function patternToLinePredicate(
   arg: string,
   onError?: (msg: string) => void,
 ): LinePredicate | null {
-  if (arg.startsWith("/") && arg.endsWith("/") && arg.length >= 2) {
+  if (arg.startsWith('/') && arg.endsWith('/') && arg.length >= 2) {
     const inner = arg.slice(1, -1);
     try {
       const re = new RegExp(inner);
@@ -107,7 +107,7 @@ export function patternToLinePredicate(
       return null;
     }
   }
-  const stringToMatch = arg.startsWith("\\/") ? arg.slice(1) : arg;
+  const stringToMatch = arg.startsWith('\\/') ? arg.slice(1) : arg;
   return (line: string) => line.includes(stringToMatch);
 }
 
@@ -155,11 +155,11 @@ export function applyRetain(lines: string[], pred: LinePredicate): string[] {
 
 function slashCharToChar(ch: string): string {
   switch (ch) {
-    case "n":
-      return "\n";
-    case "t":
-      return "\t";
-    case "\\":
+    case 'n':
+      return '\n';
+    case 't':
+      return '\t';
+    case '\\':
       return zeroChar;
     default:
       return `\\${ch}`;
@@ -176,7 +176,7 @@ export function encodeSlashChar(s: string): string {
   return s
     .replaceAll(slashLetterRe, (_, ch: string) => slashCharToChar(ch))
     .replaceAll(slashHexRe, (_, hex: string) => hexToChar(hex))
-    .replaceAll(zeroChar, "\\");
+    .replaceAll(zeroChar, '\\');
 }
 
 function applyReplaceOne(
@@ -185,7 +185,7 @@ function applyReplaceOne(
   replacementRaw: string,
 ): string {
   const replacement = encodeSlashChar(replacementRaw);
-  const re = new RegExp(reSource, "g");
+  const re = new RegExp(reSource, 'g');
 
   if (!matchDollarNumRe.test(replacement)) {
     matchDollarNumRe.lastIndex = 0;
@@ -202,18 +202,18 @@ function applyReplaceOne(
       matchDollarNumRe,
       (_m0, dollars: string, ref: string) => {
         const numDollarChar = dollars.length;
-        const dollarOut = "$".repeat(numDollarChar >> 1);
+        const dollarOut = '$'.repeat(numDollarChar >> 1);
 
-        if (numDollarChar % 2 === 0 || ref === "") {
+        if (numDollarChar % 2 === 0 || ref === '') {
           return `${dollarOut}${ref}`;
         }
-        if (ref === "&") return `${dollarOut}${match}`;
+        if (ref === '&') return `${dollarOut}${match}`;
 
         const argNum = Number.parseInt(ref, 10);
         const resolved = Number.isNaN(argNum) ? groupCount + 1 : argNum;
         if (resolved > groupCount) return `${dollarOut}$${ref}`;
         const g = captureArgs[resolved - 1];
-        return `${dollarOut}${g ?? ""}`;
+        return `${dollarOut}${g ?? ''}`;
       },
     );
   });
@@ -230,21 +230,21 @@ export function parseReplacePipeline(
   const report = (detail: string): null => {
     onError?.(
       `invalid replace attribute (${JSON.stringify(replaceExp)}); ${detail}; ` +
-        "supported syntax is 1 or more semi-colon-separated: /regexp/replacement/g",
+        'supported syntax is 1 or more semi-colon-separated: /regexp/replacement/g',
     );
     return null;
   };
 
   const parts = replaceExp
     .replaceAll(escapedSlashRe, zeroChar)
-    .split("/")
-    .map((s) => s.replaceAll(zeroChar, "/"));
+    .split('/')
+    .map((s) => s.replaceAll(zeroChar, '/'));
 
   const len = parts.length;
   if (len < 4 || len % 3 !== 1) {
     return report(`argument has missing parts (${len})`);
   }
-  if (parts[0] !== "") {
+  if (parts[0] !== '') {
     return report(
       `argument should start with "/", not ${JSON.stringify(parts[0])}`,
     );
@@ -262,7 +262,7 @@ export function parseReplacePipeline(
     }
     try {
       // Validate pattern early (applyReplaceOne also constructs RegExp)
-      new RegExp(reSource, "g");
+      new RegExp(reSource, 'g');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       return report(`bad regexp ${JSON.stringify(reSource)}: ${msg}`);
@@ -311,17 +311,17 @@ export function applyExcerptTransforms(
     if (pred !== null) out = applyRetain(out, pred);
   }
 
-  if (options.replace !== undefined && options.replace !== "") {
+  if (options.replace !== undefined && options.replace !== '') {
     const pipeline = parseReplacePipeline(options.replace, onError);
     if (pipeline !== null) {
-      const joined = out.join("\n");
-      out = pipeline(joined).split("\n");
+      const joined = out.join('\n');
+      out = pipeline(joined).split('\n');
     }
   }
 
   const indent = parseIndentBy(options.indentBy, onError);
   if (indent > 0) {
-    const prefix = " ".repeat(indent);
+    const prefix = ' '.repeat(indent);
     out = out.map((line) => prefix + line);
   }
 

@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
-import { tryParseDirective } from "../src/directive.js";
+import { describe, expect, it } from 'vitest';
+import { tryParseDirective } from '../src/directive.js';
 import {
   DEFAULT_PLASTER,
   dropTrailingBlankLines,
   extractExcerpts,
   getExcerptRegionLines,
   maxUnindent,
-} from "../src/extract.js";
-import { dedent } from "./helpers/dedent.js";
+} from '../src/extract.js';
+import { dedent } from './helpers/dedent.js';
 
-const uri = "foo";
+const uri = 'foo';
 
 /**
  * Returns the non-directive lines of `content` (split on `\n`), with trailing
@@ -18,7 +18,7 @@ const uri = "foo";
  */
 function stripDirectives(content: string): string[] {
   const lines = content
-    .split("\n")
+    .split('\n')
     .filter((line) => tryParseDirective(line) === null);
   while (lines.length > 0 && /^\s*$/.test(lines[lines.length - 1])) {
     lines.pop();
@@ -26,63 +26,63 @@ function stripDirectives(content: string): string[] {
   return lines;
 }
 
-describe("extract", () => {
+describe('extract', () => {
   // -------------------------------------------------------------------------
-  describe("utilities", () => {
-    describe("dropTrailingBlankLines", () => {
-      it("empty array", () => {
+  describe('utilities', () => {
+    describe('dropTrailingBlankLines', () => {
+      it('empty array', () => {
         expect(dropTrailingBlankLines([])).toEqual([]);
       });
 
-      it("no trailing blanks", () => {
-        expect(dropTrailingBlankLines(["abc", "def"])).toEqual(["abc", "def"]);
+      it('no trailing blanks', () => {
+        expect(dropTrailingBlankLines(['abc', 'def'])).toEqual(['abc', 'def']);
       });
 
-      it("trailing blank lines removed", () => {
-        expect(dropTrailingBlankLines(["abc", "", "  "])).toEqual(["abc"]);
+      it('trailing blank lines removed', () => {
+        expect(dropTrailingBlankLines(['abc', '', '  '])).toEqual(['abc']);
       });
 
-      it("returns new array (does not mutate)", () => {
-        const original = ["abc", ""];
+      it('returns new array (does not mutate)', () => {
+        const original = ['abc', ''];
         const result = dropTrailingBlankLines(original);
-        expect(result).toEqual(["abc"]);
-        expect(original).toEqual(["abc", ""]);
+        expect(result).toEqual(['abc']);
+        expect(original).toEqual(['abc', '']);
       });
     });
 
-    describe("maxUnindent", () => {
-      it("empty array", () => {
+    describe('maxUnindent', () => {
+      it('empty array', () => {
         expect(maxUnindent([])).toEqual([]);
       });
 
-      it("all blank lines — no shift", () => {
-        expect(maxUnindent(["", "   "])).toEqual(["", "   "]);
+      it('all blank lines — no shift', () => {
+        expect(maxUnindent(['', '   '])).toEqual(['', '   ']);
       });
 
-      it("no indentation — no shift", () => {
-        expect(maxUnindent(["abc", "def"])).toEqual(["abc", "def"]);
+      it('no indentation — no shift', () => {
+        expect(maxUnindent(['abc', 'def'])).toEqual(['abc', 'def']);
       });
 
-      it("uniform indentation removed", () => {
-        expect(maxUnindent(["  abc", "  def"])).toEqual(["abc", "def"]);
+      it('uniform indentation removed', () => {
+        expect(maxUnindent(['  abc', '  def'])).toEqual(['abc', 'def']);
       });
 
-      it("partial indentation removed (min of non-blank lines)", () => {
-        expect(maxUnindent(["    abc", "  def"])).toEqual(["  abc", "def"]);
+      it('partial indentation removed (min of non-blank lines)', () => {
+        expect(maxUnindent(['    abc', '  def'])).toEqual(['  abc', 'def']);
       });
 
-      it("blank lines preserved (not shifted)", () => {
-        expect(maxUnindent(["  abc", "", "  def"])).toEqual(["abc", "", "def"]);
+      it('blank lines preserved (not shifted)', () => {
+        expect(maxUnindent(['  abc', '', '  def'])).toEqual(['abc', '', 'def']);
       });
 
-      it("line shorter than indent is left as-is", () => {
+      it('line shorter than indent is left as-is', () => {
         // A blank line (empty string) is shorter than minLen of 2 — left unchanged.
-        expect(maxUnindent(["  abc", "  def", ""])).toEqual(["abc", "def", ""]);
+        expect(maxUnindent(['  abc', '  def', ''])).toEqual(['abc', 'def', '']);
       });
     });
 
-    describe("stripDirectives helper sanity", () => {
-      it("filters directive lines and trims trailing blanks", () => {
+    describe('stripDirectives helper sanity', () => {
+      it('filters directive lines and trims trailing blanks', () => {
         const content = dedent`
           #docregion a
             abc
@@ -91,30 +91,30 @@ describe("extract", () => {
             def
           #enddocregion b
         `;
-        expect(stripDirectives(content)).toEqual(["  abc", "  def"]);
+        expect(stripDirectives(content)).toEqual(['  abc', '  def']);
       });
     });
 
-    describe("getExcerptRegionLines", () => {
-      it("uses extract map when directives exist", () => {
+    describe('getExcerptRegionLines', () => {
+      it('uses extract map when directives exist', () => {
         const s = dedent`
           // #docregion
           x
           // #enddocregion
         `;
-        expect(getExcerptRegionLines(uri, s, "")).toEqual(["x"]);
+        expect(getExcerptRegionLines(uri, s, '')).toEqual(['x']);
       });
 
-      it("falls back to full file when there are no directives", () => {
-        expect(getExcerptRegionLines(uri, "plain\n", "")).toEqual(["plain"]);
+      it('falls back to full file when there are no directives', () => {
+        expect(getExcerptRegionLines(uri, 'plain\n', '')).toEqual(['plain']);
       });
 
-      it("returns null for unknown named region", () => {
+      it('returns null for unknown named region', () => {
         expect(
           getExcerptRegionLines(
             uri,
-            "// #docregion a\n// #enddocregion a\n",
-            "b",
+            '// #docregion a\n// #enddocregion a\n',
+            'b',
           ),
         ).toBeNull();
       });
@@ -122,12 +122,12 @@ describe("extract", () => {
   });
 
   // -------------------------------------------------------------------------
-  describe("no excerpts", () => {
+  describe('no excerpts', () => {
     const cases = [
-      "",
-      "abc",
-      "abc\ndef\n",
-      "docregion" /* without leading # */,
+      '',
+      'abc',
+      'abc\ndef\n',
+      'docregion' /* without leading # */,
     ];
 
     for (const content of cases) {
@@ -138,16 +138,16 @@ describe("extract", () => {
   });
 
   // -------------------------------------------------------------------------
-  describe("basic delimited default region", () => {
-    it("1-line region", () => {
-      const result = extractExcerpts(uri, "#docregion\nabc\n#enddocregion");
-      expect(result).toEqual(new Map([["", ["abc"]]]));
+  describe('basic delimited default region', () => {
+    it('1-line region', () => {
+      const result = extractExcerpts(uri, '#docregion\nabc\n#enddocregion');
+      expect(result).toEqual(new Map([['', ['abc']]]));
     });
   });
 
   // -------------------------------------------------------------------------
-  describe("normalized indentation", () => {
-    it("default region — indentation stripped", () => {
+  describe('normalized indentation', () => {
+    it('default region — indentation stripped', () => {
       const result = extractExcerpts(
         uri,
         dedent`
@@ -156,10 +156,10 @@ describe("extract", () => {
           #enddocregion
         `,
       );
-      expect(result).toEqual(new Map([["", ["abc"]]]));
+      expect(result).toEqual(new Map([['', ['abc']]]));
     });
 
-    it("named region a — region content stripped; default region (from full file) untouched", () => {
+    it('named region a — region content stripped; default region (from full file) untouched', () => {
       const content = dedent`
         #docregion a
           abc
@@ -168,16 +168,16 @@ describe("extract", () => {
       const result = extractExcerpts(uri, content);
       expect(result).toEqual(
         new Map([
-          ["", ["  abc"]], // fullFileKey → default, NOT maxUnindented
-          ["a", ["abc"]], // named region IS maxUnindented
+          ['', ['  abc']], // fullFileKey → default, NOT maxUnindented
+          ['a', ['abc']], // named region IS maxUnindented
         ]),
       );
     });
   });
 
   // -------------------------------------------------------------------------
-  describe("two disjoint regions", () => {
-    it("produces correct default and named regions", () => {
+  describe('two disjoint regions', () => {
+    it('produces correct default and named regions', () => {
       const content = dedent`
         #docregion a
           abc
@@ -189,108 +189,108 @@ describe("extract", () => {
       const result = extractExcerpts(uri, content);
       expect(result).toEqual(
         new Map([
-          ["", stripDirectives(content)],
-          ["a", ["abc"]],
-          ["b", ["def"]],
+          ['', stripDirectives(content)],
+          ['a', ['abc']],
+          ['b', ['def']],
         ]),
       );
     });
   });
 
   // -------------------------------------------------------------------------
-  describe("region not closed", () => {
-    it("empty default region (not closed)", () => {
-      expect(extractExcerpts(uri, "#docregion")).toEqual(new Map([["", []]]));
+  describe('region not closed', () => {
+    it('empty default region (not closed)', () => {
+      expect(extractExcerpts(uri, '#docregion')).toEqual(new Map([['', []]]));
     });
 
-    it("default region with trailing newline (not closed)", () => {
-      expect(extractExcerpts(uri, "#docregion\n")).toEqual(new Map([["", []]]));
+    it('default region with trailing newline (not closed)', () => {
+      expect(extractExcerpts(uri, '#docregion\n')).toEqual(new Map([['', []]]));
     });
 
-    it("default region with content line (not closed)", () => {
-      expect(extractExcerpts(uri, "#docregion\nabc")).toEqual(
-        new Map([["", ["abc"]]]),
+    it('default region with content line (not closed)', () => {
+      expect(extractExcerpts(uri, '#docregion\nabc')).toEqual(
+        new Map([['', ['abc']]]),
       );
     });
 
-    it("named region with no content (not closed)", () => {
-      expect(extractExcerpts(uri, "#docregion a")).toEqual(
+    it('named region with no content (not closed)', () => {
+      expect(extractExcerpts(uri, '#docregion a')).toEqual(
         new Map([
-          ["", []], // fullFileKey → default (no non-directive lines)
-          ["a", []],
+          ['', []], // fullFileKey → default (no non-directive lines)
+          ['a', []],
         ]),
       );
     });
 
-    it("named region with content (not closed)", () => {
-      expect(extractExcerpts(uri, "#docregion a\nabc")).toEqual(
+    it('named region with content (not closed)', () => {
+      expect(extractExcerpts(uri, '#docregion a\nabc')).toEqual(
         new Map([
-          ["", ["abc"]], // fullFileKey → default
-          ["a", ["abc"]],
+          ['', ['abc']], // fullFileKey → default
+          ['a', ['abc']],
         ]),
       );
     });
   });
 
   // -------------------------------------------------------------------------
-  describe("problems", () => {
-    describe("empty region", () => {
-      it("warns for empty default region", () => {
+  describe('problems', () => {
+    describe('empty region', () => {
+      it('warns for empty default region', () => {
         const warnings: string[] = [];
         const result = extractExcerpts(
           uri,
-          "#docregion\n#enddocregion",
+          '#docregion\n#enddocregion',
           (msg) => warnings.push(msg),
         );
-        expect(warnings).toEqual(["empty region at foo:2"]);
-        expect(result).toEqual(new Map([["", []]]));
+        expect(warnings).toEqual(['empty region at foo:2']);
+        expect(result).toEqual(new Map([['', []]]));
       });
 
-      it("warns for empty named region", () => {
+      it('warns for empty named region', () => {
         const warnings: string[] = [];
         const result = extractExcerpts(
           uri,
-          "#docregion a\n#enddocregion a",
+          '#docregion a\n#enddocregion a',
           (msg) => warnings.push(msg),
         );
-        expect(warnings).toEqual(["empty region a at foo:2"]);
+        expect(warnings).toEqual(['empty region a at foo:2']);
         expect(result).toEqual(
           new Map([
-            ["", []],
-            ["a", []],
+            ['', []],
+            ['a', []],
           ]),
         );
       });
     });
 
-    describe("end before start", () => {
-      it("default region", () => {
+    describe('end before start', () => {
+      it('default region', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#enddocregion", (msg) => warnings.push(msg));
+        extractExcerpts(uri, '#enddocregion', (msg) => warnings.push(msg));
         expect(warnings).toEqual([
           'region "" end without a prior start at foo:1',
         ]);
       });
 
-      it("named region a", () => {
+      it('named region a', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#enddocregion a", (msg) => warnings.push(msg));
+        extractExcerpts(uri, '#enddocregion a', (msg) => warnings.push(msg));
         expect(warnings).toEqual([
           'region "a" end without a prior start at foo:1',
         ]);
       });
 
-      it("named regions a,b", () => {
+      it('named regions a,b', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#enddocregion a,b", (msg) => warnings.push(msg));
+        extractExcerpts(uri, '#enddocregion a,b', (msg) => warnings.push(msg));
         expect(warnings).toEqual([
           'regions ("a", "b") end without a prior start at foo:1',
         ]);
       });
 
-      it("start a, end default", () => {
+      it('start a, end default', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion a\n#enddocregion", (msg) =>
+        extractExcerpts(uri, '#docregion a\n#enddocregion', (msg) =>
           warnings.push(msg),
         );
         expect(warnings).toEqual([
@@ -299,44 +299,44 @@ describe("extract", () => {
       });
     });
 
-    describe("repeated start", () => {
-      it("default region repeated", () => {
+    describe('repeated start', () => {
+      it('default region repeated', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion\n#docregion", (msg) =>
+        extractExcerpts(uri, '#docregion\n#docregion', (msg) =>
           warnings.push(msg),
         );
         expect(warnings).toEqual(['repeated start for region "" at foo:2']);
       });
 
-      it("named region a repeated", () => {
+      it('named region a repeated', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion a\n#docregion a", (msg) =>
+        extractExcerpts(uri, '#docregion a\n#docregion a', (msg) =>
           warnings.push(msg),
         );
         expect(warnings).toEqual(['repeated start for region "a" at foo:2']);
       });
     });
 
-    describe("directive issues forwarded", () => {
-      it("unquoted default region name is deprecated", () => {
+    describe('directive issues forwarded', () => {
+      it('unquoted default region name is deprecated', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion ,a", (msg) => warnings.push(msg));
+        extractExcerpts(uri, '#docregion ,a', (msg) => warnings.push(msg));
         expect(warnings).toEqual([
-          "unquoted default region name is deprecated at foo:1",
+          'unquoted default region name is deprecated at foo:1',
         ]);
       });
 
-      it("duplicate region argument", () => {
+      it('duplicate region argument', () => {
         const warnings: string[] = [];
-        extractExcerpts(uri, "#docregion a,a", (msg) => warnings.push(msg));
+        extractExcerpts(uri, '#docregion a,a', (msg) => warnings.push(msg));
         expect(warnings).toEqual(['repeated argument "a" at foo:1']);
       });
     });
   });
 
   // -------------------------------------------------------------------------
-  describe("plaster", () => {
-    it("region a with 1 plaster between two sub-spans", () => {
+  describe('plaster', () => {
+    it('region a with 1 plaster between two sub-spans', () => {
       // Close and reopen region 'a' — the '···' plaster stays in the middle.
       const content = dedent`
         #docregion a
@@ -348,10 +348,10 @@ describe("extract", () => {
         #enddocregion a
       `;
       const result = extractExcerpts(uri, content);
-      expect(result.get("a")).toEqual(["abc", DEFAULT_PLASTER, "def"]);
+      expect(result.get('a')).toEqual(['abc', DEFAULT_PLASTER, 'def']);
     });
 
-    it("overlapping regions — each region ends independently", () => {
+    it('overlapping regions — each region ends independently', () => {
       // Region a ends before region b; b continues collecting lines.
       const content = dedent`
         #docregion a,b
@@ -363,14 +363,14 @@ describe("extract", () => {
       const result = extractExcerpts(uri, content);
       expect(result).toEqual(
         new Map([
-          ["", ["  abc", "  def"]], // fullFileKey → default, NOT maxUnindented
-          ["a", ["abc"]], // only '  abc', maxUnindented
-          ["b", ["abc", "def"]], // both lines, maxUnindented
+          ['', ['  abc', '  def']], // fullFileKey → default, NOT maxUnindented
+          ['a', ['abc']], // only '  abc', maxUnindented
+          ['b', ['abc', 'def']], // both lines, maxUnindented
         ]),
       );
     });
 
-    it("plaster indentation taken from the #enddocregion directive", () => {
+    it('plaster indentation taken from the #enddocregion directive', () => {
       // Content lines have 0 indent; #enddocregion has 2-space indent.
       // maxUnindent sees min=0 (from content lines) so plaster stays '  ···'.
       const content = dedent`
@@ -383,7 +383,7 @@ describe("extract", () => {
           #enddocregion a
       `;
       const result = extractExcerpts(uri, content);
-      expect(result.get("a")).toEqual(["abc", `  ${DEFAULT_PLASTER}`, "ghi"]);
+      expect(result.get('a')).toEqual(['abc', `  ${DEFAULT_PLASTER}`, 'ghi']);
     });
   });
 });
