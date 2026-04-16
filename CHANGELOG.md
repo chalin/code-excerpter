@@ -12,12 +12,19 @@ The format is based on [Keep a Changelog][], and this project adheres to
 - CLI **`--version`**, reporting `version` from `package.json`.
 - Plaster templates for common fenced-code language identifiers, including
   `javascript`, `typescript`, `csharp`, `cs`, and more.
+- [Markdown input assumptions](docs/spec.md#markdown-input-assumptions).
+- **Tilde (`~~~`) code fences** in markdown: recognized as opening/closing
+  fences and paired by fence **kind** (backtick vs tilde vs Liquid prettify),
+  consistent with backtick and prettify blocks.
+- Unit tests for the `dedent` test helper (`test/dedent.test.ts`).
 
 ### Changed
 
 - Development `package.json` version set to **0.2.0-dev** after the **0.1.0**
   npm release.
 - README: improved installation instructions and Overview wording.
+- Refactored `inject.test.ts` to use `dedent` helper for better test readability
+  and maintainability.
 
 ## [v0.1.0][] - 2026-04-13
 

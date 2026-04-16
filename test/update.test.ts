@@ -40,7 +40,14 @@ import {
 } from "node:fs";
 import { join, relative } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import type { InstructionStats } from "../src/instructionStats.js";
 import { updatePaths } from "../src/update.js";
+
+/** Expected `instructionStats` when no set/fragment directives were parsed. */
+const ZERO_STATS: InstructionStats = { set: 0, fragment: 0 };
+
+/** Expected `instructionStats` when exactly one fragment directive was parsed. */
+const ONE_FRAGMENT: InstructionStats = { set: 0, fragment: 1 };
 
 const TMP_ROOT = join(process.cwd(), "tmp");
 const TEST_TMP_DIR_PREFIX = "ce-test";
@@ -93,6 +100,12 @@ function useTmp(): string {
   return d;
 }
 
+/** Registers a tmp dir and returns conventional `src` / `docs` subtrees. */
+function useTmpSrcDocs(): { tmp: string; src: string; docs: string } {
+  const tmp = useTmp();
+  return { tmp, src: join(tmp, "src"), docs: join(tmp, "docs") };
+}
+
 const keepTestTmp =
   process.env.KEEP_TEST_TMP === "1" || process.env.KEEP_TEST_TMP === "true";
 
@@ -107,9 +120,7 @@ afterEach(() => {
 
 describe("updatePaths", () => {
   it("updates a markdown file with an excerpt", async () => {
-    const tmp = useTmp();
-    const src = join(tmp, "src");
-    const docs = join(tmp, "docs");
+    const { src, docs } = useTmpSrcDocs();
 
     writeFixture(
       src,
@@ -139,7 +150,7 @@ describe("updatePaths", () => {
     expect(result.filesProcessed).toBe(1);
     expect(result.filesUpdated).toBe(1);
     expect(result.errors).toEqual([]);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 1 });
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
 
     const updated = readFileSync(join(docs, "guide.md"), "utf8");
     expect(updated).toContain("var greeting = 'hello';");
@@ -147,9 +158,7 @@ describe("updatePaths", () => {
   });
 
   it("resolves excerpts when pathBase is relative to cwd (CLI -p)", async () => {
-    const tmp = useTmp();
-    const src = join(tmp, "src");
-    const docs = join(tmp, "docs");
+    const { src, docs } = useTmpSrcDocs();
 
     writeFixture(
       src,
@@ -178,16 +187,14 @@ describe("updatePaths", () => {
 
     expect(result.errors, result.errors.join("\n")).toEqual([]);
     expect(result.filesUpdated).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 1 });
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
     expect(readFileSync(join(docs, "page.md"), "utf8")).toContain(
       "const k = 42;",
     );
   });
 
   it("leaves unchanged files untouched (no write)", async () => {
-    const tmp = useTmp();
-    const src = join(tmp, "src");
-    const docs = join(tmp, "docs");
+    const { src, docs } = useTmpSrcDocs();
 
     writeFixture(
       src,
@@ -209,14 +216,12 @@ describe("updatePaths", () => {
 
     expect(result.filesProcessed).toBe(1);
     expect(result.filesUpdated).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 1 });
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
     expect(readFileSync(join(docs, "already-ok.md"), "utf8")).toBe(md);
   });
 
   it("processes multiple files in a directory tree", async () => {
-    const tmp = useTmp();
-    const src = join(tmp, "src");
-    const docs = join(tmp, "docs");
+    const { src, docs } = useTmpSrcDocs();
 
     writeFixture(src, "f.dart", "// #docregion\nA\n// #enddocregion\n");
 
@@ -248,7 +253,7 @@ describe("updatePaths", () => {
     const result = await updatePaths([docs]);
 
     expect(result.filesProcessed).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("respects --exclude patterns", async () => {
@@ -263,7 +268,7 @@ describe("updatePaths", () => {
     });
 
     expect(result.filesProcessed).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("dedupes the same root passed more than once", async () => {
@@ -272,7 +277,7 @@ describe("updatePaths", () => {
     writeFixture(docs, "a.md", "no PI\n");
     const result = await updatePaths([docs, docs]);
     expect(result.filesProcessed).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("dedupes overlapping roots when a subdirectory is also listed", async () => {
@@ -281,7 +286,7 @@ describe("updatePaths", () => {
     writeFixture(docs, "sub/page.md", "no PI\n");
     const result = await updatePaths([docs, join(docs, "sub")]);
     expect(result.filesProcessed).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("skips markdown when the sole root is a dot-prefixed directory", async () => {
@@ -293,7 +298,7 @@ describe("updatePaths", () => {
     const result = await updatePaths([root]);
 
     expect(result.filesProcessed).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("skips markdown when the sole root matches --exclude", async () => {
@@ -305,13 +310,11 @@ describe("updatePaths", () => {
     const result = await updatePaths([root], { exclude: [/vendor/] });
 
     expect(result.filesProcessed).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("dry-run does not write files", async () => {
-    const tmp = useTmp();
-    const src = join(tmp, "src");
-    const docs = join(tmp, "docs");
+    const { src, docs } = useTmpSrcDocs();
 
     writeFixture(src, "a.dart", "// #docregion\nNEW\n// #enddocregion\n");
     const original = [
@@ -330,7 +333,7 @@ describe("updatePaths", () => {
     });
 
     expect(result.filesUpdated).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 1 });
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
     expect(readFileSync(join(docs, "dry.md"), "utf8")).toBe(original);
   });
 
@@ -350,7 +353,7 @@ describe("updatePaths", () => {
 
     expect(result.errors.length).toBeGreaterThan(0);
     expect(result.errors[0]).toMatch(/cannot read source file/);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 1 });
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
   });
 
   it("records an error when a root path does not exist", async () => {
@@ -366,7 +369,7 @@ describe("updatePaths", () => {
     expect(result.filesUpdated).toBe(0);
     expect(result.errors.length).toBeGreaterThan(0);
     expect(result.errors[0]).toMatch(/ENOENT|no such file|not found/i);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("still processes existing roots when another root path is missing", async () => {
@@ -385,7 +388,7 @@ describe("updatePaths", () => {
     expect(result.errors.length).toBeGreaterThan(0);
     expect(result.filesProcessed).toBe(1);
     expect(result.filesUpdated).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("accepts individual files as paths", async () => {
@@ -396,7 +399,7 @@ describe("updatePaths", () => {
 
     expect(result.filesProcessed).toBe(1);
     expect(result.filesUpdated).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("skips a dot-prefixed markdown file when passed as a single-file path", async () => {
@@ -406,7 +409,7 @@ describe("updatePaths", () => {
     const result = await updatePaths([join(tmp, ".secret.md")]);
 
     expect(result.filesProcessed).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   // cSpell:ignore skipme
@@ -419,7 +422,7 @@ describe("updatePaths", () => {
     });
 
     expect(result.filesProcessed).toBe(0);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("skips non-md files when given a directory", async () => {
@@ -431,13 +434,11 @@ describe("updatePaths", () => {
     const result = await updatePaths([tmp]);
 
     expect(result.filesProcessed).toBe(1);
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 0 });
+    expect(result.instructionStats).toEqual(ZERO_STATS);
   });
 
   it("passes globalReplace through to injectMarkdown", async () => {
-    const tmp = useTmp();
-    const src = join(tmp, "src");
-    const docs = join(tmp, "docs");
+    const { src, docs } = useTmpSrcDocs();
 
     writeFixture(src, "r.dart", "// #docregion\nhello\n// #enddocregion\n");
     writeFixture(
@@ -451,7 +452,7 @@ describe("updatePaths", () => {
       globalReplace: "/hello/world/g",
     });
 
-    expect(result.instructionStats).toEqual({ set: 0, fragment: 1 });
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
     const updated = readFileSync(join(docs, "gr.md"), "utf8");
     expect(updated).toContain("world");
     expect(updated).not.toContain("hello");

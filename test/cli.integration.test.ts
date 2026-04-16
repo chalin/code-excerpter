@@ -15,6 +15,7 @@ import {
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { dedent } from "./helpers/index.js";
 
 const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 const TMP_ROOT = join(repoRoot, "tmp");
@@ -117,17 +118,21 @@ describe("CLI (integration)", () => {
     mkdirSync(docs, { recursive: true });
     writeFileSync(
       join(src, "a.dart"),
-      "// #docregion\nNEW\n// #enddocregion\n",
+      dedent`
+        // #docregion
+        NEW
+        // #enddocregion
+      `,
       "utf8",
     );
-    const md = [
-      '<?code-excerpt "a.dart"?>',
-      "",
-      "```dart",
-      "OLD",
-      "```",
-      "",
-    ].join("\n");
+    const md = dedent`
+      <?code-excerpt "a.dart"?>
+
+      \`\`\`dart
+      OLD
+      \`\`\`
+
+    `;
     const mdPath = join(docs, "page.md");
     writeFileSync(mdPath, md, "utf8");
 
