@@ -169,6 +169,34 @@ describe('transform', () => {
       expect(out).toEqual(['L42']);
     });
 
+    // ECMA-262 `GetSubstitution`: `$0`, `$00`, ... are interpreted literally as
+    // `$0`, `$00`, ... (no substitution), for details see {@link
+    // https://tc39.es/ecma262/#sec-getsubstitution}.
+    it('replace $0 matches JS behavior (literal $0, not full match)', () => {
+      for (const dz of ['$0', '$00', '$000']) {
+        // Sanity check expected JS behavior.
+        expect('ab'.replace(/a/, dz)).toBe(`${dz}b`);
+
+        const out = applyExcerptTransforms(['ab'], {
+          replace: `/a/${dz}/g`,
+        });
+        expect(out).toEqual([`${dz}b`]);
+      }
+    });
+
+    // ECMA-262 `GetSubstitution`: `$` + digits uses the longest *valid* capture
+    // reference (≤99), not a greedy parse of all digits — e.g. with one group,
+    // `$10` is `$1` + literal `0`, not group 10 (nor literal `$10`).
+    it('replace $10 matches JS when only one capture group (not greedy digits)', () => {
+      const js = 'ab'.replace(/(a)/, '$10');
+      expect(js).toBe('a0b');
+
+      const out = applyExcerptTransforms(['ab'], {
+        replace: String.raw`/(a)/$10/g`,
+      });
+      expect(out).toEqual(['a0b']);
+    });
+
     it('indent-by out of range', () => {
       const onError = vi.fn();
       const out = applyExcerptTransforms(['a'], { indentBy: '101' }, onError);

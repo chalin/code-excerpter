@@ -9,19 +9,21 @@ The format is based on [Keep a Changelog][], and this project adheres to
 
 ### Added
 
-- CLI **`--version`**, reporting `version` from `package.json`.
+- [Markdown input assumptions](docs/spec.md#markdown-input-assumptions).
 - Plaster templates for common fenced-code language identifiers, including
   `javascript`, `typescript`, `csharp`, `cs`, and more.
-- [Markdown input assumptions](docs/spec.md#markdown-input-assumptions).
 - **Tilde (`~~~`) code fences** in markdown: recognized as opening/closing
   fences and paired by fence **kind** (backtick vs tilde vs Liquid prettify),
   consistent with backtick and prettify blocks.
+- CLI **`--version`**, reporting `version` from `package.json`.
 
 ### Changed
 
 - Development `package.json` version set to **0.2.0-dev** after the **0.1.0**
   npm release.
 - README: improved installation instructions and Overview wording.
+- [`replace` expressions](docs/spec.md#replace-expressions) now features full
+  JavaScript semantics
 
 ## [v0.1.0][] - 2026-04-13
 

@@ -93,31 +93,66 @@ path string). Set instructions accept **only** `path-base`, `replace`,
 `plaster`, or no-op compatibility keys `class` / `title`—see
 [Set instruction](#set-instruction); any other set key triggers a warning.
 
-| Argument        | Type                         | Description                                                     |
-| --------------- | ---------------------------- | --------------------------------------------------------------- |
-| _(path string)_ | string                       | Positional: `"path/file.ext (region)"`                          |
-| `path-base`     | string                       | Sets the base directory for source file paths (set instruction) |
-| `region`        | string                       | Named region to extract (alternative to inline `(region)`)      |
-| `from`          | string/regex                 | Start extraction from the first line matching this pattern      |
-| `to`            | string/regex                 | End after the first line matching this pattern (that line kept) |
-| `skip`          | integer                      | Skip the first N lines of the extracted region                  |
-| `take`          | integer                      | Take only the first N lines of the extracted region             |
-| `remove`        | string/regex                 | Remove all lines matching this pattern                          |
-| `retain`        | string/regex                 | Keep only lines matching this pattern                           |
-| `replace`       | `"pattern" -> "replacement"` | Regex replace within extracted lines                            |
-| `indent-by`     | integer                      | Prepend N spaces to every output line                           |
-| `plaster`       | string                       | Override the plaster comment (use `"none"` to disable)          |
+| Argument name   | Argument values              | Description                                                           |
+| --------------- | ---------------------------- | --------------------------------------------------------------------- |
+| _(path string)_ | _string_                     | Positional: `"path/file.ext (region)"`                                |
+| `path-base`     | _string_                     | Sets the base directory for source file paths (set instruction)       |
+| `region`        | _string_                     | Named region to extract (alternative to inline `(region)`)            |
+| `from`          | _string_ \| `/regex/`        | Start extraction from the first line matching this pattern            |
+| `to`            | _string_ \| `/regex/`        | End after the first line matching this pattern (that line kept)       |
+| `skip`          | _integer_                    | Skip the first N lines of the extracted region                        |
+| `take`          | _integer_                    | Take only the first N lines of the extracted region                   |
+| `remove`        | _string_ \| `/regex/`        | Remove all lines matching this pattern                                |
+| `retain`        | _string_ \| `/regex/`        | Keep only lines matching this pattern                                 |
+| `replace`       | `/pattern/replacement/g;`... | Regex replace within extracted lines (supports multiple replacements) |
+| `indent-by`     | _integer_                    | Prepend N spaces to every output line                                 |
+| `plaster`       | _string_                     | Override the plaster comment (use `"none"` to disable)                |
 
-On a fragment, `replace` and `plaster` participate in the transform or plaster
-pass for that excerpt only. As the **sole** argument on a
+On a fragment instruction, `replace` and `plaster` participate in the transform
+or plaster pass for that excerpt only. As the **sole** argument on a
 [set instruction](#set-instruction), they set file-level defaults (`replace`
 runs on the joined excerpt after fragment transforms; `plaster` sets the
 template for later fragments, and bare `plaster` clears the file default).
 
+### Replace expressions
+
+The `replace` can be followed by a list of one or more semicolon-separated (`;`)
+Perl-like substitution expressions, but with JavaScript semantics. Each
+expression is of the form:
+
+```text
+/pattern/replacement/g
+```
+
+For example:
+
+```text
+/hello/bonjour/g;/world/mundo/g
+```
+
+Each **replacement** string uses the same rules as [String.replace()][] with a
+string replacer.
+
+- `$$` → literal `$`; `$&` → full match; `` $` `` → text before the match; `$'`
+  → text after the match.
+- `$1`–`$99` → numbered captures when valid (two-digit indices use ECMA’s
+  two-then-one-digit rule, e.g. one group and `$10` → group `1` plus literal
+  `0`). If the index is missing or out of range, the `$…` sequence is kept
+  literally (e.g. no parens → `$1` stays `$1`).
+- `$` followed only by `0` digits (e.g. `$0`, `$00`) → those characters
+  literally, not a “group 0” (use `$&` for the full match).
+
+For the full algorithm, see [ECMA-262 `GetSubstitution`][].
+
+[ECMA-262 `GetSubstitution`]: https://tc39.es/ecma262/#sec-getsubstitution
+[String.replace()]:
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
+
 ### Limitations
 
-- XML processing instructions cannot contain unescaped `>` characters. Use
-  `&gt;` if a `>` is needed in a pattern value.
+- XML processing instructions cannot contain `>` (including inside quoted
+  attribute values). For a regexp that must match `>`, use an escape such as
+  `\x3E` instead of a literal `>`.
 
 ## Processing Order of Arguments
 
