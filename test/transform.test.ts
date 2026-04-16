@@ -132,7 +132,9 @@ describe('transform', () => {
   });
 
   describe('applyExcerptTransformsInOrder', () => {
-    it('take then skip follows PI key order (differs from batch skip→take)', () => {
+    it.skip(
+      'take then skip follows PI key order (differs from batch skip→take)',
+      () => {
       const lines = ['a', 'b', 'c', 'd', 'e'];
       const map = new Map<string, string>([
         ['take', '2'],
@@ -141,11 +143,12 @@ describe('transform', () => {
       const out = applyExcerptTransformsInOrder(lines, ['take', 'skip'], map);
       expect(out).toEqual(['b']);
       expect(lines).toEqual(['a', 'b', 'c', 'd', 'e']);
-    });
+      },
+    );
   });
 
   describe('applyExcerptTransforms', () => {
-    it('applies fixed batch pipeline order: skip then take', () => {
+    it.skip('applies fixed batch pipeline order: skip then take', () => {
       const lines = ['a', 'b', 'c', 'd', 'e'];
       const out = applyExcerptTransforms(lines, { skip: '1', take: '2' });
       expect(out).toEqual(['b', 'c']);
@@ -168,7 +171,7 @@ describe('transform', () => {
       expect(out).toEqual(['ax', 'ay']);
     });
 
-    it('replace then indent-by', () => {
+    it.skip('replace then indent-by', () => {
       const out = applyExcerptTransforms(['x1', 'y1'], {
         replace: `/1/!/g`,
         indentBy: '2',

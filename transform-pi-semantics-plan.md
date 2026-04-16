@@ -14,7 +14,7 @@
 
 ## Transition Steps
 
-0. **Update the spec first**
+0. [x] **Update the spec first**
    - Revise [`docs/spec.md`](docs/spec.md) to define the new semantics before
      code or tests move.
    - Remove the old repeated-transform coalescing rule.
@@ -24,7 +24,7 @@
    - Update any nearby docs/comments that would otherwise contradict the new
      spec.
 
-1. **Set affected tests to skip**
+1. [x] **Set affected tests to skip**
    - Mark all tests that currently encode the old transform/coalescing semantics
      as skipped before implementation starts.
    - This includes the relevant cases in:
