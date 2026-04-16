@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   applyExcerptTransforms,
+  applyExcerptTransformsInOrder,
   applyFrom,
   applyRemove,
   applyRetain,
@@ -130,8 +131,21 @@ describe('transform', () => {
     });
   });
 
+  describe('applyExcerptTransformsInOrder', () => {
+    it('take then skip follows PI key order (differs from batch skip→take)', () => {
+      const lines = ['a', 'b', 'c', 'd', 'e'];
+      const map = new Map<string, string>([
+        ['take', '2'],
+        ['skip', '1'],
+      ]);
+      const out = applyExcerptTransformsInOrder(lines, ['take', 'skip'], map);
+      expect(out).toEqual(['b']);
+      expect(lines).toEqual(['a', 'b', 'c', 'd', 'e']);
+    });
+  });
+
   describe('applyExcerptTransforms', () => {
-    it('applies spec order: skip then take', () => {
+    it('applies fixed batch pipeline order: skip then take', () => {
       const lines = ['a', 'b', 'c', 'd', 'e'];
       const out = applyExcerptTransforms(lines, { skip: '1', take: '2' });
       expect(out).toEqual(['b', 'c']);

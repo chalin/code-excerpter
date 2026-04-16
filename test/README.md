@@ -13,8 +13,11 @@ Role of each test file:
 
 - **`inject.test.ts`** — Direct `injectMarkdown` calls: PIs, fences, errors,
   set/fragment stats, many edge paths.
-- **`transform.test.ts`** — `applyExcerptTransforms` / `parseIndentBy`:
-  transform pipeline in isolation.
+- **`transform.test.ts`** — `applyExcerptTransforms` / `parseIndentBy`: per-step
+  behavior and **batch** multi-transform order (fixed pipeline in one options
+  object). Production `injectMarkdown` chains transforms in **PI attribute
+  order** (`applyExcerptTransformsInOrder`); see
+  [spec § Processing order](../docs/spec.md#processing-order-of-transform-arguments).
 - **`updater-goldens.test.ts`** — Full `injectMarkdown` + `readFile` over
   vendored [`code_excerpt_updater`][] `test_data` fixtures (Dart golden parity).
 

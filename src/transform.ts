@@ -1,11 +1,15 @@
 /**
- * Excerpt transform pipeline (ported from `chalin/code_excerpt_updater` `code_transformer`).
+ * Excerpt transforms (ported from `chalin/code_excerpt_updater` `code_transformer`).
  *
- * {@link applyExcerptTransforms} applies transforms in the default spec order
- * (skip → take → from → to → remove → retain → replace → indent-by).
- * {@link applyExcerptTransformsInOrder} applies them in PI attribute order instead,
- * matching how the Dart updater iterates its `LinkedHashMap` of named args.
- * See `docs/spec.md` for details.
+ * {@link applyExcerptTransformsInOrder} is what markdown injection uses: one
+ * transform key at a time, in **PI attribute order** (Dart `LinkedHashMap`
+ * insertion order).
+ *
+ * {@link applyExcerptTransforms} applies every supplied option in a single call
+ * using a **fixed** pipeline order (skip → take → from → to → remove → retain →
+ * replace → indent-by), mainly for unit tests and direct library callers—not for
+ * simulating a full `<?code-excerpt?>` line. See `docs/spec.md` § “Processing order
+ * of transform arguments”.
  */
 
 const escapedSlashRe = /\\\//g;
@@ -248,7 +252,9 @@ export function parseReplacePipeline(
 }
 
 /**
- * Applies transform options to excerpt lines in spec order. Does not mutate `lines`.
+ * Applies transform options to excerpt lines in **fixed pipeline order** when
+ * several fields are set at once. Does not mutate `lines`. For markdown PIs,
+ * use {@link applyExcerptTransformsInOrder} instead.
  *
  * @param onError - Parse/validation problems (indent-by, replace, bad `/regexp/` patterns).
  */

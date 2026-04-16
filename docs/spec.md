@@ -154,22 +154,27 @@ For the full algorithm, see [ECMA-262 `GetSubstitution`][].
   attribute values). For a regexp that must match `>`, use an escape such as
   `\x3E` instead of a literal `>`.
 
-## Processing Order of Arguments
+## Processing order of transform arguments
 
-When multiple transform arguments are present, `code-excerpter` applies them in
-**the order they appear** in the processing instruction.
+These fragment instruction keys are **line transform operations**:
 
-The usual relative order is:
+- `from`
+- `indent-by`
+- `remove`
+- `replace`
+- `retain`
+- `skip`
+- `take`
+- `to`
 
-1. `skip`
-2. `take`
-3. `from`
-4. `to`
-5. `remove`
-6. `retain`
-7. `replace`
+When more than one of these keys appear in a fragment instruction, they are
+applied in the order they appear in the fragment instruction, except for the following:
 
-`indent-by` is handled separately after the transform chain.
+- `plaster` is applied to joined region spans first
+- `indent-by` is applied last
+
+If the same transform key appears more than once, order stays where the key was
+first seen; the **last** attribute value wins for that key.
 
 ## Instruction and fence prefixes
 

@@ -96,7 +96,7 @@ orchestrates the extraction + transform pipeline for each code block.
   inject context compose on the joined excerpt string after per-instruction
   transforms (Dart `Updater` `fileAndCmdLineCodeTransformer` order).
 - Per-instruction transform order follows named-argument order in the PI; see
-  [`docs/spec.md`](spec.md#processing-order-of-arguments).
+  [`docs/spec.md`](spec.md#processing-order-of-transform-arguments).
 - `readFile(path, region?)` mirrors Dart `ExcerptGetter` when the callback
   resolves `.txt` fragments and `.excerpt.yaml` regions; optional
   `escapeNgInterpolation` / `globalPlasterTemplate` match updater defaults.
