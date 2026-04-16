@@ -1,5 +1,7 @@
 # Transition Fragment PI Semantics: Spec First, Then Bottom-Up TDD
 
+<!-- markdownlint-disable ol-prefix -->
+
 ## Summary
 
 - Adopt the new fragment-PI model:
@@ -7,6 +9,7 @@
     `skip`, `take`, `to`; applied strictly in encounter order; repeats allowed.
   - **Fragment settings (FSs)**: `indent-by`, `plaster`; not part of the TO
     chain.
+  - `plaster` values are full plaster templates, not just plaster strings.
   - Duplicate FSs are an error; the fragment is left untouched.
   - Invalid FS values are an error; the fragment is left untouched.
 - Make the transition explicitly **spec-first**, then do a staged bottom-up TDD
@@ -43,7 +46,7 @@
      - strict encounter order
      - no coalescing
 
-3. **Refactor PI parsing and injection**
+3. [x] **Refactor PI parsing and injection**
    - Change [`src/inject.ts`](src/inject.ts) so fragment PIs parse into:
      - an ordered TO list
      - a separate FS structure
@@ -61,6 +64,24 @@
      - duplicate `indent-by`
      - duplicate `plaster`
      - invalid FSs leaving the fragment untouched
+
+3b. [ ] **Refactor arg-processing tests**
+
+- Extract focused tests for PI argument parsing/classification so repeated TOs,
+  singleton settings, and scope-sensitive `replace` behavior are not covered
+  only through full `injectMarkdown` flows.
+- Keep `inject.test.ts` for integration-style PI/block behavior and error
+  outcomes, but move parser-shape assertions into a narrower test surface.
+- Assess the current plaster/injection code for historical YAML-excerpt vs
+  pre-YAML behavior remnants, and streamline the core so it has **no** internal
+  branch at all for that legacy evolution.
+- If any apparent no-branch requirement turns out to have a real blocker,
+  isolate and document that case explicitly for review instead of preserving
+  historical gating silently.
+- Use the extracted tests to document:
+  - exact encounter-order preservation for repeated TOs
+  - singleton-setting rejection for `region`, `indent-by`, and `plaster`
+  - `replace` behaving as `S/TOp` depending on scope
 
 4. **Rework golden expectations**
    - Update or replace the old parity-oriented expectations in

@@ -133,9 +133,7 @@ describe('transform', () => {
   });
 
   describe('applyExcerptTransformsInOrder', () => {
-    it.skip(
-      'take then skip follows PI key order (differs from batch skip→take)',
-      () => {
+    it.skip('take then skip follows PI key order (differs from batch skip→take)', () => {
       const lines = ['a', 'b', 'c', 'd', 'e'];
       const map = new Map<string, string>([
         ['take', '2'],
@@ -144,8 +142,7 @@ describe('transform', () => {
       const out = applyExcerptTransformsInOrder(lines, ['take', 'skip'], map);
       expect(out).toEqual(['b']);
       expect(lines).toEqual(['a', 'b', 'c', 'd', 'e']);
-      },
-    );
+    });
   });
 
   describe('applyOrderedExcerptTransformOps', () => {
@@ -177,10 +174,13 @@ describe('transform', () => {
     });
 
     it('repeats the same transform key without coalescing', () => {
-      const out = applyOrderedExcerptTransformOps(['abc'], [
-        { name: 'replace', value: `/a/x/g` },
-        { name: 'replace', value: `/x/y/g` },
-      ]);
+      const out = applyOrderedExcerptTransformOps(
+        ['abc'],
+        [
+          { name: 'replace', value: `/a/x/g` },
+          { name: 'replace', value: `/x/y/g` },
+        ],
+      );
       expect(out).toEqual(['ybc']);
     });
   });

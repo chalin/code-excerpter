@@ -16,7 +16,8 @@ Role of each test file:
 - **`transform.test.ts`** — `applyExcerptTransforms` / `parseIndentBy`: per-step
   behavior for line transform operations plus the current batch helper behavior.
   The spec now defines argument Scope/Kind and fragment TOp ordering; these
-  tests will move with the transition. See [spec § PI Arguments](../docs/spec.md#pi-arguments).
+  tests will move with the transition. See
+  [spec § PI Arguments](../docs/spec.md#pi-arguments).
 - **`updater-goldens.test.ts`** — Full `injectMarkdown` + `readFile` over
   vendored [`code_excerpt_updater`][] `test_data` fixtures (Dart golden parity).
 

@@ -6,8 +6,8 @@ import {
 } from './extract.js';
 import type { InstructionStats } from './instructionStats.js';
 import {
-  applyExcerptTransformsInOrder,
-  parseIndentBy,
+  applyOrderedExcerptTransformOps,
+  type ExcerptTransformOp,
   parseReplacePipeline,
 } from './transform.js';
 
@@ -41,12 +41,14 @@ const SET_KNOWN_KEYS = new Set([
   'title',
 ]);
 
+interface ParsedNamedArgEntry {
+  key: string;
+  value: string | undefined;
+  hasValue: boolean;
+}
+
 interface ParsedNamedArgs {
-  map: Map<string, string>;
-  /** Keys present as bare flags (`plaster` with no `=`). */
-  flags: Set<string>;
-  /** First-occurrence order of every named key (insertion order in the PI). */
-  keyOrder: string[];
+  entries: ParsedNamedArgEntry[];
 }
 
 // TODO: bring in x`` string template / regex helper
@@ -86,8 +88,8 @@ export interface MarkdownInjectContext {
   /** Initial `path-base` (directory prefix for excerpt sources). */
   pathBase?: string;
   /**
-   * When `true`, applies language-specific plaster templates in YAML excerpt
-   * mode (default `false`, legacy fragment-style behavior).
+   * When `true`, applies language-specific plaster comment wrappers in YAML
+   * excerpt mode (default `false`, legacy fragment-style behavior).
    */
   excerptsYaml?: boolean;
   /** Default extra spaces when `indent-by` is omitted on a fragment directive. */
@@ -98,7 +100,7 @@ export interface MarkdownInjectContext {
    */
   globalReplace?: string;
   /**
-   * Default plaster template when neither the PI nor a file-level `plaster` set
+   * Default plaster text when neither the PI nor a file-level `plaster` set
    * instruction overrides it.
    */
   globalPlasterTemplate?: string;
@@ -152,9 +154,7 @@ function parseNamedArgs(
   named: string,
   onError?: (msg: string) => void,
 ): ParsedNamedArgs {
-  const map = new Map<string, string>();
-  const flags = new Set<string>();
-  const keyOrder: string[] = [];
+  const entries: ParsedNamedArgEntry[] = [];
   let rest = named.trim();
   while (rest.length > 0) {
     const m = NAMED_ARG_RE.exec(rest);
@@ -164,15 +164,99 @@ function parseNamedArgs(
     }
     const key = m[1]!;
     const eqOrBare = m[2] ?? '';
-    if (!keyOrder.includes(key)) keyOrder.push(key);
-    if (eqOrBare.trimStart().startsWith('=')) {
-      map.set(key, m[3] ?? '');
-    } else {
-      flags.add(key);
-    }
+    entries.push({
+      key,
+      value: m[3] ?? undefined,
+      hasValue: eqOrBare.trimStart().startsWith('='),
+    });
     rest = rest.slice(m[0].length);
   }
-  return { map, flags, keyOrder };
+  return { entries };
+}
+
+type FragmentSettingName = 'region' | 'indent-by' | 'plaster';
+
+interface ParsedFragmentArgs {
+  transformOps: ExcerptTransformOp[];
+  regionValue: string | undefined;
+  indentByRaw: string | undefined;
+  plasterTemplate: string | undefined;
+  hasBarePlaster: boolean;
+  hasUnsupportedDiff: boolean;
+}
+
+function parseFragmentArgs(
+  parsed: ParsedNamedArgs,
+  onError?: (msg: string) => void,
+): ParsedFragmentArgs | null {
+  const transformOps: ExcerptTransformOp[] = [];
+  let regionValue: string | undefined;
+  let indentByRaw: string | undefined;
+  let plasterTemplate: string | undefined;
+  let hasBarePlaster = false;
+  let hasUnsupportedDiff = false;
+  const seenSettings = new Set<FragmentSettingName>();
+
+  const rejectRepeatedSetting = (key: FragmentSettingName): null => {
+    onError?.(`${key}: repeated setting argument on fragment instruction`);
+    return null;
+  };
+
+  for (const entry of parsed.entries) {
+    switch (entry.key) {
+      case 'from':
+      case 'to':
+      case 'skip':
+      case 'take':
+      case 'remove':
+      case 'retain':
+      case 'replace':
+        if (!entry.hasValue) continue;
+        transformOps.push({
+          name: entry.key,
+          value: entry.value ?? '',
+        });
+        break;
+      case 'region':
+        if (seenSettings.has('region')) return rejectRepeatedSetting('region');
+        seenSettings.add('region');
+        regionValue = entry.hasValue ? (entry.value ?? '') : undefined;
+        break;
+      case 'indent-by':
+        if (seenSettings.has('indent-by')) {
+          return rejectRepeatedSetting('indent-by');
+        }
+        seenSettings.add('indent-by');
+        indentByRaw = entry.hasValue ? (entry.value ?? '') : undefined;
+        break;
+      case 'plaster':
+        if (seenSettings.has('plaster')) {
+          return rejectRepeatedSetting('plaster');
+        }
+        seenSettings.add('plaster');
+        if (entry.hasValue) {
+          plasterTemplate = entry.value ?? '';
+        } else {
+          hasBarePlaster = true;
+        }
+        break;
+      case 'diff-with':
+      case 'diff-u':
+        hasUnsupportedDiff = true;
+        break;
+      default:
+        break;
+    }
+  }
+
+  return {
+    transformOps,
+    regionValue,
+    indentByRaw,
+    plasterTemplate,
+    hasBarePlaster,
+    hasUnsupportedDiff,
+  };
 }
 
 function normalizeRegionName(region: string): string {
@@ -243,55 +327,68 @@ const PLASTER_COMMENT_DELIMS_BY_LANG = new Map<string, PlasterCommentDelims>([
 ]);
 
 function formatPlasterWithDelims(
-  marker: string,
+  text: string,
   d: PlasterCommentDelims,
 ): string {
-  return [d.start, marker, ...(d.end ? [d.end] : [])].join(' ');
+  if (text === '') {
+    return d.end ? `${d.start} ${d.end}` : d.start;
+  }
+  return d.end ? `${d.start} ${text} ${d.end}` : `${d.start} ${text}`;
 }
 
-function plasterTemplateForLang(lang: string): string | null {
+function plasterTextForLang(text: string, lang: string): string | null {
   const d = PLASTER_COMMENT_DELIMS_BY_LANG.get(lang.toLowerCase());
   if (d === undefined) return null;
-  return formatPlasterWithDelims(DEFAULT_PLASTER, d);
+  return formatPlasterWithDelims(text, d);
 }
 
 /**
- * Plaster pass: `plaster="none"` removes default-plaster lines; if `excerptsYaml`
- * is false, returns lines unchanged; otherwise substitutes language templates
- * around `DEFAULT_PLASTER`.
+ * Plaster pass: `plaster="none"` removes default-plaster lines. In legacy mode,
+ * explicit plaster text replaces the raw `DEFAULT_PLASTER` marker. In YAML
+ * excerpt mode, plaster text is wrapped using the language-specific plaster
+ * comment form.
  */
 function applyPlasterToLines(
   lines: string[],
-  plasterTemplate: string | undefined,
+  plasterText: string | undefined,
   lang: string,
   excerptsYaml: boolean,
 ): string[] {
-  if (plasterTemplate === 'none') {
+  if (plasterText === 'none') {
     return lines.filter((line) => !line.includes(DEFAULT_PLASTER));
   }
   if (!excerptsYaml) {
-    return lines;
+    if (plasterText === undefined) return lines;
+    return lines
+      .join('\n')
+      .split(DEFAULT_PLASTER)
+      .join(plasterText)
+      .split('\n');
   }
-  let tpl: string | null =
-    plasterTemplate !== undefined && plasterTemplate !== ''
-      ? plasterTemplate.replaceAll('$defaultPlaster', DEFAULT_PLASTER)
-      : null;
-  if (tpl === null || tpl === '') {
-    const def = plasterTemplateForLang(lang);
-    if (def === null) return lines;
-    tpl = def;
-  }
+  const tpl = plasterTextForLang(plasterText ?? DEFAULT_PLASTER, lang);
+  if (tpl === null) return lines;
   const joined = lines.join('\n');
   return joined.split(DEFAULT_PLASTER).join(tpl).split('\n');
 }
 
-function parseIndentForBlock(
+function tryParseFragmentIndent(
   raw: string | undefined,
   defaultIndentation: number,
   onError?: (msg: string) => void,
-): number {
-  if (raw === undefined) return defaultIndentation;
-  return parseIndentBy(raw, onError);
+): { ok: boolean; value: number } {
+  if (raw === undefined) {
+    return { ok: true, value: defaultIndentation };
+  }
+  if (!/^[-+]?\d+$/.test(raw)) {
+    onError?.(`indent-by: error parsing integer value: ${JSON.stringify(raw)}`);
+    return { ok: false, value: defaultIndentation };
+  }
+  const n = Number.parseInt(raw, 10);
+  if (n < 0 || n > 100) {
+    onError?.(`indent-by: integer out of range: ${n}`);
+    return { ok: false, value: defaultIndentation };
+  }
+  return { ok: true, value: n };
 }
 
 /** Consumes a markdown code fence (opening through closing) from `queue`. */
@@ -356,7 +453,7 @@ export function injectMarkdown(
   }
 
   const handleSetInstruction = (pn: ParsedNamedArgs): void => {
-    const nKeys = pn.map.size + pn.flags.size;
+    const nKeys = pn.entries.length;
     if (nKeys > 1) {
       err('set instruction should have at most one argument');
       return;
@@ -364,12 +461,21 @@ export function injectMarkdown(
     if (nKeys === 0) {
       return;
     }
-    if (pn.map.has('path-base')) {
-      pathBase = pn.map.get('path-base') ?? '';
+    const entry = pn.entries[0]!;
+    if (entry.key === 'path-base') {
+      if (!entry.hasValue) {
+        err('path-base: invalid setting value on set instruction');
+        return;
+      }
+      pathBase = entry.hasValue ? (entry.value ?? '') : '';
       return;
     }
-    if (pn.map.has('replace')) {
-      const val = pn.map.get('replace') ?? '';
+    if (entry.key === 'replace') {
+      if (!entry.hasValue) {
+        err('replace: invalid setting value on set instruction');
+        return;
+      }
+      const val = entry.hasValue ? (entry.value ?? '') : '';
       if (val === '') {
         fileReplacePipeline = null;
       } else {
@@ -378,21 +484,24 @@ export function injectMarkdown(
       }
       return;
     }
-    if (pn.map.has('plaster') || pn.flags.has('plaster')) {
-      filePlasterTemplate = pn.flags.has('plaster')
-        ? undefined
-        : pn.map.get('plaster');
+    if (entry.key === 'plaster') {
+      if (!entry.hasValue) {
+        err('plaster: invalid setting value on set instruction');
+        return;
+      }
+      const val = entry.value ?? '';
+      filePlasterTemplate = val === 'unset' ? undefined : val;
       return;
     }
-    if (nKeys === 1 && pn.map.has('class')) {
+    if (entry.key === 'class') {
       return;
     }
-    if (nKeys === 1 && (pn.map.has('title') || pn.flags.has('title'))) {
+    if (entry.key === 'title') {
       return;
     }
-    const unknown = [...pn.map.keys(), ...pn.flags].filter(
-      (k) => !SET_KNOWN_KEYS.has(k),
-    );
+    const unknown = pn.entries
+      .map((e) => e.key)
+      .filter((k) => !SET_KNOWN_KEYS.has(k));
     warn(
       `instruction ignored: unrecognized set instruction argument: ${unknown.join(', ')}`,
     );
@@ -405,11 +514,12 @@ export function injectMarkdown(
     linePrefixRaw: string | undefined,
   ): string[] => {
     const namedArgs = parseNamedArgs(namedStr, err);
+    const fragmentArgs = parseFragmentArgs(namedArgs, err);
     const parsed = parsePathAndRegion(unnamed);
     let region = parsed.region;
     const relPath = parsed.path;
-    if (namedArgs.map.has('region')) {
-      region = normalizeRegionName(namedArgs.map.get('region')!);
+    if (fragmentArgs?.regionValue !== undefined) {
+      region = normalizeRegionName(fragmentArgs.regionValue);
     }
 
     const fb = consumeFenceBlock(queue);
@@ -435,7 +545,11 @@ export function injectMarkdown(
     const closing = mid.pop()!;
     const oldInner = mid;
 
-    if (namedArgs.map.has('diff-with') || namedArgs.map.has('diff-u')) {
+    if (fragmentArgs === null) {
+      return [opening, ...oldInner, closing];
+    }
+
+    if (fragmentArgs.hasUnsupportedDiff) {
       err('diff-with / diff-u are not supported in this port');
       return [opening, ...oldInner, closing];
     }
@@ -462,19 +576,22 @@ export function injectMarkdown(
     const lang = codeLang(opening, relPath);
 
     let plasterInput: string | undefined;
-    if (namedArgs.flags.has('plaster')) {
-      plasterInput = undefined;
-    } else if (namedArgs.map.has('plaster')) {
-      plasterInput = namedArgs.map.get('plaster');
+    if (fragmentArgs.hasBarePlaster) {
+      err('plaster: invalid setting value on fragment instruction');
+      return [opening, ...oldInner, closing];
+    } else if (fragmentArgs.plasterTemplate === 'unset') {
+      err('plaster: invalid setting value on fragment instruction');
+      return [opening, ...oldInner, closing];
+    } else if (fragmentArgs.plasterTemplate !== undefined) {
+      plasterInput = fragmentArgs.plasterTemplate;
     } else {
       plasterInput = filePlasterTemplate ?? ctx.globalPlasterTemplate;
     }
     working = applyPlasterToLines(working, plasterInput, lang, excerptsYaml);
 
-    working = applyExcerptTransformsInOrder(
+    working = applyOrderedExcerptTransformOps(
       working,
-      namedArgs.keyOrder,
-      namedArgs.map,
+      fragmentArgs.transformOps,
       err,
     );
 
@@ -487,11 +604,15 @@ export function injectMarkdown(
     }
     working = dropLeadingBlankLines(dropTrailingBlankLines(joined.split('\n')));
 
-    const indentExtra = parseIndentForBlock(
-      namedArgs.map.get('indent-by'),
+    const parsedIndent = tryParseFragmentIndent(
+      fragmentArgs.indentByRaw,
       defaultIndentation,
       err,
     );
+    if (!parsedIndent.ok) {
+      return [opening, ...oldInner, closing];
+    }
+    const indentExtra = parsedIndent.value;
     const indentStr = ' '.repeat(indentExtra);
 
     let linePrefix = linePrefixRaw ?? '';

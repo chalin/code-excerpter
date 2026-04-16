@@ -31,9 +31,9 @@ This document defines the feature scope for `code-excerpter` v1.
 
 ### Code transforms and settings
 
-Transform operations, setting arguments, and scope-sensitive `replace`
-semantics are in scope. See [`docs/spec.md`](spec.md#pi-arguments) for the
-canonical Scope/Kind table and fragment-order rules.
+Transform operations, setting arguments, and scope-sensitive `replace` semantics
+are in scope. See [`docs/spec.md`](spec.md#pi-arguments) for the canonical
+Scope/Kind table and fragment-order rules.
 
 ### Path-base set instructions
 

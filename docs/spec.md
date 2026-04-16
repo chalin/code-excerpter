@@ -82,9 +82,9 @@ file-level `replace`, and file-level `plaster`:
 ```
 
 A set instruction has no path argument and no following code block. Each set
-line must contain **at most one** named argument (or one bare flag such as
-`plaster` with no `=`). Set values apply to all subsequent fragment instructions
-in the same file until another set instruction for that key replaces them.
+line must contain **at most one** named argument. Set values apply to all
+subsequent fragment instructions in the same file until another set instruction
+for that key replaces them.
 
 ## PI Arguments
 
@@ -127,7 +127,7 @@ Global CLI settings are scoped to all files:
 
 - `indent-by` sets a global indent by value.
 - `path-base` sets a global base directory for source file paths.
-- `plaster` sets a global plaster template.
+- `plaster` sets the global plaster template.
 - `replace` sets a global replacement expression.
 
 ### Set instructions
@@ -137,7 +137,9 @@ fragment instructions in the same file. Precedence:
 
 - `indent-by`: overrides global settings
 - `path-base`: appends to the global base directory
-- `plaster`: overrides global settings
+- `plaster`: overrides global settings; `plaster="unset"` clears the file-level
+  plaster template; bare `plaster` is invalid and should be written as
+  `plaster="unset"`
 - `replace`: see [Replace order](#replace-order)
 
 ### Fragment instructions
@@ -150,8 +152,13 @@ Within a fragment instruction:
 
 Fragment-setting semantics:
 
-- `plaster` determines the plaster comment for the fragment. Applied before
+- `plaster` determines the plaster template for the fragment. Applied before
   transformations.
+- `plaster="<template>"` sets the full plaster template for the fragment,
+  including any language-specific comment wrapper.
+- `plaster="none"` ensures that no plaster template is injected into the
+  excerpt.
+- `plaster="unset"` and bare `plaster` are invalid in fragment scope.
 - `indent-by` is applied after the excerpt content has been fully transformed.
   Overrides file-level and global settings.
 - Repeating `indent-by` or `plaster` on the same fragment instruction is an
@@ -295,11 +302,13 @@ first.
 ## Plaster Handling
 
 When a region is composed of non-contiguous segments (e.g., a region opened and
-closed multiple times), a _plaster_ comment is inserted between the segments to
-indicate that content has been omitted.
+closed multiple times), a _plaster template_ is inserted between the segments
+to indicate that content has been omitted.
 
-The default plaster consists of three dots (`···`) inside a language-specific
-comment, for example:
+The default plaster string is three dots: `···`.
+
+The default plaster template is the default plaster string inside a
+language-specific comment, for example:
 
 | Language     | Plaster comment |
 | ------------ | --------------- |
@@ -308,13 +317,17 @@ comment, for example:
 | CSS, SCSS    | `/* ··· */`     |
 | YAML         | `# ···`         |
 
-Those language-shaped defaults apply when excerpt injection runs in **YAML
-excerpt mode** (`MarkdownInjectContext.excerptsYaml`); otherwise the extractor
-still inserts the raw `···` marker between segments and it is passed through
+Those language-shaped default plaster templates apply when excerpt injection
+runs in **YAML excerpt mode** (`MarkdownInjectContext.excerptsYaml`); otherwise
+the extractor still inserts the raw plaster string `···` between segments and
+it is passed through
 unchanged (unless overridden or removed via `plaster`).
 
-The plaster can be overridden per-instruction with the `plaster` argument, or
-disabled entirely with `plaster="none"`.
+The `plaster` argument sets the full plaster template, not just the plaster
+string. For example, `plaster="/* $defaultPlaster */"` uses that whole
+template, while `plaster="none"` removes plaster injection. On a set
+instruction, `plaster="unset"` clears the file-level plaster template and falls
+back to the global/default behavior.
 
 ## Acknowledgments
 
