@@ -1,15 +1,16 @@
 /**
  * Excerpt transforms (ported from `chalin/code_excerpt_updater` `code_transformer`).
  *
- * {@link applyExcerptTransformsInOrder} is what markdown injection uses: one
- * transform key at a time, in **PI attribute order** (Dart `LinkedHashMap`
- * insertion order).
+ * {@link applyExcerptTransformsInOrder} is the current markdown-injection
+ * helper: it applies one line-transform key at a time in PI attribute order.
+ * This is transitional; the spec now distinguishes ordered transform
+ * operations from fragment settings such as `indent-by` and `plaster`.
  *
  * {@link applyExcerptTransforms} applies every supplied option in a single call
  * using a **fixed** pipeline order (skip → take → from → to → remove → retain →
- * replace → indent-by), mainly for unit tests and direct library callers—not for
- * simulating a full `<?code-excerpt?>` line. See `docs/spec.md` § “Processing order
- * of transform arguments”.
+ * replace → indent-by), mainly for unit tests and direct library callers—not
+ * for simulating a full `<?code-excerpt?>` line. See `docs/spec.md` §
+ * “Transform operations and fragment settings”.
  */
 
 const escapedSlashRe = /\\\//g;
@@ -39,7 +40,7 @@ function parseIntArg(s: string | undefined): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-/** Keys that participate in the Dart-style per-argument transform chain. */
+/** Current ordered line-transform keys used by the transitional PI helper. */
 const ORDERED_TRANSFORM_KEYS = new Set([
   'skip',
   'take',
@@ -51,8 +52,8 @@ const ORDERED_TRANSFORM_KEYS = new Set([
 ]);
 
 /**
- * Applies transform arguments in **PI attribute order** (Dart `Map.forEach`
- * insertion order on named args), not a fixed global ordering.
+ * Applies the current ordered line-transform keys in PI attribute order, not a
+ * fixed global ordering.
  */
 export function applyExcerptTransformsInOrder(
   lines: string[],

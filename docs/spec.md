@@ -86,39 +86,83 @@ line must contain **at most one** named argument (or one bare flag such as
 `plaster` with no `=`). Set values apply to all subsequent fragment instructions
 in the same file until another set instruction for that key replaces them.
 
-## Recognized Arguments
+## PI Arguments
 
 Fragment instructions may use the following named arguments (plus the positional
 path string). Set instructions accept **only** `path-base`, `replace`,
 `plaster`, or no-op compatibility keys `class` / `title`—see
 [Set instruction](#set-instruction); any other set key triggers a warning.
 
-| Argument name   | Argument values              | Description                                                           |
-| --------------- | ---------------------------- | --------------------------------------------------------------------- |
-| _(path string)_ | _string_                     | Positional: `"path/file.ext (region)"`                                |
-| `path-base`     | _string_                     | Sets the base directory for source file paths (set instruction)       |
-| `region`        | _string_                     | Named region to extract (alternative to inline `(region)`)            |
-| `from`          | _string_ \| `/regex/`        | Start extraction from the first line matching this pattern            |
-| `to`            | _string_ \| `/regex/`        | End after the first line matching this pattern (that line kept)       |
-| `skip`          | _integer_                    | Skip the first N lines of the extracted region                        |
-| `take`          | _integer_                    | Take only the first N lines of the extracted region                   |
-| `remove`        | _string_ \| `/regex/`        | Remove all lines matching this pattern                                |
-| `retain`        | _string_ \| `/regex/`        | Keep only lines matching this pattern                                 |
-| `replace`       | `/pattern/replacement/g;`... | Regex replace within extracted lines (supports multiple replacements) |
-| `indent-by`     | _integer_                    | Prepend N spaces to every output line                                 |
-| `plaster`       | _string_                     | Override the plaster comment (use `"none"` to disable)                |
+| Argument        | Scope | Kind  | Argument values              | Description                                                     |
+| --------------- | ----- | ----- | ---------------------------- | --------------------------------------------------------------- |
+| _(path string)_ | F     | -     | _string_                     | Positional: `"path/file.ext (region)"`                          |
+| `path-base`     | S     | S     | _string_                     | Sets the base directory for source file paths                   |
+| `region`        | F     | S     | _string_                     | Named region to extract (alternative to inline `(region)`)      |
+| `from`          | F     | TOp   | _string_ \| `/regex/`        | Start extraction from the first line matching this pattern      |
+| `to`            | F     | TOp   | _string_ \| `/regex/`        | End after the first line matching this pattern (that line kept) |
+| `skip`          | F     | TOp   | _integer_                    | Skip the first N lines of the extracted region                  |
+| `take`          | F     | TOp   | _integer_                    | Take only the first N lines of the extracted region             |
+| `remove`        | F     | TOp   | _string_ \| `/regex/`        | Remove all lines matching this pattern                          |
+| `retain`        | F     | TOp   | _string_ \| `/regex/`        | Keep only lines matching this pattern                           |
+| `replace`       | GSF   | S/TOp | `/pattern/replacement/g;`... | Regex replacement expressions (details below)                   |
+| `indent-by`     | GSF   | S     | _integer_                    | Indent every fragment line by the given number of spaces        |
+| `plaster`       | GSF   | S     | _string_                     | Sets the plaster (details below)                                |
 
-On a fragment instruction, `replace` and `plaster` participate in the transform
-or plaster pass for that excerpt only. As the **sole** argument on a
-[set instruction](#set-instruction), they set file-level defaults (`replace`
-runs on the joined excerpt after fragment transforms; `plaster` sets the
-template for later fragments, and bare `plaster` clears the file default).
+Legend:
+
+- Scope is either:
+  - Global (G), currently via CLI options
+  - File-scoped set instruction (S) or fragment instruction (F)
+- Kind indicates the kind of argument:
+  - Transform operation (TOp) of a fragment instruction
+  - Setting (S) of a fragment or set instruction: can appear at most once.
+    Repeated arguments are reported as errors.
+
+> TODO: `indent-by` global and file-level settings support is not implemented
+> yet.
+
+### Global settings
+
+Global CLI settings are scoped to all files:
+
+- `indent-by` sets a global indent by value.
+- `path-base` sets a global base directory for source file paths.
+- `plaster` sets a global plaster template.
+- `replace` sets a global replacement expression.
+
+### Set instructions
+
+Set instruction settings have file-level scope, and apply to all subsequent
+fragment instructions in the same file. Precedence:
+
+- `indent-by`: overrides global settings
+- `path-base`: appends to the global base directory
+- `plaster`: overrides global settings
+- `replace`: see [Replace order](#replace-order)
+
+### Fragment instructions
+
+Within a fragment instruction:
+
+- TOps are applied strictly in the order they appear in the fragment PI.
+- There can be more than one instance of a TOp; every occurrence is preserved
+  and applied.
+
+Fragment-setting semantics:
+
+- `plaster` determines the plaster comment for the fragment. Applied before
+  transformations.
+- `indent-by` is applied after the excerpt content has been fully transformed.
+  Overrides file-level and global settings.
+- Repeating `indent-by` or `plaster` on the same fragment instruction is an
+  error; the existing fragment block is left unchanged.
+- An invalid setting value is also an error; the existing fragment block is left
+  unchanged.
 
 ### Replace expressions
 
-The `replace` can be followed by a list of one or more semicolon-separated (`;`)
-Perl-like substitution expressions, but with JavaScript semantics. Each
-expression is of the form:
+The `replace` can be followed by a list of one or more semicolon-separated
+substitution expressions. Each expression is of the form:
 
 ```text
 /pattern/replacement/g
@@ -144,6 +188,13 @@ string replacer.
 
 For the full algorithm, see [ECMA-262 `GetSubstitution`][].
 
+### Replace order
+
+- Fragment-scoped `replace` expressions are applied first, in the order they
+  appear in the fragment PI.
+- The last set-instruction `replace` expression is applied next.
+- Finally the global `replace` expression is applied.
+
 [ECMA-262 `GetSubstitution`]: https://tc39.es/ecma262/#sec-getsubstitution
 [String.replace()]:
   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
@@ -153,28 +204,6 @@ For the full algorithm, see [ECMA-262 `GetSubstitution`][].
 - XML processing instructions cannot contain `>` (including inside quoted
   attribute values). For a regexp that must match `>`, use an escape such as
   `\x3E` instead of a literal `>`.
-
-## Processing order of transform arguments
-
-These fragment instruction keys are **line transform operations**:
-
-- `from`
-- `indent-by`
-- `remove`
-- `replace`
-- `retain`
-- `skip`
-- `take`
-- `to`
-
-When more than one of these keys appear in a fragment instruction, they are
-applied in the order they appear in the fragment instruction, except for the following:
-
-- `plaster` is applied to joined region spans first
-- `indent-by` is applied last
-
-If the same transform key appears more than once, order stays where the key was
-first seen; the **last** attribute value wins for that key.
 
 ## Instruction and fence prefixes
 
