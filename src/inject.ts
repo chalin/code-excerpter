@@ -49,11 +49,23 @@ interface ParsedNamedArgs {
   keyOrder: string[];
 }
 
-/** Backtick fences or Liquid `{% prettify ... %}` only (not arbitrary `{% ... %}` tags). */
-const CODE_BLOCK_START = /^\s*(?:\/\/\/?)?\s*(```|{%-?\s*prettify(\s+.*)?-?%})/;
-const CODE_BLOCK_END = /^\s*(?:\/\/\/?)?\s*(```)/;
-const CODE_BLOCK_END_PRETTIFY =
-  /^\s*(?:\/\/\/?)?\s*({%-?\s*endprettify\s*-?%})/;
+// TODO: bring in x`` string template / regex helper
+
+/** Backtick fences, tilde fences, or Liquid `{% prettify ... %}` (not arbitrary `{% ... %}`). */
+const CODE_BLOCK_START =
+  /^\s*(?:\/\/\/?)?\s*(```|~~~|{%-?\s*prettify(\s+.*)?-?%})/;
+
+/** Matches any code-block closing fence (backtick, tilde, or prettify). */
+const CODE_BLOCK_END = /^\s*(?:\/\/\/?)?\s*(```|~~~|{%-?\s*endprettify\s*-?%})/;
+
+type FenceKind = "backtick" | "tilde" | "prettify";
+
+/** Classify an open or close fence token by kind. */
+function fenceKind(token: string): FenceKind {
+  if (token.startsWith("`")) return "backtick";
+  if (token.startsWith("~")) return "tilde";
+  return "prettify";
+}
 
 const REGION_IN_PATH = /\s*\((.+)\)\s*$/;
 const NON_WORD = /[^\w]+/g;
@@ -180,7 +192,7 @@ function parsePathAndRegion(unnamed: string): { path: string; region: string } {
 }
 
 function codeLang(openingFenceLine: string, path: string): string {
-  const fence = /(?:```|prettify\s+)(\w+)/.exec(openingFenceLine);
+  const fence = /(?:```|~~~|prettify\s+)(\w+)/.exec(openingFenceLine);
   if (fence !== null) return fence[1];
   return fileExtensionLower(path);
 }
@@ -293,13 +305,12 @@ function consumeFenceBlock(queue: string[]): {
   if (openMatch === null || openMatch[1] === undefined) {
     return { closed: false, lines: [opening] };
   }
-  const useBacktickEnd = openMatch[1].startsWith("`");
-  const endRe = useBacktickEnd ? CODE_BLOCK_END : CODE_BLOCK_END_PRETTIFY;
+  const openKind = fenceKind(openMatch[1]);
   const inner: string[] = [];
   while (queue.length > 0) {
     const line = queue[0]!;
-    const em = endRe.exec(line);
-    if (em?.[1]) {
+    const em = CODE_BLOCK_END.exec(line);
+    if (em?.[1] && fenceKind(em[1]) === openKind) {
       queue.shift();
       return { closed: true, lines: [opening, ...inner, line] };
     }
@@ -310,8 +321,8 @@ function consumeFenceBlock(queue: string[]): {
 
 /**
  * Updates markdown in memory: each `<?code-excerpt ...?>` followed by a fenced
- * (backtick) or Liquid `{% prettify %}` code block is replaced with freshly extracted
- * (and transformed) lines.
+ * code block (Markdown **```** or **~~~**, or Liquid `{% prettify %}`) is
+ * replaced with freshly extracted (and transformed) lines.
  */
 export function injectMarkdown(
   markdown: string,

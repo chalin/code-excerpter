@@ -3,6 +3,7 @@
 This document specifies:
 
 - `<?code-excerpt?>` processing instruction syntax and semantics
+- [Markdown input assumptions](#markdown-input-assumptions)
 - [Instruction and fence prefixes](#instruction-and-fence-prefixes)
 - [Source file directives](#source-file-directives): `#docregion` /
   `#enddocregion`
@@ -17,6 +18,21 @@ instructions** (PIs) of the form `<?code-excerpt?>`. PIs identify the source
 file, region, and transforms to apply to the code excerpt, allowing for
 `code-excerpter` to refresh code blocks when their originating source code
 changes.
+
+## Markdown input assumptions
+
+The `code-excerpter` tool is a simple line-oriented scanner, not a full Markdown
+parser. It scans lines for processing instructions and fenced blocks with
+regex-based rules. Inputs are assumed to be well-formed Markdown with processing
+instructions.
+
+After a fragment instruction, the next non-empty line should be an opening
+fence, and a matching close fence of the same kind should appear before the next
+excerpt block. Malformed nesting, unbalanced fences, or excerpts embedded in
+contexts where those lines are not real fences (for example inside indented code
+blocks) are not modeled. Some cases surface as errors; others may parse
+incorrectly without a Markdown-aware error. Behavior can diverge from a
+spec-compliant Markdown implementation.
 
 ## Instruction Forms
 

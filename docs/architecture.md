@@ -79,12 +79,16 @@ regex back-reference semantics (`$1`, `$2`), so this is a straightforward port.
 Parses `<?code-excerpt?>` processing instructions in markdown files and
 orchestrates the extraction + transform pipeline for each code block.
 
+- **Input assumption:** processing is line-oriented with regex-based fence
+  matching, not a full Markdown parse. Callers should supply well-formed excerpt
+  blocks; see [Markdown input assumptions](spec.md#markdown-input-assumptions).
 - Identifies `<?code-excerpt "path/file.ext (region)" arg="val" ...?>` lines.
 - Supports set instructions (`<?code-excerpt path-base="..."?>`).
 - Handles comment-prefixed instructions (`//` or `///` before
   `<?code-excerpt?>`).
 - Blank lines between an instruction and the opening fence are copied to the
   output then skipped so the fence is recognized (common in authored markdown).
+  Fenced blocks may use **backticks** (` ``` `) or **tildes** (`~~~`).
 - File-level set `replace` and optional programmatic `globalReplace` on the
   inject context compose on the joined excerpt string after per-instruction
   transforms (Dart `Updater` `fileAndCmdLineCodeTransformer` order).
