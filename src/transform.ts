@@ -11,7 +11,6 @@
 const escapedSlashRe = /\\\//g;
 const zeroChar = '\u0000';
 const endRe = /^g;?\s*$/;
-const matchDollarNumRe = /(\$+)(&|\d*)/g;
 const slashLetterRe = /\\([\\nt])/g;
 const slashHexRe = /\\x(..)/g;
 
@@ -179,6 +178,11 @@ export function encodeSlashChar(s: string): string {
     .replaceAll(zeroChar, '\\');
 }
 
+/**
+ * Applies one `/pattern/replacement/g` segment. Replacement string semantics match
+ * {@link String.prototype.replace} / ECMA-262 `GetSubstitution` (Dart port had
+ * custom logic because Dart differs).
+ */
 function applyReplaceOne(
   code: string,
   reSource: string,
@@ -186,37 +190,7 @@ function applyReplaceOne(
 ): string {
   const replacement = encodeSlashChar(replacementRaw);
   const re = new RegExp(reSource, 'g');
-
-  if (!matchDollarNumRe.test(replacement)) {
-    matchDollarNumRe.lastIndex = 0;
-    return code.replaceAll(re, replacement);
-  }
-  matchDollarNumRe.lastIndex = 0;
-
-  return code.replaceAll(re, (match, ...args: unknown[]) => {
-    const captureArgs = args.slice(0, -2) as string[];
-    const groupCount = captureArgs.length;
-
-    matchDollarNumRe.lastIndex = 0;
-    return replacement.replaceAll(
-      matchDollarNumRe,
-      (_m0, dollars: string, ref: string) => {
-        const numDollarChar = dollars.length;
-        const dollarOut = '$'.repeat(numDollarChar >> 1);
-
-        if (numDollarChar % 2 === 0 || ref === '') {
-          return `${dollarOut}${ref}`;
-        }
-        if (ref === '&') return `${dollarOut}${match}`;
-
-        const argNum = Number.parseInt(ref, 10);
-        const resolved = Number.isNaN(argNum) ? groupCount + 1 : argNum;
-        if (resolved > groupCount) return `${dollarOut}$${ref}`;
-        const g = captureArgs[resolved - 1];
-        return `${dollarOut}${g ?? ''}`;
-      },
-    );
-  });
+  return code.replaceAll(re, replacement);
 }
 
 /**
