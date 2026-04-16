@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   applyExcerptTransforms,
   applyExcerptTransformsInOrder,
+  applyOrderedExcerptTransformOps,
   applyFrom,
   applyRemove,
   applyRetain,
@@ -145,6 +146,43 @@ describe('transform', () => {
       expect(lines).toEqual(['a', 'b', 'c', 'd', 'e']);
       },
     );
+  });
+
+  describe('applyOrderedExcerptTransformOps', () => {
+    it('preserves repeated operations in encounter order', () => {
+      const lines = ['alpha', 'beta', 'gamma', 'delta'];
+      const out = applyOrderedExcerptTransformOps(lines, [
+        { name: 'take', value: '3' },
+        { name: 'skip', value: '1' },
+        { name: 'take', value: '1' },
+      ]);
+      expect(out).toEqual(['beta']);
+      expect(lines).toEqual(['alpha', 'beta', 'gamma', 'delta']);
+    });
+
+    it('applies replace and retain in strict encounter order', () => {
+      const lines = ["var greeting = 'hello';"];
+
+      const replaceThenRetain = applyOrderedExcerptTransformOps(lines, [
+        { name: 'replace', value: `/hello/bonjour/g` },
+        { name: 'retain', value: 'bonjour' },
+      ]);
+      expect(replaceThenRetain).toEqual(["var greeting = 'bonjour';"]);
+
+      const retainThenReplace = applyOrderedExcerptTransformOps(lines, [
+        { name: 'retain', value: 'bonjour' },
+        { name: 'replace', value: `/hello/bonjour/g` },
+      ]);
+      expect(retainThenReplace).toEqual([]);
+    });
+
+    it('repeats the same transform key without coalescing', () => {
+      const out = applyOrderedExcerptTransformOps(['abc'], [
+        { name: 'replace', value: `/a/x/g` },
+        { name: 'replace', value: `/x/y/g` },
+      ]);
+      expect(out).toEqual(['ybc']);
+    });
   });
 
   describe('applyExcerptTransforms', () => {

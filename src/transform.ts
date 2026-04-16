@@ -20,6 +20,19 @@ const slashLetterRe = /\\([\\nt])/g;
 const slashHexRe = /\\x(..)/g;
 
 export type LinePredicate = (line: string) => boolean;
+export type ExcerptTransformOpName =
+  | 'from'
+  | 'to'
+  | 'skip'
+  | 'take'
+  | 'remove'
+  | 'retain'
+  | 'replace';
+
+export interface ExcerptTransformOp {
+  name: ExcerptTransformOpName;
+  value: string;
+}
 
 /** Options for {@link applyExcerptTransforms}, mirroring `<?code-excerpt?>` transform arguments. */
 export interface ExcerptTransformOptions {
@@ -51,6 +64,69 @@ const ORDERED_TRANSFORM_KEYS = new Set([
   'replace',
 ]);
 
+function applyOneTransformOp(
+  lines: string[],
+  op: ExcerptTransformOp,
+  onError?: (msg: string) => void,
+): string[] {
+  switch (op.name) {
+    case 'skip': {
+      const n = parseIntArg(op.value);
+      return n === null ? lines : applySkip(lines, n);
+    }
+    case 'take': {
+      const n = parseIntArg(op.value);
+      return n === null ? lines : applyTake(lines, n);
+    }
+    case 'from': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyFrom(lines, pred);
+    }
+    case 'to': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyTo(lines, pred);
+    }
+    case 'remove': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyRemove(lines, pred);
+    }
+    case 'retain': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyRetain(lines, pred);
+    }
+    case 'replace': {
+      return applyReplaceTransform(lines, op.value, onError);
+    }
+  }
+}
+
+function applyReplaceTransform(
+  lines: string[],
+  replace: string,
+  onError?: (msg: string) => void,
+): string[] {
+  if (replace === '' || lines.length === 0) return lines;
+  const pipeline = parseReplacePipeline(replace, onError);
+  if (pipeline === null) return lines;
+  return pipeline(lines.join('\n')).split('\n');
+}
+
+/**
+ * Applies ordered transform operations exactly as listed. Repeated operations
+ * are preserved and run multiple times.
+ */
+export function applyOrderedExcerptTransformOps(
+  lines: string[],
+  ops: ExcerptTransformOp[],
+  onError?: (msg: string) => void,
+): string[] {
+  let cur = [...lines];
+  for (const op of ops) {
+    cur = applyOneTransformOp(cur, op, onError);
+  }
+  return cur;
+}
+
 /**
  * Applies the current ordered line-transform keys in PI attribute order, not a
  * fixed global ordering.
@@ -61,16 +137,14 @@ export function applyExcerptTransformsInOrder(
   map: Map<string, string>,
   onError?: (msg: string) => void,
 ): string[] {
-  let cur = [...lines];
+  const ops: ExcerptTransformOp[] = [];
   for (const key of keyOrder) {
     if (!ORDERED_TRANSFORM_KEYS.has(key)) continue;
     const val = map.get(key);
     if (val === undefined) continue;
-    const opts: ExcerptTransformOptions = {};
-    (opts as Record<string, string | undefined>)[key] = val;
-    cur = applyExcerptTransforms(cur, opts, onError);
+    ops.push({ name: key as ExcerptTransformOpName, value: val });
   }
-  return cur;
+  return applyOrderedExcerptTransformOps(lines, ops, onError);
 }
 
 /** Parses `indent-by` attribute values (Dart `Updater._getIndentBy`). */
@@ -293,11 +367,7 @@ export function applyExcerptTransforms(
   }
 
   if (options.replace !== undefined && options.replace !== '') {
-    const pipeline = parseReplacePipeline(options.replace, onError);
-    if (pipeline !== null) {
-      const joined = out.join('\n');
-      out = pipeline(joined).split('\n');
-    }
+    out = applyReplaceTransform(out, options.replace, onError);
   }
 
   const indent = parseIndentBy(options.indentBy, onError);

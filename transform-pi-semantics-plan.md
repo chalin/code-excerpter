@@ -34,7 +34,7 @@
    - Skip only semantics-affected cases where practical; if that is noisy or
      fragile, skip the broader ordering-related groups temporarily.
 
-2. **Refactor the transform layer**
+2. [x] **Refactor the transform layer**
    - Change [`src/transform.ts`](src/transform.ts) to support execution from an
      ordered TO list rather than `keyOrder + map`.
    - Keep `indent-by` out of TO execution.
