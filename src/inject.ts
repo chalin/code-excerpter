@@ -89,7 +89,7 @@ export interface MarkdownInjectContext {
   pathBase?: string;
   /**
    * When `true`, applies language-specific plaster comment wrappers in YAML
-   * excerpt mode (default `false`, legacy fragment-style behavior).
+   * excerpt mode (default `true`).
    */
   excerptsYaml?: boolean;
   /** Default extra spaces when `indent-by` is omitted on a fragment directive. */
@@ -428,7 +428,7 @@ export function injectMarkdown(
   const lines = markdown.split('\n');
   const out: string[] = [];
   let pathBase = ctx.pathBase ?? '';
-  const excerptsYaml = ctx.excerptsYaml ?? false;
+  const excerptsYaml = ctx.excerptsYaml ?? true;
   const defaultIndentation = ctx.defaultIndentation ?? 0;
   let filePlasterTemplate: string | undefined;
   let fileReplacePipeline: ((code: string) => string) | null = null;
