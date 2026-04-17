@@ -42,6 +42,7 @@ import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { InstructionStats } from '../src/instructionStats.js';
 import { updatePaths } from '../src/update.js';
+import { dedent } from './helpers/dedent.js';
 
 /** Expected `instructionStats` when no set/fragment directives were parsed. */
 const ZERO_STATS: InstructionStats = { set: 0, fragment: 0 };
@@ -190,6 +191,51 @@ describe('updatePaths', () => {
     expect(result.instructionStats).toEqual(ONE_FRAGMENT);
     expect(readFileSync(join(docs, 'page.md'), 'utf8')).toContain(
       'const k = 42;',
+    );
+  });
+
+  it('reads region content from .excerpt.yaml when present', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        '#border': '|'
+        'focus': |+
+          |const k = 42;
+          |
+          |
+      `,
+    );
+
+    writeFixture(
+      docs,
+      'page.md',
+      dedent`
+        <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+
+      `,
+    );
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expect(result.errors, result.errors.join('\n')).toEqual([]);
+    expect(result.filesUpdated).toBe(1);
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toStrictEqual(
+      dedent`
+        <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+        \`\`\`dart
+        const k = 42;
+        \`\`\`
+
+      `,
     );
   });
 

@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
+import { tryReadExcerptYamlSidecar } from './helpers/excerptYaml.js';
 import { injectMarkdown, type MarkdownInjectContext } from './inject.js';
 import type { InstructionStats } from './instructionStats.js';
 
@@ -53,14 +54,19 @@ function shouldExclude(relPath: string, patterns: RegExp[]): boolean {
 
 /**
  * Builds a synchronous `readFile` for {@link MarkdownInjectContext}: resolves
- * paths relative to `srcRoot` and returns file content or `null`.
+ * paths relative to `srcRoot`. If `<path>.excerpt.yaml` contains the requested
+ * region key, it reads excerpt text from that file; otherwise it falls back to
+ * the plain source file.
  */
 function createDiskReadFile(
   srcRoot: string,
 ): (resolvedPath: string, region?: string) => string | null {
-  return (resolvedPath: string): string | null => {
+  return (resolvedPath: string, region = ''): string | null => {
     try {
-      return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
+      return (
+        tryReadExcerptYamlSidecar(srcRoot, resolvedPath, region) ??
+        readFileSync(resolve(srcRoot, resolvedPath), 'utf8')
+      );
     } catch {
       return null;
     }

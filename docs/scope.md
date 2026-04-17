@@ -42,8 +42,8 @@ excerpt instructions in the same file.
 
 ### YAML excerpt reading
 
-Support reading excerpts from `.yaml` / `.yml` source files (same directive
-syntax).
+Support reading excerpts from `.excerpt.yaml` files. For current implementation
+details, see the [Implementation notes](#implementation-notes) section.
 
 ### Supported source file extensions
 
@@ -87,3 +87,26 @@ The v1 scope assumes we reuse upstream Dart material as follows:
 [`chalin/code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
 [`dart-lang/site-shared`]:
   https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
+
+## Implementation notes
+
+### `.excerpt.yaml` support
+
+The current `updatePaths` disk reader also supports a limited `.excerpt.yaml`
+format carried forward from the original Dart updater. This is currently an
+implementation-supported feature rather than a fully specified one.
+
+- `<path>.excerpt.yaml` is checked before the plain source file.
+- `'#border': '|'`, an optional first whose value is a single character. The
+  character is stripped line-by-line from the selected excerpt body.
+- Region content is read from quoted YAML keys such as `''`, `'main'`, or
+  `'some-region'`.
+- Only the limited fixture-style shape used by the inherited Dart tests is
+  currently supported; arbitrary YAML documents are not.
+
+This format is not yet fully documented as part of the public spec surface.
+
+Supports YAML excerpt files with a specified excerpt border character as the
+value of the `#border` map key. If present, all code excerpt lines will be
+assumed to be prefixed withe the border character in the YAML file. The app will
+strip out the border before updating docs with excerpt code.
