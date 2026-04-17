@@ -7,9 +7,10 @@ import {
 import { dedent } from './dedent.js';
 import { readExcerptYamlSync } from './excerptYaml.js';
 
-// This suite exercises the production helper in `src/helpers/excerptYaml.ts`.
-// The sibling test-only wrapper in `test/helpers/excerptYaml.ts` has no
-// dedicated tests at the moment.
+// This suite primarily exercises the production helper in
+// `src/helpers/excerptYaml.ts`.
+// The sibling test-only wrapper in `test/helpers/excerptYaml.ts` is used here,
+// but does not have its own separate test suite.
 describe('excerptYaml helpers', () => {
   it('parses block and scalar entries', () => {
     const parsed = parseExcerptYamlMap(dedent`
