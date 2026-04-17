@@ -6,6 +6,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,6 +63,31 @@ function listFiles(root: string, rel = ''): string[] {
   return files;
 }
 
+function isGeneratedOutputFile(rel: string): boolean {
+  return rel.split(/[\\/]/, 1)[0] !== 'sources';
+}
+
+function writeTestFile(root: string, rel: string, content: string): void {
+  const full = join(root, rel);
+  mkdirSync(dirname(full), { recursive: true });
+  writeFileSync(full, content, 'utf8');
+}
+
+function assertGeneratedOutputMatchesExpected(
+  workRoot: string,
+  expectedRoot: string,
+): void {
+  const expectedFiles = listFiles(expectedRoot);
+  expect(expectedFiles.length).toBeGreaterThan(0);
+  const actualFiles = listFiles(workRoot).filter(isGeneratedOutputFile);
+  expect(actualFiles).toStrictEqual(expectedFiles);
+  for (const rel of expectedFiles) {
+    const want = readFileSync(join(expectedRoot, rel), 'utf8');
+    const got = readFileSync(join(workRoot, rel), 'utf8');
+    expect(got).toBe(want);
+  }
+}
+
 async function assertFixtureCase(caseName: string): Promise<void> {
   const caseRoot = join(FIXTURE_ROOT, caseName);
   const inputRoot = join(caseRoot, 'input');
@@ -88,14 +114,7 @@ async function assertFixtureCase(caseName: string): Promise<void> {
   });
 
   expect(result.errors).toStrictEqual([]);
-
-  const expectedFiles = listFiles(expectedRoot);
-  expect(expectedFiles.length).toBeGreaterThan(0);
-  for (const rel of expectedFiles) {
-    const want = readFileSync(join(expectedRoot, rel), 'utf8');
-    const got = readFileSync(join(workRoot, rel), 'utf8');
-    expect(got).toBe(want);
-  }
+  assertGeneratedOutputMatchesExpected(workRoot, expectedRoot);
 }
 
 describe('updater fixture cases', () => {
@@ -105,5 +124,30 @@ describe('updater fixture cases', () => {
 
   it.each(caseNames())('%s', async (caseName) => {
     await assertFixtureCase(caseName);
+  });
+});
+
+describe('generated output assertions', () => {
+  it('fails when the generated tree contains an unexpected output file', () => {
+    const workRoot = join(GENERATED_ROOT, 'sanity-extra-output');
+    const expectedRoot = join(GENERATED_ROOT, 'sanity-extra-output-expected');
+
+    rmSync(workRoot, { recursive: true, force: true });
+    rmSync(expectedRoot, { recursive: true, force: true });
+
+    try {
+      writeTestFile(workRoot, 'doc.md', 'ok\n');
+      writeTestFile(workRoot, 'extra.md', 'unexpected\n');
+      writeTestFile(workRoot, 'sources/keep.txt', 'ignored\n');
+      writeTestFile(expectedRoot, 'doc.md', 'ok\n');
+
+      expect(() => assertGeneratedOutputMatchesExpected(workRoot, expectedRoot))
+        .toThrowErrorMatchingInlineSnapshot(`
+        [AssertionError: expected [ 'doc.md', 'extra.md' ] to strictly equal [ 'doc.md' ]]
+      `);
+    } finally {
+      rmSync(workRoot, { recursive: true, force: true });
+      rmSync(expectedRoot, { recursive: true, force: true });
+    }
   });
 });
