@@ -390,6 +390,26 @@ describe('inject', () => {
       );
     });
 
+    it('treats valueless named args as invalid processing-instruction syntax', () => {
+      const onError = vi.fn();
+      const md = dedent`
+        <?code-excerpt "basic.dart (greeting)" title?>
+
+        \`\`\`dart
+        keep
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: () => '//\n',
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('invalid processing instruction'),
+      );
+    });
+
     it('warns when text follows ?> on the same line and does not inject', () => {
       const onWarning = vi.fn();
       const onError = vi.fn();

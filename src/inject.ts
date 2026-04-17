@@ -18,7 +18,7 @@ import {
  * {@link PROC_INSTR_RE}, triggers `onWarning`, and the line is skipped as an instruction.
  */
 const PROC_INSTR_BODY =
-  /^(?<linePrefix>\s*((?:\/\/\/?|-|\*)\s*)?)?<\?code-excerpt\s*(?:"(?<unnamed>[^"]+)")?(?<named>(?:\s+[-\w]+(?:\s*=\s*"[^"]*")?\s*)*)\??>/;
+  /^(?<linePrefix>\s*((?:\/\/\/?|-|\*)\s*)?)?<\?code-excerpt\s*(?:"(?<unnamed>[^"]+)")?(?<named>(?:\s+[-\w]+\s*=\s*"[^"]*"\s*)*)\??>/;
 
 /**
  * Strict match: the **entire line** is only a `<?code-excerpt ...?>` plus optional trailing
@@ -31,7 +31,7 @@ export const PROC_INSTR_RE = new RegExp(
   PROC_INSTR_BODY.flags,
 );
 
-const NAMED_ARG_RE = /^([-\w]+)\s*(=\s*"([^"]*)"\s*|\b)\s*/;
+const NAMED_ARG_RE = /^([-\w]+)\s*=\s*"([^"]*)"\s*/;
 
 const SET_KNOWN_KEYS = new Set([
   'path-base',
@@ -43,8 +43,7 @@ const SET_KNOWN_KEYS = new Set([
 
 export interface ParsedNamedArgEntry {
   key: string;
-  value: string | undefined;
-  hasValue: boolean;
+  value: string;
 }
 
 export interface ParsedNamedArgs {
@@ -147,21 +146,19 @@ function normalizeListLinePrefix(prefix: string): string {
 export function parseNamedArgs(
   named: string,
   onError?: (msg: string) => void,
-): ParsedNamedArgs {
+): ParsedNamedArgs | null {
   const entries: ParsedNamedArgEntry[] = [];
   let rest = named.trim();
   while (rest.length > 0) {
     const m = NAMED_ARG_RE.exec(rest);
     if (m === null) {
       onError?.(`instruction argument parsing failure at/around: ${rest}`);
-      break;
+      return null;
     }
     const key = m[1]!;
-    const eqOrBare = m[2] ?? '';
     entries.push({
       key,
-      value: m[3] ?? undefined,
-      hasValue: eqOrBare.trimStart().startsWith('='),
+      value: m[2] ?? '',
     });
     rest = rest.slice(m[0].length);
   }
@@ -175,7 +172,6 @@ export interface ParsedFragmentArgs {
   regionValue: string | undefined;
   indentByRaw: string | undefined;
   plasterTemplate: string | undefined;
-  hasBarePlaster: boolean;
   hasUnsupportedDiff: boolean;
 }
 
@@ -187,7 +183,6 @@ export function parseFragmentArgs(
   let regionValue: string | undefined;
   let indentByRaw: string | undefined;
   let plasterTemplate: string | undefined;
-  let hasBarePlaster = false;
   let hasUnsupportedDiff = false;
   const seenSettings = new Set<FragmentSettingName>();
 
@@ -205,34 +200,29 @@ export function parseFragmentArgs(
       case 'remove':
       case 'retain':
       case 'replace':
-        if (!entry.hasValue) continue;
         transformOps.push({
           name: entry.key,
-          value: entry.value ?? '',
+          value: entry.value,
         });
         break;
       case 'region':
         if (seenSettings.has('region')) return rejectRepeatedSetting('region');
         seenSettings.add('region');
-        regionValue = entry.hasValue ? (entry.value ?? '') : undefined;
+        regionValue = entry.value;
         break;
       case 'indent-by':
         if (seenSettings.has('indent-by')) {
           return rejectRepeatedSetting('indent-by');
         }
         seenSettings.add('indent-by');
-        indentByRaw = entry.hasValue ? (entry.value ?? '') : undefined;
+        indentByRaw = entry.value;
         break;
       case 'plaster':
         if (seenSettings.has('plaster')) {
           return rejectRepeatedSetting('plaster');
         }
         seenSettings.add('plaster');
-        if (entry.hasValue) {
-          plasterTemplate = entry.value ?? '';
-        } else {
-          hasBarePlaster = true;
-        }
+        plasterTemplate = entry.value;
         break;
       case 'diff-with':
       case 'diff-u':
@@ -248,7 +238,6 @@ export function parseFragmentArgs(
     regionValue,
     indentByRaw,
     plasterTemplate,
-    hasBarePlaster,
     hasUnsupportedDiff,
   };
 }
@@ -457,19 +446,11 @@ export function injectMarkdown(
     }
     const entry = pn.entries[0]!;
     if (entry.key === 'path-base') {
-      if (!entry.hasValue) {
-        err('path-base: invalid setting value on set instruction');
-        return;
-      }
-      pathBase = entry.hasValue ? (entry.value ?? '') : '';
+      pathBase = entry.value;
       return;
     }
     if (entry.key === 'replace') {
-      if (!entry.hasValue) {
-        err('replace: invalid setting value on set instruction');
-        return;
-      }
-      const val = entry.hasValue ? (entry.value ?? '') : '';
+      const val = entry.value;
       if (val === '') {
         fileReplacePipeline = null;
       } else {
@@ -479,11 +460,7 @@ export function injectMarkdown(
       return;
     }
     if (entry.key === 'plaster') {
-      if (!entry.hasValue) {
-        err('plaster: invalid setting value on set instruction');
-        return;
-      }
-      const val = entry.value ?? '';
+      const val = entry.value;
       if (val === 'unset') {
         err('plaster: invalid setting value on set instruction');
         return;
@@ -512,6 +489,14 @@ export function injectMarkdown(
     linePrefixRaw: string | undefined,
   ): string[] => {
     const namedArgs = parseNamedArgs(namedStr, err);
+    if (namedArgs === null) {
+      const fb = consumeFenceBlock(queue);
+      if (fb.lines.length === 0) {
+        err(`reached end of input, expect code block - "${unnamed}"`);
+        return [];
+      }
+      return fb.lines;
+    }
     const fragmentArgs = parseFragmentArgs(namedArgs, err);
     const parsed = parsePathAndRegion(unnamed);
     let region = parsed.region;
@@ -574,10 +559,7 @@ export function injectMarkdown(
     const lang = codeLang(opening, relPath);
 
     let plasterInput: string | undefined;
-    if (fragmentArgs.hasBarePlaster) {
-      err('plaster: invalid setting value on fragment instruction');
-      return [opening, ...oldInner, closing];
-    } else if (fragmentArgs.plasterTemplate === 'unset') {
+    if (fragmentArgs.plasterTemplate === 'unset') {
       err('plaster: invalid setting value on fragment instruction');
       return [opening, ...oldInner, closing];
     } else if (fragmentArgs.plasterTemplate !== undefined) {
@@ -660,7 +642,9 @@ export function injectMarkdown(
     }
 
     if (unnamed === undefined) {
-      handleSetInstruction(parseNamedArgs(namedStr, err));
+      const namedArgs = parseNamedArgs(namedStr, err);
+      if (namedArgs === null) continue;
+      handleSetInstruction(namedArgs);
       continue;
     }
 

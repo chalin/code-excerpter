@@ -8,16 +8,13 @@ import { dedent } from './helpers/dedent.js';
 
 describe('inject arg processing', () => {
   describe('parseNamedArgs', () => {
-    it('preserves encounter order and distinguishes bare vs valued args', () => {
-      const parsed = parseNamedArgs(
-        'skip="1" plaster retain="x" replace="/a/b/g"',
-      );
+    it('preserves encounter order for named args', () => {
+      const parsed = parseNamedArgs('skip="1" retain="x" replace="/a/b/g"');
 
       expect(parsed.entries).toStrictEqual([
-        { key: 'skip', value: '1', hasValue: true },
-        { key: 'plaster', value: undefined, hasValue: false },
-        { key: 'retain', value: 'x', hasValue: true },
-        { key: 'replace', value: '/a/b/g', hasValue: true },
+        { key: 'skip', value: '1' },
+        { key: 'retain', value: 'x' },
+        { key: 'replace', value: '/a/b/g' },
       ]);
     });
 
@@ -25,9 +22,17 @@ describe('inject arg processing', () => {
       const onError = vi.fn();
       const parsed = parseNamedArgs('skip="1" @oops replace="/a/b/g"', onError);
 
-      expect(parsed.entries).toStrictEqual([
-        { key: 'skip', value: '1', hasValue: true },
-      ]);
+      expect(parsed).toBeNull();
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('instruction argument parsing failure'),
+      );
+    });
+
+    it('rejects valueless named args', () => {
+      const onError = vi.fn();
+      const parsed = parseNamedArgs('skip="1" plaster retain="x"', onError);
+
+      expect(parsed).toBeNull();
       expect(onError).toHaveBeenCalledWith(
         expect.stringContaining('instruction argument parsing failure'),
       );
@@ -51,7 +56,6 @@ describe('inject arg processing', () => {
         regionValue: 'r',
         indentByRaw: '2',
         plasterTemplate: 'tpl',
-        hasBarePlaster: false,
         hasUnsupportedDiff: false,
       });
     });

@@ -15,6 +15,7 @@ import { createDartUpdaterReadFile } from './helpers/dartUpdaterReadFile.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_ROOT = join(__dirname, 'fixtures/code-excerpt-updater');
 const TEST_DATA = join(FIXTURE_ROOT, 'test_data');
+const EXPECTED_LOCAL = join(TEST_DATA, 'expected-local');
 /** Last-run inject output; diff against `test_data/expected/` (same relative path). */
 const GENERATED = join(FIXTURE_ROOT, 'generated');
 
@@ -35,6 +36,10 @@ function readSrc(rel: string): string {
 }
 
 function readExpected(rel: string): string {
+  const localPath = join(EXPECTED_LOCAL, rel);
+  if (existsSync(localPath)) {
+    return readFileSync(localPath, 'utf8');
+  }
   const expPath = join(TEST_DATA, 'expected', rel);
   if (existsSync(expPath)) {
     return readFileSync(expPath, 'utf8');
@@ -96,7 +101,6 @@ describe('code_excerpt_updater goldens', () => {
 
   const codeUpdates = [
     'basic_no_region.dart',
-    'basic_with_empty_region.md',
     'basic_with_region.dart',
     'escape_ng_interpolation.md',
     'fragment-indentation.md',
@@ -110,6 +114,10 @@ describe('code_excerpt_updater goldens', () => {
 
   it.each(codeUpdates)('code updates: %s', (rel) => {
     assertGolden(rel, defaultCtx);
+  });
+
+  it.skip('code updates: basic_with_empty_region.md (legacy valueless title syntax no longer supported)', () => {
+    assertGolden('basic_with_empty_region.md', defaultCtx);
   });
 
   it.skip('code updates: arg-order.md', () => {
@@ -166,11 +174,11 @@ describe('code_excerpt_updater goldens', () => {
     assertGolden('excerpt_yaml.md', excerptYamlCtx);
   });
 
-  it.skip('excerpt yaml defaults: plaster.md', () => {
+  it('excerpt yaml defaults: plaster.md', () => {
     assertGolden('plaster.md', excerptYamlCtx);
   });
 
-  it.skip('plaster-global-option.md', () => {
+  it.skip('plaster-global-option.md (legacy bare-plaster syntax no longer supported)', () => {
     assertGolden('plaster-global-option.md', {
       ...excerptYamlCtx,
       globalPlasterTemplate: '// Insert your code here $defaultPlaster',
