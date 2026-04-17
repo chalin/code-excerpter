@@ -64,11 +64,15 @@ function listFiles(root: string, rel = ''): string[] {
 async function assertFixtureCase(caseName: string): Promise<void> {
   const caseRoot = join(FIXTURE_ROOT, caseName);
   const inputRoot = join(caseRoot, 'input');
+  const sourcesRoot = join(caseRoot, 'sources');
   const expectedRoot = join(caseRoot, 'expected');
   const workRoot = join(GENERATED_ROOT, caseName);
   const options = loadOptions(caseName);
 
   cpSync(inputRoot, workRoot, { recursive: true });
+  if (existsSync(sourcesRoot)) {
+    cpSync(sourcesRoot, join(workRoot, 'sources'), { recursive: true });
+  }
 
   const targets = options.targets.map((rel) => join(workRoot, rel));
   const result = await updatePaths(targets, {
