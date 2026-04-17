@@ -390,6 +390,26 @@ describe('inject', () => {
       );
     });
 
+    it('treats valueless named args as invalid processing-instruction syntax', () => {
+      const onError = vi.fn();
+      const md = dedent`
+        <?code-excerpt "basic.dart (greeting)" title?>
+
+        \`\`\`dart
+        keep
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: () => '//\n',
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('invalid processing instruction'),
+      );
+    });
+
     it('warns when text follows ?> on the same line and does not inject', () => {
       const onWarning = vi.fn();
       const onError = vi.fn();
@@ -524,40 +544,6 @@ describe('inject', () => {
       });
       expect(onWarning).toHaveBeenCalledWith(
         expect.stringMatching(/unrecognized set instruction argument:\s*foo/),
-      );
-    });
-
-    it('errors on bare set plaster and leaves later fragments unchanged', () => {
-      const onError = vi.fn();
-      const src = dedent`
-        // #docregion
-        SRC_TOKEN
-        // #enddocregion
-      `;
-      const md = dedent`
-        <?code-excerpt plaster?>
-        <?code-excerpt "set-bare-plaster.dart"?>
-
-        \`\`\`
-        ORIGINAL
-        \`\`\`
-
-      `;
-      const out = injectMarkdown(md, {
-        readFile: (p) => (p === 'set-bare-plaster.dart' ? src : null),
-        onError,
-      });
-      expect(out).toStrictEqual(dedent`
-        <?code-excerpt plaster?>
-        <?code-excerpt "set-bare-plaster.dart"?>
-
-        \`\`\`
-        SRC_TOKEN
-        \`\`\`
-
-      `);
-      expect(onError).toHaveBeenCalledWith(
-        'plaster: invalid setting value on set instruction',
       );
     });
 
@@ -851,7 +837,7 @@ describe('inject', () => {
       );
     });
 
-    it('substitutes plaster markers when excerptsYaml is true', () => {
+    it('substitutes plaster markers using the default plaster template', () => {
       const src = dedent`
         // #docregion
         before
@@ -870,7 +856,6 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'pl.dart' ? src : null),
-        excerptsYaml: true,
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "pl.dart"?>
@@ -903,7 +888,6 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'empty-plaster.dart' ? src : null),
-        excerptsYaml: true,
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt "empty-plaster.dart" plaster=""?>
@@ -939,7 +923,6 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'unset-plaster.dart' ? src : null),
-        excerptsYaml: true,
         onError,
       });
       expect(out).toStrictEqual(dedent`
@@ -978,7 +961,6 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'dup-plaster.dart' ? src : null),
-        excerptsYaml: true,
         onError,
       });
       expect(out).toStrictEqual(md);
@@ -1007,7 +989,6 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'frag-unset.dart' ? src : null),
-        excerptsYaml: true,
         onError,
       });
       expect(out).toStrictEqual(md);
@@ -1100,7 +1081,7 @@ describe('inject', () => {
       'php',
       'swift',
     ] as const)(
-      'substitutes plaster for excerptsYaml with %s fence',
+      'substitutes plaster with the default template for %s fence',
       (lang) => {
         const src = dedent`
           // #docregion
@@ -1119,7 +1100,6 @@ describe('inject', () => {
         `;
         const out = injectMarkdown(md, {
           readFile: (p) => (p === 'snippet.txt' ? src : null),
-          excerptsYaml: true,
         });
         const plasterLine = PLASTER_LINE_BY_FENCE_LANG[lang];
         expect(plasterLine).toBeDefined();
@@ -1135,7 +1115,7 @@ describe('inject', () => {
       },
     );
 
-    it('strips DEFAULT_PLASTER lines when plaster=none with excerptsYaml', () => {
+    it('strips DEFAULT_PLASTER lines when plaster=none', () => {
       const src = dedent`
         // #docregion
         a
@@ -1155,7 +1135,6 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'pn.dart' ? src : null),
-        excerptsYaml: true,
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt plaster="none"?>

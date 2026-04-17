@@ -50,7 +50,7 @@ Together, every fragment argument below is exercised somewhere.
 
 [^4]: Set-level `replace` only
 
-[^5]: `excerptsYaml`
+[^5]: Default plaster-template behavior and local plaster-setting cases
 
 `inject.test.ts` does not re-test every transform keyword; goldens and
 `transform.test.ts` cover those paths end-to-end or in isolation.

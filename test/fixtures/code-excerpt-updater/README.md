@@ -5,6 +5,10 @@ This directory vendors `test_data/` from
 (MIT license) so Vitest can assert byte-for-byte parity with the Dart updater’s
 expected outputs under `test_data/expected/`.
 
+Repo-owned divergence goldens live under `test_data/expected-local/`. The test
+harness prefers those files over vendored `test_data/expected/` for the same
+relative path.
+
 ## Generated output (`generated/`)
 
 The **`generated/`** directory is **committed** (with `.gitkeep` and a local

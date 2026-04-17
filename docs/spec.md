@@ -53,7 +53,8 @@ Specifies a source file (and optionally a named region) to inject:
     directives).
   - **with** `#docregion` / `#enddocregion` directives resolve the
     [Default region](#default-region).
-- Additional named arguments follow as `key="value"` pairs.
+- Additional named arguments follow as `id="value"` pairs.
+- Named-argument values must be enclosed in double quotes.
 
 **Example:**
 
@@ -92,6 +93,9 @@ Fragment instructions may use the following named arguments (plus the positional
 path string). Set instructions accept **only** `path-base`, `replace`,
 `plaster`, or no-op compatibility keys `class` / `title`—see
 [Set instruction](#set-instruction); any other set key triggers a warning.
+
+All PI named arguments use the form `id="value"`. Valueless named arguments are
+not part of this tool's supported syntax.
 
 | Argument        | Scope | Kind  | Argument values              | Description                                                     |
 | --------------- | ----- | ----- | ---------------------------- | --------------------------------------------------------------- |
@@ -137,7 +141,7 @@ fragment instructions in the same file. Precedence:
 
 - `indent-by`: overrides global settings
 - `path-base`: appends to the global base directory
-- `plaster`: overrides global settings; bare `plaster` is invalid
+- `plaster`: overrides global settings
 - `replace`: see [Replace order](#replace-order)
 
 ### Fragment instructions
@@ -157,7 +161,6 @@ Fragment-setting semantics:
 - `plaster=""` sets the plaster template to the empty string.
 - `plaster="none"` ensures that no plaster template is injected into the
   excerpt.
-- bare `plaster` is invalid in fragment scope.
 - `indent-by` is applied after the excerpt content has been fully transformed.
   Overrides file-level and global settings.
 - Repeating `indent-by` or `plaster` on the same fragment instruction is an
