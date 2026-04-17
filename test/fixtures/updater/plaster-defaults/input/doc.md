@@ -29,6 +29,35 @@ old
 old
 ```
 
+`plaster="none"` removes plaster lines:
+
+<?code-excerpt "plaster.txt" plaster="none"?>
+```
+old
+```
+
+<?code-excerpt "plaster.dart" plaster="none"?>
+```dart
+old
+```
+
+<?code-excerpt "plaster.yaml" plaster="none"?>
+```yaml
+old
+```
+
+The target code-block language can supply the plaster template:
+
+<?code-excerpt "plaster.txt"?>
+```html
+old
+```
+
+<?code-excerpt "plaster.txt"?>
+{% prettify html %}
+old
+{% endprettify %}
+
 Custom templates override the default template:
 
 <?code-excerpt "plaster.dart" plaster="/*...*/"?>
@@ -37,13 +66,6 @@ old
 ```
 
 <?code-excerpt "plaster.dart" plaster="/* $defaultPlaster */"?>
-```dart
-old
-```
-
-`plaster="none"` removes plaster lines:
-
-<?code-excerpt "plaster.dart" plaster="none"?>
 ```dart
 old
 ```

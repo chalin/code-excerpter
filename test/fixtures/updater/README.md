@@ -12,7 +12,8 @@ Rules:
 
 Each case lives under `<case-name>/` and contains:
 
-- `input/`: target files copied into a temporary generated worktree before the test
+- `input/`: target files copied into a temporary generated worktree before the
+  test
 - `sources/`: excerpt source files copied into the generated worktree
 - `expected/`: files that should exist after the updater runs
 - `options.json`: per-case updater options

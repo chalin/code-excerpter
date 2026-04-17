@@ -3,6 +3,7 @@
 Default extraction without region directives:
 
 <?code-excerpt "no_region.html"?>
+
 ```html
 old
 ```
@@ -10,6 +11,7 @@ old
 Indented extraction from a plain Dart source file:
 
 <?code-excerpt "no_region.dart" indent-by="2"?>
+
 ```dart
 old
 ```
@@ -17,6 +19,7 @@ old
 Existing block content is replaced regardless of its indentation:
 
 <?code-excerpt "no_region.dart" indent-by="2"?>
+
 ```dart
   stale
 misindented

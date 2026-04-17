@@ -1,6 +1,7 @@
 ## Test instructions in markdown lists
 
 - <?code-excerpt "indented_frag.dart" region="single-code-block"?>
+
   ```
   // Fragment is indented by 4 spaces
   var x = 1;

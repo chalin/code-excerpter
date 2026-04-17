@@ -5,10 +5,12 @@ globs:
   - '**/*.md'
 
 ignores:
-  - 'node_modules/**'
-  - 'dist/**'
-  - 'tmp/**'
-  - 'test/fixtures/code-excerpt-updater/**'
+  - dist/**
+  - node_modules/**
+  - test/fixtures/code-excerpt-updater/**
+  - test/fixtures/updater/*/**
+  - test/generated/**
+  - tmp/**
 
 config:
   default: true

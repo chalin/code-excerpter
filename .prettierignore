@@ -1,7 +1,8 @@
 # https://prettier.io/docs/ignore. None yet.
 
-# Golden fixtures from chalin/code_excerpt_updater (preserve exact bytes).
 test/fixtures/code-excerpt-updater/
+test/fixtures/
+!test/fixtures/**/README.md
+!test/fixtures/**/options.yaml
 
-# Ephemeral trees from test/update.test.ts (default: keep for inspection).
 tmp/

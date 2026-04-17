@@ -39,6 +39,42 @@ abc:
   def
 ```
 
+`plaster="none"` removes plaster lines:
+
+<?code-excerpt "plaster.txt" plaster="none"?>
+```
+abc
+def
+```
+
+<?code-excerpt "plaster.dart" plaster="none"?>
+```dart
+var greeting = 'hello';
+var scope = 'world';
+```
+
+<?code-excerpt "plaster.yaml" plaster="none"?>
+```yaml
+abc:
+  def
+```
+
+The target code-block language can supply the plaster template:
+
+<?code-excerpt "plaster.txt"?>
+```html
+abc
+<!-- ··· -->
+def
+```
+
+<?code-excerpt "plaster.txt"?>
+{% prettify html %}
+abc
+<!-- ··· -->
+def
+{% endprettify %}
+
 Custom templates override the default template:
 
 <?code-excerpt "plaster.dart" plaster="/*...*/"?>
@@ -52,13 +88,5 @@ var scope = 'world';
 ```dart
 var greeting = 'hello';
 /* ··· */
-var scope = 'world';
-```
-
-`plaster="none"` removes plaster lines:
-
-<?code-excerpt "plaster.dart" plaster="none"?>
-```dart
-var greeting = 'hello';
 var scope = 'world';
 ```
