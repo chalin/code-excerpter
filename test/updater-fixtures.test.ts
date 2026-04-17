@@ -122,8 +122,10 @@ describe('updater fixture cases', () => {
     clearGeneratedOutput();
   });
 
-  it.each(caseNames())('%s', async (caseName) => {
-    await assertFixtureCase(caseName);
+  it('matches all fixture cases', async () => {
+    for (const caseName of caseNames()) {
+      await assertFixtureCase(caseName);
+    }
   });
 });
 

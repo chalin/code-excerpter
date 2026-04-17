@@ -72,6 +72,7 @@ function createDiskReadAccessors(
 
   return {
     readFile: (resolvedPath: string, region = ''): string | null => {
+      // The default excerpt-yaml region is stored under the empty-string key ''.
       const key = excerptYamlErrorKey(resolvedPath, region);
       lastReadErrors.delete(key);
 

@@ -321,6 +321,29 @@ describe('updatePaths', () => {
     );
   });
 
+  it('reports an error when a sidecar uses an unsupported block scalar', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        'focus': |
+          const fromSidecar = 99;
+      `,
+    );
+
+    writeSnippetPage(docs);
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expectSnippetSidecarError(
+      result,
+      docs,
+      /invalid \.excerpt\.yaml format in "lib\/snippet\.dart\.excerpt\.yaml"/,
+    );
+  });
+
   it('leaves unchanged files untouched (no write)', async () => {
     const { src, docs } = useTmpSrcDocs();
 

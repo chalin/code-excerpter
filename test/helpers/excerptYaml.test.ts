@@ -108,5 +108,18 @@ describe('excerptYaml helpers', () => {
         'focus',
       ),
     ).toEqual({ status: 'invalid-format' });
+
+    expect(
+      readExcerptYamlResultSync(
+        () =>
+          dedent`
+            'focus': |
+              const k = 42;
+          `,
+        'snippet.dart.excerpt.yaml',
+        'focus',
+      ),
+      // `|` is unsupported block scalar; should be `|+`
+    ).toEqual({ status: 'invalid-format' });
   });
 });
