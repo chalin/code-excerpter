@@ -124,7 +124,14 @@ describe('updater fixture cases', () => {
 
   it('matches all fixture cases', async () => {
     for (const caseName of caseNames()) {
-      await assertFixtureCase(caseName);
+      try {
+        await assertFixtureCase(caseName);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`fixture case "${caseName}": ${message}`, {
+          cause: err,
+        });
+      }
     }
   });
 });

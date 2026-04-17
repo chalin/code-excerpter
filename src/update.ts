@@ -68,13 +68,15 @@ function excerptYamlErrorKey(resolvedPath: string, region = ''): string {
 function createDiskReadAccessors(
   srcRoot: string,
 ): Pick<MarkdownInjectContext, 'readFile' | 'readError'> {
-  const lastReadErrors = new Map<string, string>();
+  let lastReadError: { key: string; message: string } | null = null;
 
   return {
     readFile: (resolvedPath: string, region = ''): string | null => {
       // The default excerpt-yaml region is stored under the empty-string key ''.
       const key = excerptYamlErrorKey(resolvedPath, region);
-      lastReadErrors.delete(key);
+      if (lastReadError?.key === key) {
+        lastReadError = null;
+      }
 
       try {
         const sidecar = tryReadExcerptYamlSidecar(
@@ -87,17 +89,23 @@ function createDiskReadAccessors(
           return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
         }
 
-        lastReadErrors.set(
+        lastReadError = {
           key,
-          formatExcerptYamlReadError(resolvedPath, region, sidecar.status),
-        );
+          message: formatExcerptYamlReadError(
+            resolvedPath,
+            region,
+            sidecar.status,
+          ),
+        };
         return null;
       } catch {
         return null;
       }
     },
     readError: (resolvedPath: string, region = ''): string | null =>
-      lastReadErrors.get(excerptYamlErrorKey(resolvedPath, region)) ?? null,
+      lastReadError?.key === excerptYamlErrorKey(resolvedPath, region)
+        ? lastReadError.message
+        : null,
   };
 }
 

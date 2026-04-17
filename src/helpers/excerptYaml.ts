@@ -79,37 +79,25 @@ export function stripExcerptYamlBorder(
     .join('\n');
 }
 
-export function readExcerptYamlSync(
-  readFile: (path: string, encoding: 'utf8') => string,
-  yamlPath: string,
-  region: string,
-  borderKey = '#border',
-): string | null {
-  const result = readExcerptYamlResultSync(
-    readFile,
-    yamlPath,
-    region,
-    borderKey,
-  );
-  return result.status === 'found' ? result.excerpt : null;
-}
-
 /** Filename suffix for excerpt sidecar files (e.g. `lib/a.dart.excerpt.yaml`). */
 export const EXCERPT_YAML_EXT = '.excerpt.yaml';
 
-export type ExcerptYamlReadResult =
+export type ExcerptYamlResolvedResult =
   | { status: 'found'; excerpt: string }
-  | { status: 'invalid-format' }
-  | { status: 'region-not-found' }
+  | { status: 'file-invalid-format' }
+  | { status: 'region-not-found' };
+
+export type ExcerptYamlReadResult =
+  | ExcerptYamlResolvedResult
   | { status: 'file-not-found' };
 
 export function formatExcerptYamlReadError(
   resolvedPath: string,
   region: string,
-  status: Exclude<ExcerptYamlReadResult['status'], 'found' | 'file-not-found'>,
+  status: Exclude<ExcerptYamlResolvedResult['status'], 'found'>,
 ): string {
   const yamlPath = `${resolvedPath}${EXCERPT_YAML_EXT}`;
-  if (status === 'invalid-format') {
+  if (status === 'file-invalid-format') {
     return `invalid .excerpt.yaml format in "${yamlPath}"`;
   }
   if (region === '') {
@@ -123,13 +111,13 @@ export function readExcerptYamlResultSync(
   yamlPath: string,
   region: string,
   borderKey = '#border',
-): ExcerptYamlReadResult {
+): ExcerptYamlResolvedResult {
   const doc = parseExcerptYamlMap(readFile(yamlPath, 'utf8'));
-  if (doc === null) return { status: 'invalid-format' };
+  if (doc === null) return { status: 'file-invalid-format' };
 
   const border = doc.get(borderKey);
   if (border !== undefined && border.length !== 1) {
-    return { status: 'invalid-format' };
+    return { status: 'file-invalid-format' };
   }
 
   const raw = doc.get(region);

@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   parseExcerptYamlMap,
   readExcerptYamlResultSync,
-  readExcerptYamlSync,
   stripExcerptYamlBorder,
 } from '../../src/helpers/excerptYaml.js';
 import { dedent } from './dedent.js';
+import { readExcerptYamlSync } from './excerptYaml.js';
 
+// This suite exercises the production helper in `src/helpers/excerptYaml.ts`.
+// The sibling test-only wrapper in `test/helpers/excerptYaml.ts` has no
+// dedicated tests at the moment.
 describe('excerptYaml helpers', () => {
   it('parses block and scalar entries', () => {
     const parsed = parseExcerptYamlMap(dedent`
@@ -94,7 +97,7 @@ describe('excerptYaml helpers', () => {
         'snippet.dart.excerpt.yaml',
         'focus',
       ),
-    ).toEqual({ status: 'invalid-format' });
+    ).toEqual({ status: 'file-invalid-format' });
 
     expect(
       readExcerptYamlResultSync(
@@ -107,7 +110,7 @@ describe('excerptYaml helpers', () => {
         'snippet.dart.excerpt.yaml',
         'focus',
       ),
-    ).toEqual({ status: 'invalid-format' });
+    ).toEqual({ status: 'file-invalid-format' });
 
     expect(
       readExcerptYamlResultSync(
@@ -120,6 +123,6 @@ describe('excerptYaml helpers', () => {
         'focus',
       ),
       // `|` is unsupported block scalar; should be `|+`
-    ).toEqual({ status: 'invalid-format' });
+    ).toEqual({ status: 'file-invalid-format' });
   });
 });
