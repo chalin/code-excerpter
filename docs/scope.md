@@ -97,6 +97,8 @@ format carried forward from the original Dart updater. This is currently an
 implementation-supported feature rather than a fully specified one.
 
 - `<path>.excerpt.yaml` is checked before the plain source file.
+- If the sidecar exists, it is authoritative: missing sidecar regions are
+  reported as missing instead of falling back to plain-source extraction.
 - `'#border': '|'`, an optional first whose value is a single character. The
   character is stripped line-by-line from the selected excerpt body.
 - Region content is read from quoted YAML keys such as `''`, `'main'`, or
@@ -105,8 +107,3 @@ implementation-supported feature rather than a fully specified one.
   currently supported; arbitrary YAML documents are not.
 
 This format is not yet fully documented as part of the public spec surface.
-
-Supports YAML excerpt files with a specified excerpt border character as the
-value of the `#border` map key. If present, all code excerpt lines will be
-assumed to be prefixed withe the border character in the YAML file. The app will
-strip out the border before updating docs with excerpt code.

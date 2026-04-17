@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   parseExcerptYamlMap,
+  readExcerptYamlResultSync,
   readExcerptYamlSync,
   stripExcerptYamlBorder,
 } from '../../src/helpers/excerptYaml.js';
@@ -72,5 +73,27 @@ describe('excerptYaml helpers', () => {
     expect(got).toBe(dedent`
       const k = 42;
     `);
+  });
+
+  it('distinguishes a missing region from invalid yaml', () => {
+    expect(
+      readExcerptYamlResultSync(
+        () =>
+          dedent`
+            'focus': |+
+              const k = 42;
+          `,
+        'snippet.dart.excerpt.yaml',
+        'missing',
+      ),
+    ).toEqual({ status: 'region-not-found' });
+
+    expect(
+      readExcerptYamlResultSync(
+        () => 'plain: value',
+        'snippet.dart.excerpt.yaml',
+        'focus',
+      ),
+    ).toEqual({ status: 'invalid-format' });
   });
 });

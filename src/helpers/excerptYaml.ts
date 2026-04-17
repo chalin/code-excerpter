@@ -85,28 +85,52 @@ export function readExcerptYamlSync(
   region: string,
   borderKey = '#border',
 ): string | null {
-  const doc = parseExcerptYamlMap(readFile(yamlPath, 'utf8'));
-  if (doc === null) return null;
-  const raw = doc.get(region);
-  if (raw === undefined) return null;
-  const border = doc.get(borderKey) ?? '';
-  return stripExcerptYamlBorder(raw, border).trimEnd();
+  const result = readExcerptYamlResultSync(
+    readFile,
+    yamlPath,
+    region,
+    borderKey,
+  );
+  return result.status === 'found' ? result.excerpt : null;
 }
 
 /** Filename suffix for excerpt sidecar files (e.g. `lib/a.dart.excerpt.yaml`). */
 export const EXCERPT_YAML_EXT = '.excerpt.yaml';
 
+export type ExcerptYamlReadResult =
+  | { status: 'found'; excerpt: string }
+  | { status: 'invalid-format' }
+  | { status: 'region-not-found' }
+  | { status: 'file-not-found' };
+
+export function readExcerptYamlResultSync(
+  readFile: (path: string, encoding: 'utf8') => string,
+  yamlPath: string,
+  region: string,
+  borderKey = '#border',
+): ExcerptYamlReadResult {
+  const doc = parseExcerptYamlMap(readFile(yamlPath, 'utf8'));
+  if (doc === null) return { status: 'invalid-format' };
+
+  const raw = doc.get(region);
+  if (raw === undefined) return { status: 'region-not-found' };
+
+  const border = doc.get(borderKey) ?? '';
+  return {
+    status: 'found',
+    excerpt: stripExcerptYamlBorder(raw, border).trimEnd(),
+  };
+}
+
 /**
- * If `<resolvedPath>.excerpt.yaml` exists under `srcRoot`, returns the region
- * excerpt (or `null` when the region is missing). Returns `null` when there is
- * no sidecar file so callers can fall back to reading the plain source path.
+ * Reads the excerpt sidecar for a source path when present.
  */
 export function tryReadExcerptYamlSidecar(
   srcRoot: string,
   resolvedPath: string,
   region: string,
-): string | null {
+): ExcerptYamlReadResult {
   const yamlPath = resolve(srcRoot, resolvedPath + EXCERPT_YAML_EXT);
-  if (!existsSync(yamlPath)) return null;
-  return readExcerptYamlSync(readFileSync, yamlPath, region);
+  if (!existsSync(yamlPath)) return { status: 'file-not-found' };
+  return readExcerptYamlResultSync(readFileSync, yamlPath, region);
 }

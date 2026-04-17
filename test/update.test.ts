@@ -239,6 +239,58 @@ describe('updatePaths', () => {
     );
   });
 
+  it('reports an error when a sidecar exists but the requested region is missing', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart',
+      dedent`
+        // #docregion focus
+        const fromSource = 42;
+        // #enddocregion focus
+      `,
+    );
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        'other': |+
+          const fromSidecar = 99;
+      `,
+    );
+
+    writeFixture(
+      docs,
+      'page.md',
+      dedent`
+        <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+      `,
+    );
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expect(result.filesUpdated).toBe(0);
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+    expect(result.errors.join('\n')).toMatch(
+      /cannot read source file "lib\/snippet\.dart"/,
+    );
+    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toBe(
+      dedent`
+        <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+      `,
+    );
+  });
+
   it('leaves unchanged files untouched (no write)', async () => {
     const { src, docs } = useTmpSrcDocs();
 

@@ -63,10 +63,10 @@ function createDiskReadFile(
 ): (resolvedPath: string, region?: string) => string | null {
   return (resolvedPath: string, region = ''): string | null => {
     try {
-      return (
-        tryReadExcerptYamlSidecar(srcRoot, resolvedPath, region) ??
-        readFileSync(resolve(srcRoot, resolvedPath), 'utf8')
-      );
+      const sidecar = tryReadExcerptYamlSidecar(srcRoot, resolvedPath, region);
+      if (sidecar.status === 'found') return sidecar.excerpt;
+      if (sidecar.status !== 'file-not-found') return null;
+      return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
     } catch {
       return null;
     }
