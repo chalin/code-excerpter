@@ -65,7 +65,7 @@
      - duplicate `plaster`
      - invalid FSs leaving the fragment untouched
 
-4. [ ] **Rework arg-processing semantics, code, and tests**
+4. [x] **Rework arg-processing semantics, code, and tests**
 
 This was previously step 3b, originally focused on **Refactor arg-processing
 tests**. But I realized that arg-processing semantics were wrongly specified and
@@ -87,6 +87,9 @@ Next are some of the original steps for 3b:
   only through full `injectMarkdown` flows.
 - Keep `inject.test.ts` for integration-style PI/block behavior and error
   outcomes, but move parser-shape assertions into a narrower test surface.
+- Exported `parseNamedArgs` / `parseFragmentArgs` from `inject.ts` only to
+  support those direct arg-processing tests; this is not yet a broader
+  `inject.ts` refactor.
 - Use the extracted tests to document:
   - exact encounter-order preservation for repeated TOs
   - singleton-setting rejection for `region`, `indent-by`, and `plaster`
