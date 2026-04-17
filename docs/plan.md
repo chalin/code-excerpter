@@ -40,6 +40,10 @@ Limitations:
 Transform pipeline: skip, take, from, to, remove, retain, replace, indent. All
 pure logic, no I/O.
 
+Current transform-order semantics are defined in [`docs/spec.md`](spec.md):
+fragment transform operations run in PI encounter order, and repeated operations
+are preserved.
+
 - [x] Implement `src/transform.ts`
 - [x] Write `test/transform.test.ts`
 - [x] Update docs as needed

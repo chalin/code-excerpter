@@ -264,6 +264,50 @@ describe('updatePaths', () => {
     );
   });
 
+  it('passes defaultIndentation through to injectMarkdown', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart',
+      dedent`
+        // #docregion
+        const k = 42;
+        // #enddocregion
+      `,
+    );
+
+    writeFixture(
+      docs,
+      'page.md',
+      dedent`
+        <?code-excerpt "lib/snippet.dart"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+      `,
+    );
+
+    const result = await updatePaths([docs], {
+      pathBase: src,
+      defaultIndentation: 2,
+    });
+
+    expect(result.errors, result.errors.join('\n')).toEqual([]);
+    expect(result.filesUpdated).toBe(1);
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toStrictEqual(
+      dedent`
+        <?code-excerpt "lib/snippet.dart"?>
+
+        \`\`\`dart
+          const k = 42;
+        \`\`\`
+      `,
+    );
+  });
+
   it('reports an error when a sidecar exists but the requested region is missing', async () => {
     const { src, docs } = useTmpSrcDocs();
 

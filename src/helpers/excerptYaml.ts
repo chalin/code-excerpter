@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 const YAML_BLOCK_KEY_RE = /^'([^']*)':\s*\|\+\s*$/;
 const YAML_SCALAR_KEY_RE = /^'([^']*)':\s*'([^']*)'\s*$/;
 
+// Flow for the disk updater path:
+// parse the limited sidecar subset -> validate border / region ->
+// return a structured read result -> let `update.ts` surface errors via inject.
+
 /**
  * Parses the limited `.excerpt.yaml` subset currently supported by the disk
  * updater path:

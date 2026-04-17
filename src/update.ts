@@ -32,6 +32,8 @@ export interface UpdateOptions {
   dryRun?: boolean;
   /** Escape Angular `{{`/`}}` in injected code (default `true`). */
   escapeNgInterpolation?: boolean;
+  /** Default extra spaces when `indent-by` is omitted on a fragment directive. */
+  defaultIndentation?: number;
   /** Global replace expression applied after per-instruction + file-level transforms. */
   globalReplace?: string;
   /** Default plaster template when the PI / file-level set does not override it. */
@@ -56,6 +58,8 @@ function shouldExclude(relPath: string, patterns: RegExp[]): boolean {
 }
 
 function excerptYamlErrorKey(resolvedPath: string, region = ''): string {
+  // `readFile` / `readError` are keyed by the exact path+region pair because a
+  // single markdown file may resolve multiple excerpt regions from one source.
   return `${resolvedPath}\0${region}`;
 }
 
@@ -182,6 +186,7 @@ export async function updatePaths(
     const ctx: MarkdownInjectContext = {
       ...readAccessors,
       escapeNgInterpolation: opts.escapeNgInterpolation,
+      defaultIndentation: opts.defaultIndentation,
       globalReplace: opts.globalReplace,
       globalPlasterTemplate: opts.globalPlasterTemplate,
       instructionStats,

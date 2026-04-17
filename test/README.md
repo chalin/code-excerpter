@@ -23,6 +23,9 @@ Role of each test file:
   [spec § PI Arguments](../docs/spec.md#pi-arguments).
 - **`updater-goldens.test.ts`** — Full `injectMarkdown` + `readFile` over
   vendored [`code_excerpt_updater`][] `test_data` fixtures (Dart golden parity).
+- **`updater-fixtures.test.ts`** — Full `updatePaths` over normalized repo-owned
+  filesystem fixtures under `test/fixtures/updater/` (`input/`, `sources/`,
+  `expected/`, `options.yaml`).
 
 Together, every fragment argument below is exercised somewhere.
 
@@ -89,5 +92,13 @@ Scenario coverage:
 | `globalReplace` (CLI-style)             | `inject.test.ts`, golden `replace.md`  |
 | Unsupported `diff-with`                 | `inject.test.ts` (error path)          |
 | Liquid `{% prettify %}` fences          | `inject.test.ts`, golden `prettify.md` |
+
+## Updater test layers
+
+- **`update.test.ts`** — Focused tmp-tree tests for `updatePaths` behavior and
+  error/reporting edges.
+- **`updater-fixtures.test.ts`** — Deterministic normalized filesystem fixtures
+  owned by this repo.
+- **`updater-goldens.test.ts`** — Vendored Dart-oriented parity coverage.
 
 [`code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater

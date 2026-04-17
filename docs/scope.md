@@ -99,7 +99,7 @@ implementation-supported feature rather than a fully specified one.
 - `<path>.excerpt.yaml` is checked before the plain source file.
 - If the sidecar exists, it is authoritative: missing sidecar regions are
   reported as missing instead of falling back to plain-source extraction.
-- `'#border': '|'`, an optional first whose value is a single character. The
+- `'#border': '|'`, an optional field whose value is a single character. The
   character is stripped line-by-line from the selected excerpt body.
 - Region content is read from quoted YAML keys such as `''`, `'main'`, or
   `'some-region'`.
