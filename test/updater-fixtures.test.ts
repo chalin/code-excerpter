@@ -10,6 +10,7 @@ import {
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
 import { updatePaths } from '../src/update.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,10 +39,10 @@ function caseNames(): string[] {
 
 function loadOptions(caseName: string): FixtureCaseOptions {
   const raw = readFileSync(
-    join(FIXTURE_ROOT, caseName, 'options.json'),
+    join(FIXTURE_ROOT, caseName, 'options.yaml'),
     'utf8',
   );
-  return JSON.parse(raw) as FixtureCaseOptions;
+  return parseYaml(raw) as FixtureCaseOptions;
 }
 
 function listFiles(root: string, rel = ''): string[] {

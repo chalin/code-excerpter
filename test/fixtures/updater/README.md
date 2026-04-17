@@ -16,6 +16,6 @@ Each case lives under `<case-name>/` and contains:
   test
 - `sources/`: excerpt source files copied into the generated worktree
 - `expected/`: files that should exist after the updater runs
-- `options.json`: per-case updater options
+- `options.yaml`: per-case updater options
 
 Generated working copies are written under `test/generated/updater/`.

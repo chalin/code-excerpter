@@ -3,6 +3,6 @@
 test/fixtures/code-excerpt-updater/
 test/fixtures/
 !test/fixtures/**/README.md
-!test/fixtures/**/options.yaml
+!test/fixtures/**/options.*
 
 tmp/

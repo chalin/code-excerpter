@@ -1,5 +1,0 @@
-{
-  "pathBase": "sources",
-  "targets": ["doc.md"],
-  "globalReplace": "/mundo/$&!/g"
-}
