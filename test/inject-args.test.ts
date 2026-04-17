@@ -4,7 +4,7 @@ import {
   parseFragmentArgs,
   parseNamedArgs,
 } from '../src/inject.js';
-import { dedent } from './helpers/dedent.js';
+import dedent from './helpers/dedent.js';
 
 describe('inject arg processing', () => {
   describe('parseNamedArgs', () => {

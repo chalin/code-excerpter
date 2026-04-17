@@ -4,7 +4,7 @@
 import { expect } from 'vitest';
 import type { Directive } from '../../src/directive.js';
 
-export { dedent } from './dedent.js';
+export { default as dedent, dedent0, dedent2, dedentMax } from './dedent.js';
 export { re } from './re.js';
 
 /** Runtime check via Vitest; narrows `d` for TypeScript after the call. */

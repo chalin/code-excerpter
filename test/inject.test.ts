@@ -10,7 +10,7 @@ import {
   PROC_INSTR_RE,
   type MarkdownInjectContext,
 } from '../src/inject.js';
-import { dedent } from './helpers/dedent.js';
+import dedent from './helpers/dedent.js';
 
 function ctx(files: Record<string, string>, base = ''): MarkdownInjectContext {
   return {
@@ -67,6 +67,11 @@ describe('inject', () => {
       const m = '<?code-excerpt "a.dart"?>   \t'.match(PROC_INSTR_RE);
       expect(m?.groups?.unnamed).toBe('a.dart');
     });
+
+    it('allows optional whitespace before the closing ?>', () => {
+      const m = '<?code-excerpt "a.dart" ?>'.match(PROC_INSTR_RE);
+      expect(m?.groups?.unnamed).toBe('a.dart');
+    });
   });
 
   describe('injectMarkdown', () => {
@@ -119,6 +124,30 @@ describe('inject', () => {
       `);
     });
 
+    it('injects through a tilde fence longer than triple tildes', () => {
+      const src = dedent`
+        // #docregion
+        tilde-body
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "tilde.dart"?>
+
+        ~~~~dart
+        old
+        ~~~~
+
+      `;
+      const out = injectMarkdown(md, ctx({ 'tilde.dart': src }));
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "tilde.dart"?>
+
+        ~~~~dart
+        tilde-body
+        ~~~~
+      `);
+    });
+
     it('injects excerpt containing nested markdown code fences when outer fence is tilde', () => {
       // Outer `~~~` is required so inner ``` lines are not mistaken for the
       // closing fence (fence-end matching is by kind: backtick vs tilde).
@@ -151,6 +180,41 @@ describe('inject', () => {
 
         Trailing prose.
         ~~~
+      `;
+      const out = injectMarkdown(md, ctx({ 'nested-fences.md': src }));
+      expect(out).toStrictEqual(expected);
+    });
+
+    it('injects excerpt inside a fence longer than triple backticks', () => {
+      const src = dedent`
+        # Section
+
+        \`\`\`dart
+        const injected = 42;
+        \`\`\`
+
+        Trailing prose.
+      `;
+      const md = dedent`
+        <?code-excerpt "nested-fences.md"?>
+
+        \`\`\`\`markdown
+        old-placeholder
+        \`\`\`\`
+
+      `;
+      const expected = dedent`
+        <?code-excerpt "nested-fences.md"?>
+
+        \`\`\`\`markdown
+        # Section
+
+        \`\`\`dart
+        const injected = 42;
+        \`\`\`
+
+        Trailing prose.
+        \`\`\`\`
       `;
       const out = injectMarkdown(md, ctx({ 'nested-fences.md': src }));
       expect(out).toStrictEqual(expected);
@@ -459,6 +523,31 @@ describe('inject', () => {
       });
       expect(onWarning).toHaveBeenCalledWith(
         expect.stringMatching(/processing instruction must be closed using/),
+      );
+    });
+
+    it('warns when a space appears after "<?" in the PI opener', () => {
+      const onWarning = vi.fn();
+      const src = dedent`
+        // #docregion
+        ok
+        // #enddocregion
+      `;
+      const md = dedent`
+        <? code-excerpt "c.dart"?>
+
+        \`\`\`
+        x
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'c.dart' ? src : null),
+        onWarning,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onWarning).toHaveBeenCalledWith(
+        expect.stringContaining('must start with "<?code-excerpt"'),
       );
     });
 
@@ -869,6 +958,37 @@ describe('inject', () => {
       `);
     });
 
+    it('only substitutes standalone plaster marker lines', () => {
+      const src = dedent`
+        // #docregion
+        void f() {
+          // ···
+        }
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "pl-source-comment.dart"?>
+
+        \`\`\`dart
+        .
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'pl-source-comment.dart' ? src : null),
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "pl-source-comment.dart"?>
+
+        \`\`\`dart
+        void f() {
+          // ···
+        }
+        \`\`\`
+
+      `);
+    });
+
     it('uses an empty fragment plaster template', () => {
       const src = dedent`
         // #docregion
@@ -1148,6 +1268,35 @@ describe('inject', () => {
       `);
     });
 
+    it('removes shared left whitespace after transforms', () => {
+      const src = dedent`
+          info - one
+          info - two
+      `;
+      // Sanity check:
+      expect(src.match(/\s+info/)).toBeTruthy();
+      const md = dedent`
+        <?code-excerpt "analysis.txt" retain="info - "?>
+
+        \`\`\`plaintext
+        keep
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'analysis.txt' ? src : null),
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "analysis.txt" retain="info - "?>
+
+        \`\`\`plaintext
+        info - one
+        info - two
+        \`\`\`
+
+      `);
+    });
+
     it('errors when input ends after excerpt PI (no code block)', () => {
       const onError = vi.fn();
       const md = dedent`
@@ -1227,6 +1376,45 @@ describe('inject', () => {
 
         \`\`\`
         xy
+        \`\`\`
+
+      `);
+    });
+
+    it('indents plaster from the reopening #docregion directive', () => {
+      const src = dedent`
+        // #docregion sample
+        int sumUp(int a, int b, int c) {
+          return a + b + c;
+        }
+        // #enddocregion sample
+
+        void mainTest() {
+          // #docregion sample
+          int total = sumUp(1, 2, 3);
+          // #enddocregion sample
+        }
+      `;
+      const md = dedent`
+        <?code-excerpt "sample.dart (sample)"?>
+
+        \`\`\`dart
+        old
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'sample.dart' ? src : null),
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "sample.dart (sample)"?>
+
+        \`\`\`dart
+        int sumUp(int a, int b, int c) {
+          return a + b + c;
+        }
+          // ···
+          int total = sumUp(1, 2, 3);
         \`\`\`
 
       `);
