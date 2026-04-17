@@ -7,8 +7,8 @@ This document tracks the migration of the Dart excerpter tooling to TypeScript.
 About the original model:
 
 - From plaster.dart, I see that the `plaster` args were setting
-  `plasterTemplate`; and that `plaster=""` meant "use the lang template
-  default".
+  `plasterTemplate`; and that a `null` plaster template meant "use the lang
+  template default", while `plaster=""` meant an empty plaster template.
 - There was never any capacity for a user to set only, what we've started
   calling, the "plaster string", only the full "plaster template".
 

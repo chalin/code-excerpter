@@ -103,7 +103,7 @@ So, this step now also includes correcting:
 > Note the spec may be in an inconsistent state wrt plaster processing. We're
 > accepting this as temporary, and will fix it in the next step.
 
-5. [ ] **Revisit plaster spec and processing**
+5. [x] **Revisit plaster spec and processing**
 
 Plaster spec, code, and tests cleanup.
 

@@ -87,10 +87,7 @@ export interface MarkdownInjectContext {
   readFile: (relativePath: string, region?: string) => string | null;
   /** Initial `path-base` (directory prefix for excerpt sources). */
   pathBase?: string;
-  /**
-   * When `true`, applies language-specific plaster comment wrappers in YAML
-   * excerpt mode (default `false`, legacy fragment-style behavior).
-   */
+  /** Legacy option retained for compatibility; plaster handling is now YAML-style by default. */
   excerptsYaml?: boolean;
   /** Default extra spaces when `indent-by` is omitted on a fragment directive. */
   defaultIndentation?: number;
@@ -99,10 +96,7 @@ export interface MarkdownInjectContext {
    * file-level set `replace`, on the joined excerpt string.
    */
   globalReplace?: string;
-  /**
-   * Default plaster text when neither the PI nor a file-level `plaster` set
-   * instruction overrides it.
-   */
+  /** Default plaster template when neither the PI nor a file-level `plaster` set instruction overrides it. */
   globalPlasterTemplate?: string;
   /**
    * When `true` (default), escape Angular-style `{{` / `}}` in injected lines.
@@ -336,39 +330,40 @@ function formatPlasterWithDelims(
   return d.end ? `${d.start} ${text} ${d.end}` : `${d.start} ${text}`;
 }
 
-function plasterTextForLang(text: string, lang: string): string | null {
+function plasterTemplateForLang(text: string, lang: string): string | null {
   const d = PLASTER_COMMENT_DELIMS_BY_LANG.get(lang.toLowerCase());
   if (d === undefined) return null;
   return formatPlasterWithDelims(text, d);
 }
 
 /**
- * Plaster pass: `plaster="none"` removes default-plaster lines. In legacy mode,
- * explicit plaster text replaces the raw `DEFAULT_PLASTER` marker. In YAML
- * excerpt mode, plaster text is wrapped using the language-specific plaster
- * comment form.
+ * Plaster pass: `plaster="none"` removes plaster lines. Otherwise, explicit
+ * values are treated as full plaster templates and `$defaultPlaster` expands to
+ * the default plaster string. When no template is set, a language-specific
+ * default template is used when available; languages without a known comment
+ * syntax keep the raw plaster marker.
  */
 function applyPlasterToLines(
   lines: string[],
-  plasterText: string | undefined,
+  plasterTemplate: string | undefined,
   lang: string,
-  excerptsYaml: boolean,
 ): string[] {
-  if (plasterText === 'none') {
+  if (plasterTemplate === 'none') {
     return lines.filter((line) => !line.includes(DEFAULT_PLASTER));
   }
-  if (!excerptsYaml) {
-    if (plasterText === undefined) return lines;
-    return lines
-      .join('\n')
-      .split(DEFAULT_PLASTER)
-      .join(plasterText)
-      .split('\n');
+
+  const explicitTemplate =
+    plasterTemplate === undefined
+      ? undefined
+      : plasterTemplate.replaceAll('$defaultPlaster', DEFAULT_PLASTER);
+  const effectiveTemplate =
+    explicitTemplate ?? plasterTemplateForLang(DEFAULT_PLASTER, lang);
+  if (effectiveTemplate === null || effectiveTemplate === DEFAULT_PLASTER) {
+    return lines;
   }
-  const tpl = plasterTextForLang(plasterText ?? DEFAULT_PLASTER, lang);
-  if (tpl === null) return lines;
+
   const joined = lines.join('\n');
-  return joined.split(DEFAULT_PLASTER).join(tpl).split('\n');
+  return joined.split(DEFAULT_PLASTER).join(effectiveTemplate).split('\n');
 }
 
 function tryParseFragmentIndent(
@@ -428,7 +423,6 @@ export function injectMarkdown(
   const lines = markdown.split('\n');
   const out: string[] = [];
   let pathBase = ctx.pathBase ?? '';
-  const excerptsYaml = ctx.excerptsYaml ?? false;
   const defaultIndentation = ctx.defaultIndentation ?? 0;
   let filePlasterTemplate: string | undefined;
   let fileReplacePipeline: ((code: string) => string) | null = null;
@@ -490,7 +484,11 @@ export function injectMarkdown(
         return;
       }
       const val = entry.value ?? '';
-      filePlasterTemplate = val === 'unset' ? undefined : val;
+      if (val === 'unset') {
+        err('plaster: invalid setting value on set instruction');
+        return;
+      }
+      filePlasterTemplate = val;
       return;
     }
     if (entry.key === 'class') {
@@ -587,7 +585,7 @@ export function injectMarkdown(
     } else {
       plasterInput = filePlasterTemplate ?? ctx.globalPlasterTemplate;
     }
-    working = applyPlasterToLines(working, plasterInput, lang, excerptsYaml);
+    working = applyPlasterToLines(working, plasterInput, lang);
 
     working = applyOrderedExcerptTransformOps(
       working,
