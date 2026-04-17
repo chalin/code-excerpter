@@ -14,7 +14,7 @@ overview, installation, and clone workflow.
 - [docs/architecture.md](docs/architecture.md) — Module map, data flow, Dart
   repository lineage, Dart→TypeScript porting notes
 - [docs/spec.md](docs/spec.md) — `<?code-excerpt?>` instruction syntax and
-  transform order
+  transform argument order (PI attribute order in inject)
 - [docs/plan.md](docs/plan.md) — Phased porting plan with progress checkboxes
 - [docs/scope.md](docs/scope.md) — Feature scoping for v1
 - [docs/tooling.md](docs/tooling.md) — Tooling stack, rationale, and how scripts

@@ -82,43 +82,94 @@ file-level `replace`, and file-level `plaster`:
 ```
 
 A set instruction has no path argument and no following code block. Each set
-line must contain **at most one** named argument (or one bare flag such as
-`plaster` with no `=`). Set values apply to all subsequent fragment instructions
-in the same file until another set instruction for that key replaces them.
+line must contain **at most one** named argument. Set values apply to all
+subsequent fragment instructions in the same file until another set instruction
+for that key replaces them.
 
-## Recognized Arguments
+## PI Arguments
 
 Fragment instructions may use the following named arguments (plus the positional
 path string). Set instructions accept **only** `path-base`, `replace`,
 `plaster`, or no-op compatibility keys `class` / `title`—see
 [Set instruction](#set-instruction); any other set key triggers a warning.
 
-| Argument name   | Argument values              | Description                                                           |
-| --------------- | ---------------------------- | --------------------------------------------------------------------- |
-| _(path string)_ | _string_                     | Positional: `"path/file.ext (region)"`                                |
-| `path-base`     | _string_                     | Sets the base directory for source file paths (set instruction)       |
-| `region`        | _string_                     | Named region to extract (alternative to inline `(region)`)            |
-| `from`          | _string_ \| `/regex/`        | Start extraction from the first line matching this pattern            |
-| `to`            | _string_ \| `/regex/`        | End after the first line matching this pattern (that line kept)       |
-| `skip`          | _integer_                    | Skip the first N lines of the extracted region                        |
-| `take`          | _integer_                    | Take only the first N lines of the extracted region                   |
-| `remove`        | _string_ \| `/regex/`        | Remove all lines matching this pattern                                |
-| `retain`        | _string_ \| `/regex/`        | Keep only lines matching this pattern                                 |
-| `replace`       | `/pattern/replacement/g;`... | Regex replace within extracted lines (supports multiple replacements) |
-| `indent-by`     | _integer_                    | Prepend N spaces to every output line                                 |
-| `plaster`       | _string_                     | Override the plaster comment (use `"none"` to disable)                |
+| Argument        | Scope | Kind  | Argument values              | Description                                                     |
+| --------------- | ----- | ----- | ---------------------------- | --------------------------------------------------------------- |
+| _(path string)_ | F     | -     | _string_                     | Positional: `"path/file.ext (region)"`                          |
+| `path-base`     | S     | S     | _string_                     | Sets the base directory for source file paths                   |
+| `region`        | F     | S     | _string_                     | Named region to extract (alternative to inline `(region)`)      |
+| `from`          | F     | TOp   | _string_ \| `/regex/`        | Start extraction from the first line matching this pattern      |
+| `to`            | F     | TOp   | _string_ \| `/regex/`        | End after the first line matching this pattern (that line kept) |
+| `skip`          | F     | TOp   | _integer_                    | Skip the first N lines of the extracted region                  |
+| `take`          | F     | TOp   | _integer_                    | Take only the first N lines of the extracted region             |
+| `remove`        | F     | TOp   | _string_ \| `/regex/`        | Remove all lines matching this pattern                          |
+| `retain`        | F     | TOp   | _string_ \| `/regex/`        | Keep only lines matching this pattern                           |
+| `replace`       | GSF   | S/TOp | `/pattern/replacement/g;`... | Regex replacement expressions (details below)                   |
+| `indent-by`     | GSF   | S     | _integer_                    | Indent every fragment line by the given number of spaces        |
+| `plaster`       | GSF   | S     | _string_                     | Sets the plaster (details below)                                |
 
-On a fragment instruction, `replace` and `plaster` participate in the transform
-or plaster pass for that excerpt only. As the **sole** argument on a
-[set instruction](#set-instruction), they set file-level defaults (`replace`
-runs on the joined excerpt after fragment transforms; `plaster` sets the
-template for later fragments, and bare `plaster` clears the file default).
+Legend:
+
+- Scope is either:
+  - Global (G), currently via CLI options
+  - File-scoped set instruction (S) or fragment instruction (F)
+- Kind indicates the kind of argument:
+  - Transform operation (TOp) of a fragment instruction
+  - Setting (S) of a fragment or set instruction: can appear at most once.
+    Repeated arguments are reported as errors.
+
+> TODO: `indent-by` global and file-level settings support is not implemented
+> yet.
+
+### Global settings
+
+Global CLI settings are scoped to all files:
+
+- `indent-by` sets a global indent by value.
+- `path-base` sets a global base directory for source file paths.
+- `plaster` sets the global plaster template.
+- `replace` sets a global replacement expression.
+
+### Set instructions
+
+Set instruction settings have file-level scope, and apply to all subsequent
+fragment instructions in the same file. Precedence:
+
+- `indent-by`: overrides global settings
+- `path-base`: appends to the global base directory
+- `plaster`: overrides global settings; `plaster="unset"` clears the file-level
+  plaster template; bare `plaster` is invalid and should be written as
+  `plaster="unset"`
+- `replace`: see [Replace order](#replace-order)
+
+### Fragment instructions
+
+Within a fragment instruction:
+
+- TOps are applied strictly in the order they appear in the fragment PI.
+- There can be more than one instance of a TOp; every occurrence is preserved
+  and applied.
+
+Fragment-setting semantics:
+
+- `plaster` determines the plaster template for the fragment. Applied before
+  transformations.
+- `plaster="<template>"` sets the full plaster template for the fragment,
+  including any language-specific comment wrapper.
+- `plaster="none"` ensures that no plaster template is injected into the
+  excerpt.
+- `plaster="unset"` and bare `plaster` are invalid in fragment scope.
+- `indent-by` is applied after the excerpt content has been fully transformed.
+  Overrides file-level and global settings.
+- Repeating `indent-by` or `plaster` on the same fragment instruction is an
+  error; the existing fragment block is left unchanged.
+- An invalid setting value is also an error; the existing fragment block is left
+  unchanged.
 
 ### Replace expressions
 
-The `replace` can be followed by a list of one or more semicolon-separated (`;`)
-Perl-like substitution expressions, but with JavaScript semantics. Each
-expression is of the form:
+The `replace` can be followed by a list of one or more semicolon-separated
+substitution expressions. Each expression is of the form:
 
 ```text
 /pattern/replacement/g
@@ -144,6 +195,13 @@ string replacer.
 
 For the full algorithm, see [ECMA-262 `GetSubstitution`][].
 
+### Replace order
+
+- Fragment-scoped `replace` expressions are applied first, in the order they
+  appear in the fragment PI.
+- The last set-instruction `replace` expression is applied next.
+- Finally the global `replace` expression is applied.
+
 [ECMA-262 `GetSubstitution`]: https://tc39.es/ecma262/#sec-getsubstitution
 [String.replace()]:
   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
@@ -153,23 +211,6 @@ For the full algorithm, see [ECMA-262 `GetSubstitution`][].
 - XML processing instructions cannot contain `>` (including inside quoted
   attribute values). For a regexp that must match `>`, use an escape such as
   `\x3E` instead of a literal `>`.
-
-## Processing Order of Arguments
-
-When multiple transform arguments are present, `code-excerpter` applies them in
-**the order they appear** in the processing instruction.
-
-The usual relative order is:
-
-1. `skip`
-2. `take`
-3. `from`
-4. `to`
-5. `remove`
-6. `retain`
-7. `replace`
-
-`indent-by` is handled separately after the transform chain.
 
 ## Instruction and fence prefixes
 
@@ -261,11 +302,13 @@ first.
 ## Plaster Handling
 
 When a region is composed of non-contiguous segments (e.g., a region opened and
-closed multiple times), a _plaster_ comment is inserted between the segments to
+closed multiple times), a _plaster template_ is inserted between the segments to
 indicate that content has been omitted.
 
-The default plaster consists of three dots (`···`) inside a language-specific
-comment, for example:
+The default plaster string is three dots: `···`.
+
+The default plaster template is the default plaster string inside a
+language-specific comment, for example:
 
 | Language     | Plaster comment |
 | ------------ | --------------- |
@@ -274,13 +317,16 @@ comment, for example:
 | CSS, SCSS    | `/* ··· */`     |
 | YAML         | `# ···`         |
 
-Those language-shaped defaults apply when excerpt injection runs in **YAML
-excerpt mode** (`MarkdownInjectContext.excerptsYaml`); otherwise the extractor
-still inserts the raw `···` marker between segments and it is passed through
-unchanged (unless overridden or removed via `plaster`).
+Those language-shaped default plaster templates apply when excerpt injection
+runs in **YAML excerpt mode** (`MarkdownInjectContext.excerptsYaml`); otherwise
+the extractor still inserts the raw plaster string `···` between segments and it
+is passed through unchanged (unless overridden or removed via `plaster`).
 
-The plaster can be overridden per-instruction with the `plaster` argument, or
-disabled entirely with `plaster="none"`.
+The `plaster` argument sets the full plaster template, not just the plaster
+string. For example, `plaster="/* $defaultPlaster */"` uses that whole template,
+while `plaster="none"` removes plaster injection. On a set instruction,
+`plaster="unset"` clears the file-level plaster template and falls back to the
+global/default behavior.
 
 ## Acknowledgments
 

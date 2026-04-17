@@ -1,11 +1,16 @@
 /**
- * Excerpt transform pipeline (ported from `chalin/code_excerpt_updater` `code_transformer`).
+ * Excerpt transforms (ported from `chalin/code_excerpt_updater` `code_transformer`).
  *
- * {@link applyExcerptTransforms} applies transforms in the default spec order
- * (skip → take → from → to → remove → retain → replace → indent-by).
- * {@link applyExcerptTransformsInOrder} applies them in PI attribute order instead,
- * matching how the Dart updater iterates its `LinkedHashMap` of named args.
- * See `docs/spec.md` for details.
+ * {@link applyExcerptTransformsInOrder} is the current markdown-injection
+ * helper: it applies one line-transform key at a time in PI attribute order.
+ * This is transitional; the spec now distinguishes ordered transform
+ * operations from fragment settings such as `indent-by` and `plaster`.
+ *
+ * {@link applyExcerptTransforms} applies every supplied option in a single call
+ * using a **fixed** pipeline order (skip → take → from → to → remove → retain →
+ * replace → indent-by), mainly for unit tests and direct library callers—not
+ * for simulating a full `<?code-excerpt?>` line. See `docs/spec.md` §
+ * “Transform operations and fragment settings”.
  */
 
 const escapedSlashRe = /\\\//g;
@@ -15,6 +20,19 @@ const slashLetterRe = /\\([\\nt])/g;
 const slashHexRe = /\\x(..)/g;
 
 export type LinePredicate = (line: string) => boolean;
+export type ExcerptTransformOpName =
+  | 'from'
+  | 'to'
+  | 'skip'
+  | 'take'
+  | 'remove'
+  | 'retain'
+  | 'replace';
+
+export interface ExcerptTransformOp {
+  name: ExcerptTransformOpName;
+  value: string;
+}
 
 /** Options for {@link applyExcerptTransforms}, mirroring `<?code-excerpt?>` transform arguments. */
 export interface ExcerptTransformOptions {
@@ -35,7 +53,7 @@ function parseIntArg(s: string | undefined): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-/** Keys that participate in the Dart-style per-argument transform chain. */
+/** Current ordered line-transform keys used by the transitional PI helper. */
 const ORDERED_TRANSFORM_KEYS = new Set([
   'skip',
   'take',
@@ -46,9 +64,72 @@ const ORDERED_TRANSFORM_KEYS = new Set([
   'replace',
 ]);
 
+function applyOneTransformOp(
+  lines: string[],
+  op: ExcerptTransformOp,
+  onError?: (msg: string) => void,
+): string[] {
+  switch (op.name) {
+    case 'skip': {
+      const n = parseIntArg(op.value);
+      return n === null ? lines : applySkip(lines, n);
+    }
+    case 'take': {
+      const n = parseIntArg(op.value);
+      return n === null ? lines : applyTake(lines, n);
+    }
+    case 'from': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyFrom(lines, pred);
+    }
+    case 'to': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyTo(lines, pred);
+    }
+    case 'remove': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyRemove(lines, pred);
+    }
+    case 'retain': {
+      const pred = patternToLinePredicate(op.value, onError);
+      return pred === null ? lines : applyRetain(lines, pred);
+    }
+    case 'replace': {
+      return applyReplaceTransform(lines, op.value, onError);
+    }
+  }
+}
+
+function applyReplaceTransform(
+  lines: string[],
+  replace: string,
+  onError?: (msg: string) => void,
+): string[] {
+  if (replace === '' || lines.length === 0) return lines;
+  const pipeline = parseReplacePipeline(replace, onError);
+  if (pipeline === null) return lines;
+  return pipeline(lines.join('\n')).split('\n');
+}
+
 /**
- * Applies transform arguments in **PI attribute order** (Dart `Map.forEach`
- * insertion order on named args), not a fixed global ordering.
+ * Applies ordered transform operations exactly as listed. Repeated operations
+ * are preserved and run multiple times.
+ */
+export function applyOrderedExcerptTransformOps(
+  lines: string[],
+  ops: ExcerptTransformOp[],
+  onError?: (msg: string) => void,
+): string[] {
+  let cur = [...lines];
+  for (const op of ops) {
+    cur = applyOneTransformOp(cur, op, onError);
+  }
+  return cur;
+}
+
+/**
+ * Applies the current ordered line-transform keys in PI attribute order, not a
+ * fixed global ordering.
  */
 export function applyExcerptTransformsInOrder(
   lines: string[],
@@ -56,16 +137,14 @@ export function applyExcerptTransformsInOrder(
   map: Map<string, string>,
   onError?: (msg: string) => void,
 ): string[] {
-  let cur = [...lines];
+  const ops: ExcerptTransformOp[] = [];
   for (const key of keyOrder) {
     if (!ORDERED_TRANSFORM_KEYS.has(key)) continue;
     const val = map.get(key);
     if (val === undefined) continue;
-    const opts: ExcerptTransformOptions = {};
-    (opts as Record<string, string | undefined>)[key] = val;
-    cur = applyExcerptTransforms(cur, opts, onError);
+    ops.push({ name: key as ExcerptTransformOpName, value: val });
   }
-  return cur;
+  return applyOrderedExcerptTransformOps(lines, ops, onError);
 }
 
 /** Parses `indent-by` attribute values (Dart `Updater._getIndentBy`). */
@@ -248,7 +327,9 @@ export function parseReplacePipeline(
 }
 
 /**
- * Applies transform options to excerpt lines in spec order. Does not mutate `lines`.
+ * Applies transform options to excerpt lines in **fixed pipeline order** when
+ * several fields are set at once. Does not mutate `lines`. For markdown PIs,
+ * use {@link applyExcerptTransformsInOrder} instead.
  *
  * @param onError - Parse/validation problems (indent-by, replace, bad `/regexp/` patterns).
  */
@@ -286,11 +367,7 @@ export function applyExcerptTransforms(
   }
 
   if (options.replace !== undefined && options.replace !== '') {
-    const pipeline = parseReplacePipeline(options.replace, onError);
-    if (pipeline !== null) {
-      const joined = out.join('\n');
-      out = pipeline(joined).split('\n');
-    }
+    out = applyReplaceTransform(out, options.replace, onError);
   }
 
   const indent = parseIndentBy(options.indentBy, onError);

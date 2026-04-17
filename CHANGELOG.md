@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog][], and this project adheres to
   fences and paired by fence **kind** (backtick vs tilde vs Liquid prettify),
   consistent with backtick and prettify blocks.
 - CLI **`--version`**, reporting `version` from `package.json`.
+- Focused PI arg-processing tests for direct parser/classifier coverage.
 
 ### Changed
 
@@ -24,6 +25,11 @@ The format is based on [Keep a Changelog][], and this project adheres to
 - README: improved installation instructions and Overview wording.
 - [`replace` expressions](docs/spec.md#replace-expressions) now features full
   JavaScript semantics
+- Spec now states clearly that excerpt **transform operations** run in the order
+  they appear in the fragment instruction.
+  [Details](docs/spec.md#processing-order-of-transform-arguments).
+- Fragment PI arg processing now preserves repeated transform operations in
+  appearance order instead of coalescing them by key.
 
 ## [v0.1.0][] - 2026-04-13
 

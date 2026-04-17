@@ -29,10 +29,11 @@ This document defines the feature scope for `code-excerpter` v1.
 - Overlapping and nested regions.
 - Plaster handling (language-specific filler comment at region join points).
 
-### Code transforms
+### Code transforms and settings
 
-`skip`, `take`, `from`, `to`, `remove`, `retain`, `replace`, `indent-by`. See
-[`docs/spec.md`](spec.md#processing-order-of-arguments) for ordering rules.
+Transform operations, setting arguments, and scope-sensitive `replace` semantics
+are in scope. See [`docs/spec.md`](spec.md#pi-arguments) for the canonical
+Scope/Kind table and fragment-order rules.
 
 ### Path-base set instructions
 

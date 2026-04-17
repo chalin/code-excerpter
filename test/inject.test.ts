@@ -527,6 +527,40 @@ describe('inject', () => {
       );
     });
 
+    it('errors on bare set plaster and leaves later fragments unchanged', () => {
+      const onError = vi.fn();
+      const src = dedent`
+        // #docregion
+        SRC_TOKEN
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt plaster?>
+        <?code-excerpt "set-bare-plaster.dart"?>
+
+        \`\`\`
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'set-bare-plaster.dart' ? src : null),
+        onError,
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt plaster?>
+        <?code-excerpt "set-bare-plaster.dart"?>
+
+        \`\`\`
+        SRC_TOKEN
+        \`\`\`
+
+      `);
+      expect(onError).toHaveBeenCalledWith(
+        'plaster: invalid setting value on set instruction',
+      );
+    });
+
     it('clears file-level replace when set replace is empty', () => {
       const src = dedent`
         // #docregion
@@ -677,6 +711,42 @@ describe('inject', () => {
       `);
     });
 
+    it('preserves repeated transform operations in fragment PI order', () => {
+      const src = dedent`
+        // #docregion
+        var greeting = 'hello';
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "arg.dart" replace="/hello/bonjour/g" retain="bonjour"?>
+
+        \`\`\`
+        .
+        \`\`\`
+
+        <?code-excerpt "arg.dart" retain="bonjour" replace="/hello/bonjour/g"?>
+
+        \`\`\`
+        .
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, ctx({ 'arg.dart': src }));
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "arg.dart" replace="/hello/bonjour/g" retain="bonjour"?>
+
+        \`\`\`
+        var greeting = 'bonjour';
+        \`\`\`
+
+        <?code-excerpt "arg.dart" retain="bonjour" replace="/hello/bonjour/g"?>
+
+        \`\`\`
+        \`\`\`
+
+      `);
+    });
+
     it('region="" overrides path-embedded (region) and returns full file', () => {
       const src = dedent`
         // #docregion greeting
@@ -704,6 +774,81 @@ describe('inject', () => {
         \`\`\`
 
       `);
+    });
+
+    it('leaves block unchanged on repeated region setting', () => {
+      const onError = vi.fn();
+      const src = dedent`
+        // #docregion r1
+        in-r1
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "reg.dart" region="r1" region=""?>
+
+        \`\`\`
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'reg.dart' ? src : null),
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('region: repeated setting argument'),
+      );
+    });
+
+    it('leaves block unchanged on repeated indent-by setting', () => {
+      const onError = vi.fn();
+      const src = dedent`
+        // #docregion
+        ok
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "dup-indent.dart" indent-by="2" indent-by="4"?>
+
+        \`\`\`
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'dup-indent.dart' ? src : null),
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('indent-by: repeated setting argument'),
+      );
+    });
+
+    it('leaves block unchanged on invalid indent-by setting', () => {
+      const onError = vi.fn();
+      const src = dedent`
+        // #docregion
+        ok
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "bad-indent.dart" indent-by="2abc"?>
+
+        \`\`\`
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'bad-indent.dart' ? src : null),
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('indent-by: error parsing integer value'),
+      );
     });
 
     it('substitutes plaster markers when excerptsYaml is true', () => {
@@ -737,6 +882,134 @@ describe('inject', () => {
         \`\`\`
 
       `);
+    });
+
+    it('uses empty fragment plaster text with the normal wrapper', () => {
+      const src = dedent`
+        // #docregion
+        before
+        // #enddocregion
+        // #docregion
+        after
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "empty-plaster.dart" plaster=""?>
+
+        \`\`\`dart
+        .
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'empty-plaster.dart' ? src : null),
+        excerptsYaml: true,
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "empty-plaster.dart" plaster=""?>
+
+        \`\`\`dart
+        before
+        //
+        after
+        \`\`\`
+
+      `);
+    });
+
+    it('uses plaster="unset" on a set instruction to clear file-level plaster', () => {
+      const src = dedent`
+        // #docregion
+        a
+        // #enddocregion
+        // #docregion
+        b
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt plaster="none"?>
+        <?code-excerpt plaster="unset"?>
+        <?code-excerpt "unset-plaster.dart"?>
+
+        \`\`\`dart
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'unset-plaster.dart' ? src : null),
+        excerptsYaml: true,
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt plaster="none"?>
+        <?code-excerpt plaster="unset"?>
+        <?code-excerpt "unset-plaster.dart"?>
+
+        \`\`\`dart
+        a
+        // ···
+        b
+        \`\`\`
+
+      `);
+    });
+
+    it('leaves block unchanged on repeated plaster setting', () => {
+      const onError = vi.fn();
+      const src = dedent`
+        // #docregion
+        a
+        // #enddocregion
+        // #docregion
+        b
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "dup-plaster.dart" plaster="none" plaster="/*...*/"?>
+
+        \`\`\`dart
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'dup-plaster.dart' ? src : null),
+        excerptsYaml: true,
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('plaster: repeated setting argument'),
+      );
+    });
+
+    it('leaves block unchanged on fragment plaster="unset"', () => {
+      const onError = vi.fn();
+      const src = dedent`
+        // #docregion
+        a
+        // #enddocregion
+        // #docregion
+        b
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "frag-unset.dart" plaster="unset"?>
+
+        \`\`\`dart
+        ORIGINAL
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'frag-unset.dart' ? src : null),
+        excerptsYaml: true,
+        onError,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onError).toHaveBeenCalledWith(
+        'plaster: invalid setting value on fragment instruction',
+      );
     });
 
     it.each([

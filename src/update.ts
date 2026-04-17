@@ -30,7 +30,7 @@ export interface UpdateOptions {
   escapeNgInterpolation?: boolean;
   /** Global replace expression applied after per-instruction + file-level transforms. */
   globalReplace?: string;
-  /** Default plaster template when the PI / file-level set does not override it. */
+  /** Default plaster text when the PI / file-level set does not override it. */
   globalPlasterTemplate?: string;
   log?: (msg: string) => void;
 }
