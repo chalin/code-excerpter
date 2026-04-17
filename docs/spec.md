@@ -137,7 +137,7 @@ fragment instructions in the same file. Precedence:
 
 - `indent-by`: overrides global settings
 - `path-base`: appends to the global base directory
-- `plaster`: overrides global settings; bare `plaster` is invalid
+- `plaster`: overrides global settings
 - `replace`: see [Replace order](#replace-order)
 
 ### Fragment instructions
@@ -157,7 +157,6 @@ Fragment-setting semantics:
 - `plaster=""` sets the plaster template to the empty string.
 - `plaster="none"` ensures that no plaster template is injected into the
   excerpt.
-- bare `plaster` is invalid in fragment scope.
 - `indent-by` is applied after the excerpt content has been fully transformed.
   Overrides file-level and global settings.
 - Repeating `indent-by` or `plaster` on the same fragment instruction is an
