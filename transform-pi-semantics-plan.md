@@ -1,6 +1,17 @@
-# Transition Fragment PI Semantics: Spec First, Then Bottom-Up TDD
+# Transition Fragment PI Semantics: Archived Transition Record
 
 <!-- markdownlint-disable ol-prefix -->
+
+## Current status
+
+- Steps 0 through 5 landed and are now the repo's current behavior.
+- The intended fragment PI semantic transition is complete for the repo-owned
+  spec, code, and tests.
+- Remaining skipped legacy parity cases in `test/updater-goldens.test.ts` are
+  no longer tracked as part of this transition; treat them as separate fixture /
+  parity cleanup under [`docs/plan.md`](docs/plan.md).
+- The `inject.ts` refactor note below is now optional later cleanup, not a
+  required completion step for this transition.
 
 ## Summary
 
@@ -110,25 +121,25 @@ Plaster spec, code, and tests cleanup.
 - Consider dropping `ParsedNamedArgEntry.hasValue` if `value === undefined`
   remains sufficient to distinguish bare args from `key=""`.
 
-6. [ ] **Refactor inject.ts**
+6. [ ] **Optional later `inject.ts` refactor**
 
-Refactor `inject.ts` to use the proper arg-order semantics.
+- No longer required to complete the fragment PI semantic transition.
+- If `inject.ts` becomes a maintenance problem later, track that work under
+  [`docs/plan.md`](docs/plan.md) instead of this archived transition plan.
 
-7. [ ] **Rework golden expectations**
+7. [ ] **Optional legacy parity cleanup**
 
-- Update or replace the old parity-oriented expectations in
-  `test/updater-goldens.test.ts`.
-- Treat `arg-order.md` as TS-owned semantics, not Dart-parity semantics.
-- Add one golden covering duplicate FS error behavior if unit/inject tests are
-  not sufficient.
+- Remaining updater-golden parity cleanup is now separate from the semantic
+  transition itself.
+- Track any future work on `arg-order.md` or related legacy fixtures under
+  [`docs/plan.md`](docs/plan.md).
 
-8. [ ] **Re-enable higher layers and finish**
+8. [x] **Higher layers re-enabled for current shipped behavior**
 
-- Re-enable skipped tests incrementally from bottom to top.
-- Run/update [`test/update.test.ts`](test/update.test.ts) and
-  [`test/cli.integration.test.ts`](test/cli.integration.test.ts) only for any
-  observable error/reporting changes caused by the new fragment behavior.
-- Remove stale comments/docs that still describe Dart-style coalescing.
+- `updatePaths`, CLI, and the current regression harness reflect the new
+  repo-owned semantics.
+- Remaining skipped legacy parity cases are intentional and out of scope for
+  this archived transition record.
 
 ## Public Interface / Behavior Changes
 

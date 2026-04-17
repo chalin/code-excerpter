@@ -65,6 +65,12 @@ Directory walking, file updating, CLI entry point.
 - [x] Implement `src/cli.ts`
 - [x] Write `test/update.test.ts`
 - [x] Update docs as needed
+- [x] Add built-in `.excerpt.yaml` sidecar support in the disk updater path,
+      including authoritative-sidecar semantics and explicit sidecar error
+      reporting.
+- [x] Add normalized repo-owned updater fixtures under
+      `test/fixtures/updater/` plus the `test/updater-fixtures.test.ts`
+      filesystem harness.
 
 ## Phase 5a - follow-ups
 
