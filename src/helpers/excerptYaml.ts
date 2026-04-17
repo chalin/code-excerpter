@@ -75,7 +75,7 @@ export function stripExcerptYamlBorder(
   if (border === '') return content;
   return content
     .split('\n')
-    .map((line) => (line.startsWith(border) ? line.slice(1) : line))
+    .map((line) => (line.startsWith(border) ? line.slice(border.length) : line))
     .join('\n');
 }
 
@@ -103,6 +103,21 @@ export type ExcerptYamlReadResult =
   | { status: 'region-not-found' }
   | { status: 'file-not-found' };
 
+export function formatExcerptYamlReadError(
+  resolvedPath: string,
+  region: string,
+  status: Exclude<ExcerptYamlReadResult['status'], 'found' | 'file-not-found'>,
+): string {
+  const yamlPath = `${resolvedPath}${EXCERPT_YAML_EXT}`;
+  if (status === 'invalid-format') {
+    return `invalid .excerpt.yaml format in "${yamlPath}"`;
+  }
+  if (region === '') {
+    return `default region not found in "${yamlPath}"`;
+  }
+  return `unknown region "${region}" in "${yamlPath}"`;
+}
+
 export function readExcerptYamlResultSync(
   readFile: (path: string, encoding: 'utf8') => string,
   yamlPath: string,
@@ -112,13 +127,17 @@ export function readExcerptYamlResultSync(
   const doc = parseExcerptYamlMap(readFile(yamlPath, 'utf8'));
   if (doc === null) return { status: 'invalid-format' };
 
+  const border = doc.get(borderKey);
+  if (border !== undefined && border.length !== 1) {
+    return { status: 'invalid-format' };
+  }
+
   const raw = doc.get(region);
   if (raw === undefined) return { status: 'region-not-found' };
 
-  const border = doc.get(borderKey) ?? '';
   return {
     status: 'found',
-    excerpt: stripExcerptYamlBorder(raw, border).trimEnd(),
+    excerpt: stripExcerptYamlBorder(raw, border ?? '').trimEnd(),
   };
 }
 

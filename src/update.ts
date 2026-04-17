@@ -8,7 +8,10 @@
 import { readFileSync } from 'node:fs';
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
-import { tryReadExcerptYamlSidecar } from './helpers/excerptYaml.js';
+import {
+  formatExcerptYamlReadError,
+  tryReadExcerptYamlSidecar,
+} from './helpers/excerptYaml.js';
 import { injectMarkdown, type MarkdownInjectContext } from './inject.js';
 import type { InstructionStats } from './instructionStats.js';
 
@@ -52,24 +55,48 @@ function shouldExclude(relPath: string, patterns: RegExp[]): boolean {
   return patterns.some((re) => re.test(relPath));
 }
 
+function excerptYamlErrorKey(resolvedPath: string, region = ''): string {
+  return `${resolvedPath}\0${region}`;
+}
+
 /**
  * Builds a synchronous `readFile` for {@link MarkdownInjectContext}: resolves
  * paths relative to `srcRoot`. If `<path>.excerpt.yaml` contains the requested
  * region key, it reads excerpt text from that file; otherwise it falls back to
  * the plain source file.
  */
-function createDiskReadFile(
+function createDiskReadAccessors(
   srcRoot: string,
-): (resolvedPath: string, region?: string) => string | null {
-  return (resolvedPath: string, region = ''): string | null => {
-    try {
-      const sidecar = tryReadExcerptYamlSidecar(srcRoot, resolvedPath, region);
-      if (sidecar.status === 'found') return sidecar.excerpt;
-      if (sidecar.status !== 'file-not-found') return null;
-      return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
-    } catch {
-      return null;
-    }
+): Pick<MarkdownInjectContext, 'readFile' | 'readError'> {
+  const lastReadErrors = new Map<string, string>();
+
+  return {
+    readFile: (resolvedPath: string, region = ''): string | null => {
+      const key = excerptYamlErrorKey(resolvedPath, region);
+      lastReadErrors.delete(key);
+
+      try {
+        const sidecar = tryReadExcerptYamlSidecar(
+          srcRoot,
+          resolvedPath,
+          region,
+        );
+        if (sidecar.status === 'found') return sidecar.excerpt;
+        if (sidecar.status === 'file-not-found') {
+          return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
+        }
+
+        lastReadErrors.set(
+          key,
+          formatExcerptYamlReadError(resolvedPath, region, sidecar.status),
+        );
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    readError: (resolvedPath: string, region = ''): string | null =>
+      lastReadErrors.get(excerptYamlErrorKey(resolvedPath, region)) ?? null,
   };
 }
 
@@ -142,8 +169,9 @@ export async function updatePaths(
   const uniqueFiles = [...new Set(allFiles)];
 
   for (const filePath of uniqueFiles) {
+    const readAccessors = createDiskReadAccessors(srcRoot);
     const ctx: MarkdownInjectContext = {
-      readFile: createDiskReadFile(srcRoot),
+      ...readAccessors,
       escapeNgInterpolation: opts.escapeNgInterpolation,
       globalReplace: opts.globalReplace,
       globalPlasterTemplate: opts.globalPlasterTemplate,

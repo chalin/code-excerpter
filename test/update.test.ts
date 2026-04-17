@@ -107,6 +107,31 @@ function useTmpSrcDocs(): { tmp: string; src: string; docs: string } {
   return { tmp, src: join(tmp, 'src'), docs: join(tmp, 'docs') };
 }
 
+const SNIPPET_PAGE_PLACEHOLDER = dedent`
+  <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+  \`\`\`dart
+  placeholder
+  \`\`\`
+`;
+
+function writeSnippetPage(docs: string): void {
+  writeFixture(docs, 'page.md', SNIPPET_PAGE_PLACEHOLDER);
+}
+
+function expectSnippetSidecarError(
+  result: Awaited<ReturnType<typeof updatePaths>>,
+  docs: string,
+  message: RegExp,
+): void {
+  expect(result.filesUpdated).toBe(0);
+  expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+  expect(result.errors.join('\n')).toMatch(message);
+  expect(readFileSync(join(docs, 'page.md'), 'utf8')).toBe(
+    SNIPPET_PAGE_PLACEHOLDER,
+  );
+}
+
 const keepTestTmp =
   process.env.KEEP_TEST_TMP === '1' || process.env.KEEP_TEST_TMP === 'true';
 
@@ -261,33 +286,38 @@ describe('updatePaths', () => {
       `,
     );
 
-    writeFixture(
-      docs,
-      'page.md',
-      dedent`
-        <?code-excerpt "lib/snippet.dart" region="focus"?>
-
-        \`\`\`dart
-        placeholder
-        \`\`\`
-      `,
-    );
+    writeSnippetPage(docs);
 
     const result = await updatePaths([docs], { pathBase: src });
 
-    expect(result.filesUpdated).toBe(0);
-    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
-    expect(result.errors.join('\n')).toMatch(
-      /cannot read source file "lib\/snippet\.dart"/,
+    expectSnippetSidecarError(
+      result,
+      docs,
+      /unknown region "focus" in "lib\/snippet\.dart\.excerpt\.yaml"/,
     );
-    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toBe(
-      dedent`
-        <?code-excerpt "lib/snippet.dart" region="focus"?>
+  });
 
-        \`\`\`dart
-        placeholder
-        \`\`\`
+  it('reports an error when a sidecar has an invalid #border value', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        '#border': '||'
+        'focus': |+
+          ||const fromSidecar = 99;
       `,
+    );
+
+    writeSnippetPage(docs);
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expectSnippetSidecarError(
+      result,
+      docs,
+      /invalid \.excerpt\.yaml format in "lib\/snippet\.dart\.excerpt\.yaml"/,
     );
   });
 
