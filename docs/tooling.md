@@ -169,6 +169,9 @@ below states what it does / its purpose, not how it achieves that (see
   order, stop on the first failure” instead of long `&&` chains. Uses **bash**;
   on Windows, Git Bash, WSL, or another environment where `bash` is on `PATH` is
   required.
+- `test:site-www`: Runs the reusable `site-www` integration harness from
+  `scripts/test-site-www.mts`. Supports `--root <dir>`, optional target files,
+  and `--write` for restoring excerpted docs in a local `site-www` clone.
 - `postbuild`: Asserts `dist/` contains the expected build artifacts.
 - `prepare`: Builds on install so git URL consumers get `dist/`.
 - `test`: Offers the default “trust this tree” path: full read-only gates, then

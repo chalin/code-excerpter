@@ -7,8 +7,8 @@
 - Steps 0 through 5 landed and are now the repo's current behavior.
 - The intended fragment PI semantic transition is complete for the repo-owned
   spec, code, and tests.
-- Remaining skipped legacy parity cases in `test/updater-goldens.test.ts` are
-  no longer tracked as part of this transition; treat them as separate fixture /
+- Remaining skipped legacy parity cases in `test/updater-goldens.test.ts` are no
+  longer tracked as part of this transition; treat them as separate fixture /
   parity cleanup under [`docs/plan.md`](docs/plan.md).
 - The `inject.ts` refactor note below is now optional later cleanup, not a
   required completion step for this transition.

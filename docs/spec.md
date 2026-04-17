@@ -19,6 +19,9 @@ file, region, and transforms to apply to the code excerpt, allowing for
 `code-excerpter` to refresh code blocks when their originating source code
 changes.
 
+Per XML PI syntax, there is no space between `<?` and `code-excerpt`.
+`<? code-excerpt ...?>` is treated as malformed and ignored with a warning.
+
 ## Markdown input assumptions
 
 The `code-excerpter` tool is a simple line-oriented scanner, not a full Markdown
@@ -69,9 +72,12 @@ Specifies a source file (and optionally a named region) to inject:
 Supported fences are:
 
 - Markdown code-block fences using either syntax:
-  - backtick fences (` ``` ` ... ` ``` `) or
-  - tilde fences (`~~~` … `~~~`)
+  - backtick fences (runs of 3 or more backticks), or
+  - tilde fences (runs of 3 or more tildes)
 - Hugo/Liquid `{% prettify … %}` ... `{% endprettify %}` pairs.
+
+For backtick and tilde fences, the closing fence must be the same kind and at
+least as long as the opening fence.
 
 ### Set instruction
 
@@ -230,9 +236,10 @@ margin token prefix:
 
 ## Optional trailing whitespace for instruction lines
 
-Any whitespace following the closing `?>` is ignored. Any non-whitespace after
-the closing `?>` is reported via a warning and the document is left unchanged
-for that line.
+Any whitespace between the final attribute and the closing `?>` is ignored, as
+is any whitespace following the closing `?>`. Any non-whitespace after the
+closing `?>` is reported via a warning and the document is left unchanged for
+that line.
 
 ---
 
@@ -326,6 +333,9 @@ The `plaster` argument sets the full plaster template, not just the plaster
 string. For example, `plaster="/* $defaultPlaster */"` uses that whole template,
 while `plaster="none"` removes plaster injection. The `$defaultPlaster`
 placeholder expands to the default plaster string `···`.
+
+For discontiguous regions, the plaster line inherits the indentation of the
+reopening `#docregion` directive.
 
 ## Acknowledgments
 

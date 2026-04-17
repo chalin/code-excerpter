@@ -113,6 +113,9 @@ export function extractExcerpts(
     if (regionNames.length === 0) regionNames.push(defaultRegionKey);
 
     for (const name of regionNames) {
+      if (excerpts.has(name) && !openExcerpts.has(name)) {
+        excerpts.get(name)?.push(directive.indentation + DEFAULT_PLASTER);
+      }
       const isNew = excerptStart(name);
       if (!isNew) {
         regionAlreadyStarted.push(quoteName(name));
@@ -141,7 +144,6 @@ export function extractExcerpts(
           // "empty region \"a\"". This matches the Dart excerpter exactly.
           warnRegions([name], (r) => `empty ${r}`);
         }
-        excerpt.push(directive.indentation + DEFAULT_PLASTER);
       } else {
         regionsWithoutStart.push(quoteName(name));
       }

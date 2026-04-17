@@ -3,6 +3,7 @@ import {
   dropLeadingBlankLines,
   dropTrailingBlankLines,
   getExcerptRegionLines,
+  maxUnindent,
 } from './extract.js';
 import type { InstructionStats } from './instructionStats.js';
 import {
@@ -10,6 +11,7 @@ import {
   type ExcerptTransformOp,
   parseReplacePipeline,
 } from './transform.js';
+import { re } from './helpers/re.js';
 
 /**
  * Core `<?code-excerpt ...?>` match from the start of a line (no end-of-line rule).
@@ -18,7 +20,9 @@ import {
  * {@link PROC_INSTR_RE}, triggers `onWarning`, and the line is skipped as an instruction.
  */
 const PROC_INSTR_BODY =
-  /^(?<linePrefix>\s*((?:\/\/\/?|-|\*)\s*)?)?<\?code-excerpt\s*(?:"(?<unnamed>[^"]+)")?(?<named>(?:\s+[-\w]+\s*=\s*"[^"]*"\s*)*)\??>/;
+  /^(?<linePrefix>\s*((?:\/\/\/?|-|\*)\s*)?)?<\?code-excerpt\s*(?:"(?<unnamed>[^"]+)")?(?<named>(?:\s+[-\w]+\s*=\s*"[^"]*"\s*)*)\s*\??>/;
+
+const MALFORMED_PI_SPACE_AFTER_XML_OPEN = re`^(?:\s*((?:///?|-|\*)\s*)?)?<\?\s+code-excerpt\b`;
 
 /**
  * Strict match: the **entire line** is only a `<?code-excerpt ...?>` plus optional trailing
@@ -50,14 +54,13 @@ export interface ParsedNamedArgs {
   entries: ParsedNamedArgEntry[];
 }
 
-// TODO: bring in x`` string template / regex helper
-
 /** Backtick fences, tilde fences, or Liquid `{% prettify ... %}` (not arbitrary `{% ... %}`). */
 const CODE_BLOCK_START =
-  /^\s*(?:\/\/\/?)?\s*(```|~~~|{%-?\s*prettify(\s+.*)?-?%})/;
+  /^\s*(?:\/\/\/?)?\s*(?<token>`{3,}|~{3,}|{%-?\s*prettify(\s+.*)?-?%})/;
 
 /** Matches any code-block closing fence (backtick, tilde, or prettify). */
-const CODE_BLOCK_END = /^\s*(?:\/\/\/?)?\s*(```|~~~|{%-?\s*endprettify\s*-?%})/;
+const CODE_BLOCK_END =
+  /^\s*(?:\/\/\/?)?\s*(?<token>`{3,}|~{3,}|{%-?\s*endprettify\s*-?%})/;
 
 type FenceKind = 'backtick' | 'tilde' | 'prettify';
 
@@ -66,6 +69,16 @@ function fenceKind(token: string): FenceKind {
   if (token.startsWith('`')) return 'backtick';
   if (token.startsWith('~')) return 'tilde';
   return 'prettify';
+}
+
+function isMatchingFence(
+  openingToken: string,
+  closingToken: string,
+  openKind: FenceKind,
+): boolean {
+  if (fenceKind(closingToken) !== openKind) return false;
+  if (openKind === 'prettify') return true;
+  return closingToken.length >= openingToken.length;
 }
 
 const REGION_IN_PATH = /\s*\((.+)\)\s*$/;
@@ -356,8 +369,11 @@ function applyPlasterToLines(
     return lines;
   }
 
-  const joined = lines.join('\n');
-  return joined.split(DEFAULT_PLASTER).join(effectiveTemplate).split('\n');
+  return lines.map((line) => {
+    const leadingWhitespace = /^([ \t]*)/.exec(line)?.[1] ?? '';
+    if (line.trim() !== DEFAULT_PLASTER) return line;
+    return `${leadingWhitespace}${effectiveTemplate}`;
+  });
 }
 
 function tryParseFragmentIndent(
@@ -388,15 +404,20 @@ function consumeFenceBlock(queue: string[]): {
   if (queue.length === 0) return { closed: false, lines: [] };
   const opening = queue.shift()!;
   const openMatch = CODE_BLOCK_START.exec(opening);
-  if (openMatch === null || openMatch[1] === undefined) {
+  const openingToken = openMatch?.groups?.token;
+  if (openingToken === undefined) {
     return { closed: false, lines: [opening] };
   }
-  const openKind = fenceKind(openMatch[1]);
+  const openKind = fenceKind(openingToken);
   const inner: string[] = [];
   while (queue.length > 0) {
     const line = queue[0]!;
     const em = CODE_BLOCK_END.exec(line);
-    if (em?.[1] && fenceKind(em[1]) === openKind) {
+    const closingToken = em?.groups?.token;
+    if (
+      closingToken !== undefined &&
+      isMatchingFence(openingToken, closingToken, openKind)
+    ) {
       queue.shift();
       return { closed: true, lines: [opening, ...inner, line] };
     }
@@ -518,7 +539,7 @@ export function injectMarkdown(
 
     const [opening, ...mid] = fb.lines;
     const openMatch = CODE_BLOCK_START.exec(opening);
-    if (openMatch === null || openMatch[1] === undefined) {
+    if (openMatch?.groups?.token === undefined) {
       err(
         `code block should immediately follow - "${relPath}"\n not: ${opening}`,
       );
@@ -591,6 +612,7 @@ export function injectMarkdown(
       joined = appReplacePipeline(joined);
     }
     working = dropLeadingBlankLines(dropTrailingBlankLines(joined.split('\n')));
+    working = maxUnindent(working);
 
     const parsedIndent = tryParseFragmentIndent(
       fragmentArgs.indentByRaw,
@@ -620,7 +642,14 @@ export function injectMarkdown(
   while (lines.length > 0) {
     const line = lines.shift()!;
     out.push(line);
-    if (!line.includes('<?code-excerpt')) continue;
+    if (!line.includes('<?code-excerpt')) {
+      if (MALFORMED_PI_SPACE_AFTER_XML_OPEN.test(line)) {
+        warn(
+          'processing instruction ignored: XML processing instructions must start with "<?code-excerpt" (no space after "<?")',
+        );
+      }
+      continue;
+    }
 
     const match = PROC_INSTR_RE.exec(line);
     if (match === null || match.groups === undefined) {

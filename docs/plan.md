@@ -68,9 +68,8 @@ Directory walking, file updating, CLI entry point.
 - [x] Add built-in `.excerpt.yaml` sidecar support in the disk updater path,
       including authoritative-sidecar semantics and explicit sidecar error
       reporting.
-- [x] Add normalized repo-owned updater fixtures under
-      `test/fixtures/updater/` plus the `test/updater-fixtures.test.ts`
-      filesystem harness.
+- [x] Add normalized repo-owned updater fixtures under `test/fixtures/updater/`
+      plus the `test/updater-fixtures.test.ts` filesystem harness.
 
 ## Phase 5a - follow-ups
 

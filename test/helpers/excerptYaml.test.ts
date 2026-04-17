@@ -4,7 +4,7 @@ import {
   readExcerptYamlResultSync,
   stripExcerptYamlBorder,
 } from '../../src/helpers/excerptYaml.js';
-import { dedent } from './dedent.js';
+import dedent from './dedent.js';
 import { readExcerptYamlSync } from './excerptYaml.js';
 
 // This suite primarily exercises the production helper in

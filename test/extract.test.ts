@@ -7,7 +7,7 @@ import {
   getExcerptRegionLines,
   maxUnindent,
 } from '../src/extract.js';
-import { dedent } from './helpers/dedent.js';
+import dedent from './helpers/dedent.js';
 
 const uri = 'foo';
 
@@ -370,17 +370,17 @@ describe('extract', () => {
       );
     });
 
-    it('plaster indentation taken from the #enddocregion directive', () => {
-      // Content lines have 0 indent; #enddocregion has 2-space indent.
-      // maxUnindent sees min=0 (from content lines) so plaster stays '  ···'.
+    it('plaster indentation taken from the reopening #docregion directive', () => {
+      // Content lines have 0 indent; the reopened #docregion has 2-space indent.
+      // The plaster line should inherit that indentation.
       const content = dedent`
         #docregion a
         abc
-          #enddocregion a
+        #enddocregion a
         def
-        #docregion a
+          #docregion a
         ghi
-          #enddocregion a
+        #enddocregion a
       `;
       const result = extractExcerpts(uri, content);
       expect(result.get('a')).toEqual(['abc', `  ${DEFAULT_PLASTER}`, 'ghi']);

@@ -39,6 +39,7 @@
     "pretest:watch": "npm run build",
     "seq": "bash -c 'for cmd in \"$@\"; do npm run $cmd || exit 1; done' - ",
     "test:base": "KEEP_TEST_TMP=${KEEP_TEST_TMP:-0} vitest run",
+    "test:site-www": "tsx scripts/test-site-www.mts",
     "test:watch": "vitest",
     "test": "npm run check && npm run test:base",
     "update:packages": "npm-check-updates -u"

@@ -42,7 +42,7 @@ import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { InstructionStats } from '../src/instructionStats.js';
 import { updatePaths } from '../src/update.js';
-import { dedent } from './helpers/dedent.js';
+import dedent from './helpers/dedent.js';
 
 /** Expected `instructionStats` when no set/fragment directives were parsed. */
 const ZERO_STATS: InstructionStats = { set: 0, fragment: 0 };

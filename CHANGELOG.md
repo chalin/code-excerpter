@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog][], and this project adheres to
 - [Markdown input assumptions](docs/spec.md#markdown-input-assumptions).
 - Plaster templates for common fenced-code language identifiers, including
   `javascript`, `typescript`, `csharp`, `cs`, and more.
+- Reusable `test:site-www` integration harness for exercising the updater
+  against a local `site-www` clone.
 - **Tilde (`~~~`) code fences** in markdown: recognized as opening/closing
   fences and paired by fence **kind** (backtick vs tilde vs Liquid prettify),
   consistent with backtick and prettify blocks.
@@ -36,6 +38,11 @@ The format is based on [Keep a Changelog][], and this project adheres to
 - Built-in `.excerpt.yaml` sidecar reading now treats a present sidecar as
   authoritative: missing sidecar regions report an error instead of falling back
   to plain-source extraction.
+- PI parsing now tolerates whitespace before `?>`, warns on malformed
+  `<? code-excerpt ...?>` openers, and accepts backtick / tilde fence runs
+  longer than 3.
+- Discontiguous-region plaster lines now inherit the reopening `#docregion`
+  directive indentation, matching `site-shared` and `site-www`.
 
 ## [v0.1.0][] - 2026-04-13
 
