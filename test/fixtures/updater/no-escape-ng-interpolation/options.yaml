@@ -1,0 +1,4 @@
+pathBase: sources
+targets:
+  - doc.md
+escapeNgInterpolation: false

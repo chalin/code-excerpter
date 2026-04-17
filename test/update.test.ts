@@ -42,6 +42,7 @@ import { join, relative } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { InstructionStats } from '../src/instructionStats.js';
 import { updatePaths } from '../src/update.js';
+import { dedent } from './helpers/dedent.js';
 
 /** Expected `instructionStats` when no set/fragment directives were parsed. */
 const ZERO_STATS: InstructionStats = { set: 0, fragment: 0 };
@@ -104,6 +105,31 @@ function useTmp(): string {
 function useTmpSrcDocs(): { tmp: string; src: string; docs: string } {
   const tmp = useTmp();
   return { tmp, src: join(tmp, 'src'), docs: join(tmp, 'docs') };
+}
+
+const SNIPPET_PAGE_PLACEHOLDER = dedent`
+  <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+  \`\`\`dart
+  placeholder
+  \`\`\`
+`;
+
+function writeSnippetPage(docs: string): void {
+  writeFixture(docs, 'page.md', SNIPPET_PAGE_PLACEHOLDER);
+}
+
+function expectSnippetSidecarError(
+  result: Awaited<ReturnType<typeof updatePaths>>,
+  docs: string,
+  message: RegExp,
+): void {
+  expect(result.filesUpdated).toBe(0);
+  expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+  expect(result.errors.join('\n')).toMatch(message);
+  expect(readFileSync(join(docs, 'page.md'), 'utf8')).toBe(
+    SNIPPET_PAGE_PLACEHOLDER,
+  );
 }
 
 const keepTestTmp =
@@ -190,6 +216,175 @@ describe('updatePaths', () => {
     expect(result.instructionStats).toEqual(ONE_FRAGMENT);
     expect(readFileSync(join(docs, 'page.md'), 'utf8')).toContain(
       'const k = 42;',
+    );
+  });
+
+  it('reads region content from .excerpt.yaml when present', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        '#border': '|'
+        'focus': |+
+          |const k = 42;
+          |
+          |
+      `,
+    );
+
+    writeFixture(
+      docs,
+      'page.md',
+      dedent`
+        <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+
+      `,
+    );
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expect(result.errors, result.errors.join('\n')).toEqual([]);
+    expect(result.filesUpdated).toBe(1);
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toStrictEqual(
+      dedent`
+        <?code-excerpt "lib/snippet.dart" region="focus"?>
+
+        \`\`\`dart
+        const k = 42;
+        \`\`\`
+
+      `,
+    );
+  });
+
+  it('passes defaultIndentation through to injectMarkdown', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart',
+      dedent`
+        // #docregion
+        const k = 42;
+        // #enddocregion
+      `,
+    );
+
+    writeFixture(
+      docs,
+      'page.md',
+      dedent`
+        <?code-excerpt "lib/snippet.dart"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+      `,
+    );
+
+    const result = await updatePaths([docs], {
+      pathBase: src,
+      defaultIndentation: 2,
+    });
+
+    expect(result.errors, result.errors.join('\n')).toEqual([]);
+    expect(result.filesUpdated).toBe(1);
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toStrictEqual(
+      dedent`
+        <?code-excerpt "lib/snippet.dart"?>
+
+        \`\`\`dart
+          const k = 42;
+        \`\`\`
+      `,
+    );
+  });
+
+  it('reports an error when a sidecar exists but the requested region is missing', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart',
+      dedent`
+        // #docregion focus
+        const fromSource = 42;
+        // #enddocregion focus
+      `,
+    );
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        'other': |+
+          const fromSidecar = 99;
+      `,
+    );
+
+    writeSnippetPage(docs);
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expectSnippetSidecarError(
+      result,
+      docs,
+      /unknown region "focus" in "lib\/snippet\.dart\.excerpt\.yaml"/,
+    );
+  });
+
+  it('reports an error when a sidecar has an invalid #border value', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        '#border': '||'
+        'focus': |+
+          ||const fromSidecar = 99;
+      `,
+    );
+
+    writeSnippetPage(docs);
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expectSnippetSidecarError(
+      result,
+      docs,
+      /invalid \.excerpt\.yaml format in "lib\/snippet\.dart\.excerpt\.yaml"/,
+    );
+  });
+
+  it('reports an error when a sidecar uses an unsupported block scalar', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/snippet.dart.excerpt.yaml',
+      dedent`
+        'focus': |
+          const fromSidecar = 99;
+      `,
+    );
+
+    writeSnippetPage(docs);
+
+    const result = await updatePaths([docs], { pathBase: src });
+
+    expectSnippetSidecarError(
+      result,
+      docs,
+      /invalid \.excerpt\.yaml format in "lib\/snippet\.dart\.excerpt\.yaml"/,
     );
   });
 

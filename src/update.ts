@@ -8,6 +8,10 @@
 import { readFileSync } from 'node:fs';
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
+import {
+  formatExcerptYamlReadError,
+  tryReadExcerptYamlSidecar,
+} from './helpers/excerptYaml.js';
 import { injectMarkdown, type MarkdownInjectContext } from './inject.js';
 import type { InstructionStats } from './instructionStats.js';
 
@@ -28,6 +32,8 @@ export interface UpdateOptions {
   dryRun?: boolean;
   /** Escape Angular `{{`/`}}` in injected code (default `true`). */
   escapeNgInterpolation?: boolean;
+  /** Default extra spaces when `indent-by` is omitted on a fragment directive. */
+  defaultIndentation?: number;
   /** Global replace expression applied after per-instruction + file-level transforms. */
   globalReplace?: string;
   /** Default plaster template when the PI / file-level set does not override it. */
@@ -51,19 +57,59 @@ function shouldExclude(relPath: string, patterns: RegExp[]): boolean {
   return patterns.some((re) => re.test(relPath));
 }
 
+function excerptYamlErrorKey(resolvedPath: string, region = ''): string {
+  // `readFile` / `readError` are keyed by the exact path+region pair because a
+  // single markdown file may resolve multiple excerpt regions from one source.
+  return `${resolvedPath}\0${region}`;
+}
+
 /**
  * Builds a synchronous `readFile` for {@link MarkdownInjectContext}: resolves
- * paths relative to `srcRoot` and returns file content or `null`.
+ * paths relative to `srcRoot`. If `<path>.excerpt.yaml` contains the requested
+ * region key, it reads excerpt text from that file; otherwise it falls back to
+ * the plain source file.
  */
-function createDiskReadFile(
+function createDiskReadAccessors(
   srcRoot: string,
-): (resolvedPath: string, region?: string) => string | null {
-  return (resolvedPath: string): string | null => {
-    try {
-      return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
-    } catch {
-      return null;
-    }
+): Pick<MarkdownInjectContext, 'readFile' | 'readError'> {
+  let lastReadError: { key: string; message: string } | null = null;
+
+  return {
+    readFile: (resolvedPath: string, region = ''): string | null => {
+      // The default excerpt-yaml region is stored under the empty-string key ''.
+      const key = excerptYamlErrorKey(resolvedPath, region);
+      if (lastReadError?.key === key) {
+        lastReadError = null;
+      }
+
+      try {
+        const sidecar = tryReadExcerptYamlSidecar(
+          srcRoot,
+          resolvedPath,
+          region,
+        );
+        if (sidecar.status === 'found') return sidecar.excerpt;
+        if (sidecar.status === 'file-not-found') {
+          return readFileSync(resolve(srcRoot, resolvedPath), 'utf8');
+        }
+
+        lastReadError = {
+          key,
+          message: formatExcerptYamlReadError(
+            resolvedPath,
+            region,
+            sidecar.status,
+          ),
+        };
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    readError: (resolvedPath: string, region = ''): string | null =>
+      lastReadError?.key === excerptYamlErrorKey(resolvedPath, region)
+        ? lastReadError.message
+        : null,
   };
 }
 
@@ -136,9 +182,11 @@ export async function updatePaths(
   const uniqueFiles = [...new Set(allFiles)];
 
   for (const filePath of uniqueFiles) {
+    const readAccessors = createDiskReadAccessors(srcRoot);
     const ctx: MarkdownInjectContext = {
-      readFile: createDiskReadFile(srcRoot),
+      ...readAccessors,
       escapeNgInterpolation: opts.escapeNgInterpolation,
+      defaultIndentation: opts.defaultIndentation,
       globalReplace: opts.globalReplace,
       globalPlasterTemplate: opts.globalPlasterTemplate,
       instructionStats,

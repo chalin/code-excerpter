@@ -33,6 +33,9 @@ The format is based on [Keep a Changelog][], and this project adheres to
 - Plaster handling now uses YAML-style default-template semantics by default,
   treats explicit `plaster` values as full templates, and documents
   `plaster="unset"` as unsupported.
+- Built-in `.excerpt.yaml` sidecar reading now treats a present sidecar as
+  authoritative: missing sidecar regions report an error instead of falling back
+  to plain-source extraction.
 
 ## [v0.1.0][] - 2026-04-13
 

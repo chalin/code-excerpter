@@ -84,6 +84,11 @@ export interface MarkdownInjectContext {
    * ignore `region`.
    */
   readFile: (relativePath: string, region?: string) => string | null;
+  /**
+   * Optional detail for the last `readFile(...)` failure on the same
+   * `relativePath` / `region`.
+   */
+  readError?: (relativePath: string, region?: string) => string | null;
   /** Initial `path-base` (directory prefix for excerpt sources). */
   pathBase?: string;
   /** Legacy option retained for compatibility; plaster handling is now YAML-style by default. */
@@ -540,7 +545,10 @@ export function injectMarkdown(
     const resolvedPath = joinPathBase(pathBase, relPath);
     const source = ctx.readFile(resolvedPath, region);
     if (source === null) {
-      err(`cannot read source file "${resolvedPath}"`);
+      err(
+        ctx.readError?.(resolvedPath, region) ??
+          `cannot read source file "${resolvedPath}"`,
+      );
       return [opening, ...oldInner, closing];
     }
 

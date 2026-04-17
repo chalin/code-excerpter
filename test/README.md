@@ -23,24 +23,27 @@ Role of each test file:
   [spec § PI Arguments](../docs/spec.md#pi-arguments).
 - **`updater-goldens.test.ts`** — Full `injectMarkdown` + `readFile` over
   vendored [`code_excerpt_updater`][] `test_data` fixtures (Dart golden parity).
+- **`updater-fixtures.test.ts`** — Full `updatePaths` over normalized repo-owned
+  filesystem fixtures under `test/fixtures/updater/` (`input/`, `sources/`,
+  `expected/`, `options.yaml`).
 
 Together, every fragment argument below is exercised somewhere.
 
 ### Fragment argument coverage
 
-| Argument                     | `inject`[^1] | Args[^2] | Tr[^3] | Goldens (examples)                                                       |
-| ---------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------ |
-| Positional path              | Yes          | —        | —      | Many fixtures                                                            |
-| `region`                     | Yes          | Yes      | —      | E.g. `basic_with_region.dart`, `basic_with_empty_region.md`              |
-| `skip`                       | Yes          | Yes      | Yes    | `no_change/skip-and-take.md`                                             |
-| `take`                       | —            | —        | Yes    | `no_change/skip-and-take.md`                                             |
-| `from`                       | —            | —        | Yes    | `no_change/basic_with_args.md`                                           |
-| `to`                         | —            | —        | Yes    | `no_change/basic_with_args.md`                                           |
-| `remove`                     | —            | —        | Yes    | `remove.md`, `no_change/diff.md`                                         |
-| `retain`                     | —            | Yes      | Yes    | `retain.md`, `arg-order.md`                                              |
-| `replace` (on fragment line) | Partial[^4]  | Yes      | Yes    | `arg-order.md` (`replace` + `retain` on same PI)                         |
-| `indent-by`                  | —            | Yes      | Yes    | `no_comment_prefix.md`, `basic_no_region.dart`, `basic_with_region.dart` |
-| `plaster`                    | Yes[^5]      | Yes      | —      | `excerpt_yaml/plaster.md`, `plaster-global-option.md`                    |
+| Argument                     | `inject`[^1] | Args[^2] | Tr[^3] | Examples                                                             |
+| ---------------------------- | ------------ | -------- | ------ | -------------------------------------------------------------------- |
+| Positional path              | Yes          | —        | —      | Many fixtures                                                        |
+| `region`                     | Yes          | Yes      | —      | `basic_with_region.dart`, `test/fixtures/updater/basic-with-region/` |
+| `skip`                       | Yes          | Yes      | Yes    | `no_change/skip-and-take.md`                                         |
+| `take`                       | —            | —        | Yes    | `no_change/skip-and-take.md`                                         |
+| `from`                       | —            | —        | Yes    | `no_change/basic_with_args.md`                                       |
+| `to`                         | —            | —        | Yes    | `no_change/basic_with_args.md`                                       |
+| `remove`                     | —            | —        | Yes    | `remove.md`, `test/fixtures/updater/remove/`                         |
+| `retain`                     | —            | Yes      | Yes    | `retain.md`, `test/fixtures/updater/retain/`                         |
+| `replace` (on fragment line) | Partial[^4]  | Yes      | Yes    | `test/fixtures/updater/arg-order/`                                   |
+| `indent-by`                  | —            | Yes      | Yes    | `no_comment_prefix.md`, `fragment-indentation.md`                    |
+| `plaster`                    | Yes[^5]      | Yes      | —      | `excerpt_yaml/plaster.md`, `test/fixtures/updater/plaster-defaults/` |
 
 [^1]: `inject.test.ts`
 
@@ -89,5 +92,13 @@ Scenario coverage:
 | `globalReplace` (CLI-style)             | `inject.test.ts`, golden `replace.md`  |
 | Unsupported `diff-with`                 | `inject.test.ts` (error path)          |
 | Liquid `{% prettify %}` fences          | `inject.test.ts`, golden `prettify.md` |
+
+## Updater test layers
+
+- **`update.test.ts`** — Focused tmp-tree tests for `updatePaths` behavior and
+  error/reporting edges.
+- **`updater-fixtures.test.ts`** — Deterministic normalized filesystem fixtures
+  owned by this repo.
+- **`updater-goldens.test.ts`** — Vendored Dart-oriented parity coverage.
 
 [`code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
