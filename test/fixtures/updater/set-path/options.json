@@ -1,0 +1,4 @@
+{
+  "pathBase": ".",
+  "targets": ["doc.md"]
+}

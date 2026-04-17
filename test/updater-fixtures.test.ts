@@ -14,7 +14,6 @@ import { updatePaths } from '../src/update.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_ROOT = join(__dirname, 'fixtures', 'updater');
-const CASES_ROOT = join(FIXTURE_ROOT, 'cases');
 const GENERATED_ROOT = join(__dirname, 'generated', 'updater');
 
 interface FixtureCaseOptions {
@@ -32,14 +31,14 @@ function clearGeneratedOutput(): void {
 }
 
 function caseNames(): string[] {
-  return readdirSync(CASES_ROOT)
-    .filter((name) => statSync(join(CASES_ROOT, name)).isDirectory())
+  return readdirSync(FIXTURE_ROOT)
+    .filter((name) => statSync(join(FIXTURE_ROOT, name)).isDirectory())
     .sort();
 }
 
 function loadOptions(caseName: string): FixtureCaseOptions {
   const raw = readFileSync(
-    join(CASES_ROOT, caseName, 'options.json'),
+    join(FIXTURE_ROOT, caseName, 'options.json'),
     'utf8',
   );
   return JSON.parse(raw) as FixtureCaseOptions;
@@ -63,7 +62,7 @@ function listFiles(root: string, rel = ''): string[] {
 }
 
 async function assertFixtureCase(caseName: string): Promise<void> {
-  const caseRoot = join(CASES_ROOT, caseName);
+  const caseRoot = join(FIXTURE_ROOT, caseName);
   const inputRoot = join(caseRoot, 'input');
   const expectedRoot = join(caseRoot, 'expected');
   const workRoot = join(GENERATED_ROOT, caseName);

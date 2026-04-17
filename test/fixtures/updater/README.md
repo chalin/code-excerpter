@@ -10,7 +10,7 @@ Rules:
 - Keep fixture prose and expectations aligned with current tool semantics.
 - Keep each case self-contained under one directory.
 
-Each case lives under `cases/<case-name>/` and contains:
+Each case lives under `<case-name>/` and contains:
 
 - `input/`: files copied into a temporary generated worktree before the test
 - `expected/`: files that should exist after the updater runs
