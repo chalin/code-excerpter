@@ -137,9 +137,7 @@ fragment instructions in the same file. Precedence:
 
 - `indent-by`: overrides global settings
 - `path-base`: appends to the global base directory
-- `plaster`: overrides global settings; `plaster="unset"` clears the file-level
-  plaster template; bare `plaster` is invalid and should be written as
-  `plaster="unset"`
+- `plaster`: overrides global settings; bare `plaster` is invalid
 - `replace`: see [Replace order](#replace-order)
 
 ### Fragment instructions
@@ -156,9 +154,10 @@ Fragment-setting semantics:
   transformations.
 - `plaster="<template>"` sets the full plaster template for the fragment,
   including any language-specific comment wrapper.
+- `plaster=""` sets the plaster template to the empty string.
 - `plaster="none"` ensures that no plaster template is injected into the
   excerpt.
-- `plaster="unset"` and bare `plaster` are invalid in fragment scope.
+- bare `plaster` is invalid in fragment scope.
 - `indent-by` is applied after the excerpt content has been fully transformed.
   Overrides file-level and global settings.
 - Repeating `indent-by` or `plaster` on the same fragment instruction is an
@@ -317,16 +316,13 @@ language-specific comment, for example:
 | CSS, SCSS    | `/* ··· */`     |
 | YAML         | `# ···`         |
 
-Those language-shaped default plaster templates apply when excerpt injection
-runs in **YAML excerpt mode** (`MarkdownInjectContext.excerptsYaml`); otherwise
-the extractor still inserts the raw plaster string `···` between segments and it
-is passed through unchanged (unless overridden or removed via `plaster`).
+When the excerpt language has no known comment syntax, the raw plaster string
+`···` is used.
 
 The `plaster` argument sets the full plaster template, not just the plaster
 string. For example, `plaster="/* $defaultPlaster */"` uses that whole template,
-while `plaster="none"` removes plaster injection. On a set instruction,
-`plaster="unset"` clears the file-level plaster template and falls back to the
-global/default behavior.
+while `plaster="none"` removes plaster injection. The `$defaultPlaster`
+placeholder expands to the default plaster string `···`.
 
 ## Acknowledgments
 

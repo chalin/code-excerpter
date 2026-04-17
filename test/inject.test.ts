@@ -884,7 +884,7 @@ describe('inject', () => {
       `);
     });
 
-    it('uses empty fragment plaster text with the normal wrapper', () => {
+    it('uses an empty fragment plaster template', () => {
       const src = dedent`
         // #docregion
         before
@@ -910,14 +910,15 @@ describe('inject', () => {
 
         \`\`\`dart
         before
-        //
+
         after
         \`\`\`
 
       `);
     });
 
-    it('uses plaster="unset" on a set instruction to clear file-level plaster', () => {
+    it('errors on plaster="unset" on a set instruction', () => {
+      const onError = vi.fn();
       const src = dedent`
         // #docregion
         a
@@ -939,6 +940,7 @@ describe('inject', () => {
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'unset-plaster.dart' ? src : null),
         excerptsYaml: true,
+        onError,
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt plaster="none"?>
@@ -947,11 +949,13 @@ describe('inject', () => {
 
         \`\`\`dart
         a
-        // ···
         b
         \`\`\`
 
       `);
+      expect(onError).toHaveBeenCalledWith(
+        'plaster: invalid setting value on set instruction',
+      );
     });
 
     it('leaves block unchanged on repeated plaster setting', () => {
@@ -1010,6 +1014,70 @@ describe('inject', () => {
       expect(onError).toHaveBeenCalledWith(
         'plaster: invalid setting value on fragment instruction',
       );
+    });
+
+    it('treats explicit fragment plaster as a full template', () => {
+      const src = dedent`
+        // #docregion
+        before
+        // #enddocregion
+        // #docregion
+        after
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "tpl.dart" plaster="/*...*/"?>
+
+        \`\`\`dart
+        .
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'tpl.dart' ? src : null),
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "tpl.dart" plaster="/*...*/"?>
+
+        \`\`\`dart
+        before
+        /*...*/
+        after
+        \`\`\`
+
+      `);
+    });
+
+    it('expands $defaultPlaster inside an explicit plaster template', () => {
+      const src = dedent`
+        // #docregion
+        before
+        // #enddocregion
+        // #docregion
+        after
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt "tpl-default.dart" plaster="/* $defaultPlaster */"?>
+
+        \`\`\`dart
+        .
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'tpl-default.dart' ? src : null),
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt "tpl-default.dart" plaster="/* $defaultPlaster */"?>
+
+        \`\`\`dart
+        before
+        /* ··· */
+        after
+        \`\`\`
+
+      `);
     });
 
     it.each([

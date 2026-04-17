@@ -30,6 +30,9 @@ The format is based on [Keep a Changelog][], and this project adheres to
   [Details](docs/spec.md#processing-order-of-transform-arguments).
 - Fragment PI arg processing now preserves repeated transform operations in
   appearance order instead of coalescing them by key.
+- Plaster handling now uses YAML-style default-template semantics by default,
+  treats explicit `plaster` values as full templates, and documents
+  `plaster="unset"` as unsupported.
 
 ## [v0.1.0][] - 2026-04-13
 
