@@ -41,13 +41,13 @@ const SET_KNOWN_KEYS = new Set([
   'title',
 ]);
 
-interface ParsedNamedArgEntry {
+export interface ParsedNamedArgEntry {
   key: string;
   value: string | undefined;
   hasValue: boolean;
 }
 
-interface ParsedNamedArgs {
+export interface ParsedNamedArgs {
   entries: ParsedNamedArgEntry[];
 }
 
@@ -150,7 +150,7 @@ function normalizeListLinePrefix(prefix: string): string {
   return prefix;
 }
 
-function parseNamedArgs(
+export function parseNamedArgs(
   named: string,
   onError?: (msg: string) => void,
 ): ParsedNamedArgs {
@@ -176,7 +176,7 @@ function parseNamedArgs(
 
 type FragmentSettingName = 'region' | 'indent-by' | 'plaster';
 
-interface ParsedFragmentArgs {
+export interface ParsedFragmentArgs {
   transformOps: ExcerptTransformOp[];
   regionValue: string | undefined;
   indentByRaw: string | undefined;
@@ -185,7 +185,7 @@ interface ParsedFragmentArgs {
   hasUnsupportedDiff: boolean;
 }
 
-function parseFragmentArgs(
+export function parseFragmentArgs(
   parsed: ParsedNamedArgs,
   onError?: (msg: string) => void,
 ): ParsedFragmentArgs | null {

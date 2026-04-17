@@ -104,6 +104,9 @@ So, this step now also includes correcting:
 
 Plaster spec, code, and tests cleanup.
 
+- Consider dropping `ParsedNamedArgEntry.hasValue` if `value === undefined`
+  remains sufficient to distinguish bare args from `key=""`.
+
 6. [ ] **Refactor inject.ts**
 
 Refactor `inject.ts` to use the proper arg-order semantics.

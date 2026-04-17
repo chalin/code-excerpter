@@ -11,6 +11,9 @@ Fragment processing-instruction arguments are defined in
 
 Role of each test file:
 
+- **`inject-args.test.ts`** — Focused PI arg parsing/classification tests:
+  encounter-order preservation, singleton settings, and scope-sensitive
+  `replace`.
 - **`inject.test.ts`** — Direct `injectMarkdown` calls: PIs, fences, errors,
   set/fragment stats, many edge paths.
 - **`transform.test.ts`** — `applyExcerptTransforms` / `parseIndentBy`: per-step
@@ -25,27 +28,29 @@ Together, every fragment argument below is exercised somewhere.
 
 ### Fragment argument coverage
 
-| Argument                     | `inject`[^1] | Tr[^2] | Goldens (examples)                                                       |
-| ---------------------------- | ------------ | ------ | ------------------------------------------------------------------------ |
-| Positional path              | Yes          | —      | Many fixtures                                                            |
-| `region`                     | Yes          | —      | E.g. `basic_with_region.dart`, `basic_with_empty_region.md`              |
-| `skip`                       | Yes          | Yes    | `no_change/skip-and-take.md`                                             |
-| `take`                       | —            | Yes    | `no_change/skip-and-take.md`                                             |
-| `from`                       | —            | Yes    | `no_change/basic_with_args.md`                                           |
-| `to`                         | —            | Yes    | `no_change/basic_with_args.md`                                           |
-| `remove`                     | —            | Yes    | `remove.md`, `no_change/diff.md`                                         |
-| `retain`                     | —            | Yes    | `retain.md`, `arg-order.md`                                              |
-| `replace` (on fragment line) | Partial[^3]  | Yes    | `arg-order.md` (`replace` + `retain` on same PI)                         |
-| `indent-by`                  | —            | Yes    | `no_comment_prefix.md`, `basic_no_region.dart`, `basic_with_region.dart` |
-| `plaster`                    | Yes[^4]      | —      | `excerpt_yaml/plaster.md`, `plaster-global-option.md`                    |
+| Argument                     | `inject`[^1] | Args[^2] | Tr[^3] | Goldens (examples)                                                       |
+| ---------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------ |
+| Positional path              | Yes          | —        | —      | Many fixtures                                                            |
+| `region`                     | Yes          | Yes      | —      | E.g. `basic_with_region.dart`, `basic_with_empty_region.md`              |
+| `skip`                       | Yes          | Yes      | Yes    | `no_change/skip-and-take.md`                                             |
+| `take`                       | —            | —        | Yes    | `no_change/skip-and-take.md`                                             |
+| `from`                       | —            | —        | Yes    | `no_change/basic_with_args.md`                                           |
+| `to`                         | —            | —        | Yes    | `no_change/basic_with_args.md`                                           |
+| `remove`                     | —            | —        | Yes    | `remove.md`, `no_change/diff.md`                                         |
+| `retain`                     | —            | Yes      | Yes    | `retain.md`, `arg-order.md`                                              |
+| `replace` (on fragment line) | Partial[^4]  | Yes      | Yes    | `arg-order.md` (`replace` + `retain` on same PI)                         |
+| `indent-by`                  | —            | Yes      | Yes    | `no_comment_prefix.md`, `basic_no_region.dart`, `basic_with_region.dart` |
+| `plaster`                    | Yes[^5]      | Yes      | —      | `excerpt_yaml/plaster.md`, `plaster-global-option.md`                    |
 
 [^1]: `inject.test.ts`
 
-[^2]: `transform.test.ts`
+[^2]: `inject-args.test.ts`
 
-[^3]: Set-level `replace` only
+[^3]: `transform.test.ts`
 
-[^4]: `excerptsYaml`
+[^4]: Set-level `replace` only
+
+[^5]: `excerptsYaml`
 
 `inject.test.ts` does not re-test every transform keyword; goldens and
 `transform.test.ts` cover those paths end-to-end or in isolation.
