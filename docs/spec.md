@@ -302,8 +302,8 @@ first.
 ## Plaster Handling
 
 When a region is composed of non-contiguous segments (e.g., a region opened and
-closed multiple times), a _plaster template_ is inserted between the segments
-to indicate that content has been omitted.
+closed multiple times), a _plaster template_ is inserted between the segments to
+indicate that content has been omitted.
 
 The default plaster string is three dots: `···`.
 
@@ -319,15 +319,14 @@ language-specific comment, for example:
 
 Those language-shaped default plaster templates apply when excerpt injection
 runs in **YAML excerpt mode** (`MarkdownInjectContext.excerptsYaml`); otherwise
-the extractor still inserts the raw plaster string `···` between segments and
-it is passed through
-unchanged (unless overridden or removed via `plaster`).
+the extractor still inserts the raw plaster string `···` between segments and it
+is passed through unchanged (unless overridden or removed via `plaster`).
 
 The `plaster` argument sets the full plaster template, not just the plaster
-string. For example, `plaster="/* $defaultPlaster */"` uses that whole
-template, while `plaster="none"` removes plaster injection. On a set
-instruction, `plaster="unset"` clears the file-level plaster template and falls
-back to the global/default behavior.
+string. For example, `plaster="/* $defaultPlaster */"` uses that whole template,
+while `plaster="none"` removes plaster injection. On a set instruction,
+`plaster="unset"` clears the file-level plaster template and falls back to the
+global/default behavior.
 
 ## Acknowledgments
 

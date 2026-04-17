@@ -138,6 +138,19 @@ versions, such as:
 - [ ] (IN PROGRESS) [open-telemetry/opentelemetry.io][]
 - [ ] [dart-lang/site-www][]
 
+## Appendix - possible later `inject.ts` refactoring
+
+If the current `inject.ts` shape becomes a maintenance problem, consider a later
+split along responsibility boundaries:
+
+- target-file PI/block scanning and rewrite orchestration
+- PI arg parsing and classification
+- source excerpt resolution (`readFile` + region selection)
+- fragment rendering (plaster, TOps, scoped replaces, final formatting)
+
+Keep this separate from the current arg-order transition unless it materially
+reduces risk.
+
 [open-telemetry/opentelemetry.io]:
   https://github.com/open-telemetry/opentelemetry.io
 [dart-lang/site-www]: https://github.com/dart-lang/site-www

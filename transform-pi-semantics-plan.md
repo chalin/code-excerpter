@@ -65,37 +65,64 @@
      - duplicate `plaster`
      - invalid FSs leaving the fragment untouched
 
-3b. [ ] **Refactor arg-processing tests**
+4. [ ] **Rework arg-processing semantics, code, and tests**
+
+This was previously step 3b, originally focused on **Refactor arg-processing
+tests**. But I realized that arg-processing semantics were wrongly specified and
+implemented. That is, v0.1.0 had an arg-processing order based on arg kind. I
+can't recall if any of the original tools had any such semantics. The proper
+semantics, as documented in the Dart tool spec, is arg-order.
+
+The early TS spec was wrongly inferred from the upstream Dart tool spec in
+[chalin/code_excerpt_updater](https://github.com/chalin/code_excerpt_updater).
+Maybe this was because one of the repo README's had a note about `retain` args
+being processed before `replace`, but even that conflicted with its own goldens.
+Anyhow, this step is to recover the proper in-appearance order processing of PI
+args.
+
+Next are some of the original steps for 3b:
 
 - Extract focused tests for PI argument parsing/classification so repeated TOs,
   singleton settings, and scope-sensitive `replace` behavior are not covered
   only through full `injectMarkdown` flows.
 - Keep `inject.test.ts` for integration-style PI/block behavior and error
   outcomes, but move parser-shape assertions into a narrower test surface.
-- Assess the current plaster/injection code for historical YAML-excerpt vs
-  pre-YAML behavior remnants, and streamline the core so it has **no** internal
-  branch at all for that legacy evolution.
-- If any apparent no-branch requirement turns out to have a real blocker,
-  isolate and document that case explicitly for review instead of preserving
-  historical gating silently.
 - Use the extracted tests to document:
   - exact encounter-order preservation for repeated TOs
   - singleton-setting rejection for `region`, `indent-by`, and `plaster`
   - `replace` behaving as `S/TOp` depending on scope
 
-4. **Rework golden expectations**
-   - Update or replace the old parity-oriented expectations in
-     `test/updater-goldens.test.ts`.
-   - Treat `arg-order.md` as TS-owned semantics, not Dart-parity semantics.
-   - Add one golden covering duplicate FS error behavior if unit/inject tests
-     are not sufficient.
+So, this step now also includes correcting:
 
-5. **Re-enable higher layers and finish**
-   - Re-enable skipped tests incrementally from bottom to top.
-   - Run/update [`test/update.test.ts`](test/update.test.ts) and
-     [`test/cli.integration.test.ts`](test/cli.integration.test.ts) only for any
-     observable error/reporting changes caused by the new fragment behavior.
-   - Remove stale comments/docs that still describe Dart-style coalescing.
+- The spec, code, and tests to use the proper arg-order semantics.
+- Ensuring that all docs, code, and tests are self- and mutually consistent.
+
+> Note the spec may be in an inconsistent state wrt plaster processing. We're
+> accepting this as temporary, and will fix it in the next step.
+
+5. [ ] **Revisit plaster spec and processing**
+
+Plaster spec, code, and tests cleanup.
+
+6. [ ] **Refactor inject.ts**
+
+Refactor `inject.ts` to use the proper arg-order semantics.
+
+7. [ ] **Rework golden expectations**
+
+- Update or replace the old parity-oriented expectations in
+  `test/updater-goldens.test.ts`.
+- Treat `arg-order.md` as TS-owned semantics, not Dart-parity semantics.
+- Add one golden covering duplicate FS error behavior if unit/inject tests are
+  not sufficient.
+
+8. [ ] **Re-enable higher layers and finish**
+
+- Re-enable skipped tests incrementally from bottom to top.
+- Run/update [`test/update.test.ts`](test/update.test.ts) and
+  [`test/cli.integration.test.ts`](test/cli.integration.test.ts) only for any
+  observable error/reporting changes caused by the new fragment behavior.
+- Remove stale comments/docs that still describe Dart-style coalescing.
 
 ## Public Interface / Behavior Changes
 
