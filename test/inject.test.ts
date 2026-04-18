@@ -791,6 +791,42 @@ describe('inject', () => {
       `);
     });
 
+    it('warns when a bare set instruction is a no-op', () => {
+      const onWarning = vi.fn();
+      const src = dedent`
+        // #docregion
+        ok
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt?>
+        <?code-excerpt "noop.dart"?>
+
+        \`\`\`
+        .
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        ...ctx({ 'noop.dart': src }),
+        onWarning,
+      });
+      expect(onWarning).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'set instruction ignored: no argument provided',
+        ),
+      );
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt?>
+        <?code-excerpt "noop.dart"?>
+
+        \`\`\`
+        ok
+        \`\`\`
+
+      `);
+    });
+
     it('uses region= named argument when path has no (region) suffix', () => {
       const src = dedent`
         // #docregion r1
@@ -1343,7 +1379,7 @@ describe('inject', () => {
 
       `;
       const out = injectMarkdown(md, {
-        readFile: (p) => (p === 'trim-right.dart' ? src : null),
+        ...ctx({ 'trim-right.dart': src }),
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt replace="/elideBody;/... /g"?>
@@ -1356,17 +1392,102 @@ describe('inject', () => {
       `);
     });
 
+    it('trims trailing whitespace in comment-prefixed excerpt lines', () => {
+      const src = dedent`
+        // In fragment file, the const declaration line ends with: SPACE TAB
+        // (Beware: some editors trim out trailing whitespace!)
+        const c = 1; \t
+      `;
+      expect(src.match(/\s\t$/)).toBeTruthy(); // sanity check
+
+      const doc = dedent`
+        // ignore_for_file: type_annotate_public_apis
+        /// Test: trimming of whitespace from frag lines
+        /// <?code-excerpt "frag.dart"?>
+        /// \`\`\`dart
+        /// \`\`\`
+        var v;
+      `;
+
+      const out = injectMarkdown(doc, {
+        ...ctx({ 'frag.dart': src }),
+      });
+
+      expect(out).toStrictEqual(dedent`
+        // ignore_for_file: type_annotate_public_apis
+        /// Test: trimming of whitespace from frag lines
+        /// <?code-excerpt "frag.dart"?>
+        /// \`\`\`dart
+        /// // In fragment file, the const declaration line ends with: SPACE TAB
+        /// // (Beware: some editors trim out trailing whitespace!)
+        /// const c = 1;
+        /// \`\`\`
+        var v;
+      `);
+    });
+
     it('errors when input ends after excerpt PI (no code block)', () => {
       const onError = vi.fn();
+      const onWarning = vi.fn();
       const md = dedent`
         <?code-excerpt "end.dart"?>
       `;
-      injectMarkdown(md, {
+      const out = injectMarkdown(md, {
         readFile: () => '//\n',
         onError,
+        onWarning,
       });
+      expect(out).toStrictEqual(md);
+      expect(onWarning).toHaveBeenCalledWith(
+        expect.stringContaining('reached end of input before code block'),
+      );
       expect(onError).toHaveBeenCalledWith(
         expect.stringContaining('reached end of input'),
+      );
+    });
+
+    it('leaves comment-prefixed input unchanged when no code block follows a PI', () => {
+      const onError = vi.fn();
+      const onWarning = vi.fn();
+      const md = dedent`
+        /// Missing code block
+        /// <?code-excerpt "quote.md"?>
+        int x = 0;
+      `;
+      const out = injectMarkdown(md, {
+        readFile: () => 'ignored\n',
+        onError,
+        onWarning,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onWarning).toHaveBeenCalledWith(
+        expect.stringContaining('code block should immediately follow'),
+      );
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('code block should immediately follow'),
+      );
+    });
+
+    it('leaves comment-prefixed input unchanged when the closing fence is missing', () => {
+      const onError = vi.fn();
+      const onWarning = vi.fn();
+      const md = dedent`
+        /// Closing code-block token is missing below:
+        /// <?code-excerpt "quote.md"?>
+        /// \`\`\`
+        int x = 1;
+      `;
+      const out = injectMarkdown(md, {
+        readFile: () => 'ignored\n',
+        onError,
+        onWarning,
+      });
+      expect(out).toStrictEqual(md);
+      expect(onWarning).toHaveBeenCalledWith(
+        expect.stringContaining('unterminated markdown code block'),
+      );
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('unterminated markdown code block'),
       );
     });
 

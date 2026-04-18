@@ -124,7 +124,7 @@ rules).
 - Newer [dart-lang/site-shared excerpter][]: [excerpter `update.dart`][] uses
   configurable `validTargetExtensions`; [excerpter `bin/excerpter.dart`][]
   passes `{'.md'}` only. Fixture shape:
-  `test/fixtures/code-excerpt-updater/test_data/src/basic_with_region.dart`.
+  `test/fixtures/updater/basic-with-region/`.
 - Consider bringing in this new behavior into `code-excerpter`.
 - If/once this is added, update [docs/spec.md](spec.md#pi-line-prefixes) to
   reflect the new behavior, in particular the list bullet prefix, add:

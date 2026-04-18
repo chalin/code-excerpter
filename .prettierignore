@@ -1,6 +1,5 @@
 # https://prettier.io/docs/ignore. None yet.
 
-test/fixtures/code-excerpt-updater/
 test/fixtures/
 !test/fixtures/**/README.md
 !test/fixtures/**/options.*

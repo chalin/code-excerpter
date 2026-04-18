@@ -14,3 +14,7 @@
   - <?code-excerpt "indented_frag.dart" region="single-code-block"?>
     ```
     ```
+
+* <?code-excerpt "indented_frag.dart" region="code-blocks"?>
+  ```
+  ```
