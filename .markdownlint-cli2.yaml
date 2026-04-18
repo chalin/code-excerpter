@@ -7,7 +7,6 @@ globs:
 ignores:
   - dist/**
   - node_modules/**
-  - test/fixtures/code-excerpt-updater/**
   - test/fixtures/updater/*/**
   - test/generated/**
   - tmp/**

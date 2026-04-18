@@ -23,3 +23,11 @@
     var x = 1;
     return x;
     ```
+
+* <?code-excerpt "indented_frag.dart" region="code-blocks"?>
+  ```
+      // Fragment is indented by 4 spaces
+      var x = 1;
+  // ···
+         return x;
+  ```

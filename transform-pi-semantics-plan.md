@@ -7,9 +7,8 @@
 - Steps 0 through 5 landed and are now the repo's current behavior.
 - The intended fragment PI semantic transition is complete for the repo-owned
   spec, code, and tests.
-- Remaining skipped legacy parity cases in `test/updater-goldens.test.ts` are no
-  longer tracked as part of this transition; treat them as separate fixture /
-  parity cleanup under [`docs/plan.md`](docs/plan.md).
+- The old vendored parity harness was removed later; any future fixture cleanup
+  is tracked under [`docs/plan.md`](docs/plan.md).
 - The `inject.ts` refactor note below is now optional later cleanup, not a
   required completion step for this transition.
 
@@ -44,7 +43,7 @@
    - This includes the relevant cases in:
      - [`test/transform.test.ts`](test/transform.test.ts)
      - [`test/inject.test.ts`](test/inject.test.ts)
-     - [`test/updater-goldens.test.ts`](test/updater-goldens.test.ts)
+     - the now-removed vendored parity harness
    - Skip only semantics-affected cases where practical; if that is noisy or
      fragile, skip the broader ordering-related groups temporarily.
 

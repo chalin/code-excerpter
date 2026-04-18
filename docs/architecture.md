@@ -100,9 +100,10 @@ orchestrates the extraction + transform pipeline for each code block.
 - `readFile(path, region?)` mirrors Dart `ExcerptGetter` when the callback
   resolves `.txt` fragments and `.excerpt.yaml` regions; optional
   `escapeNgInterpolation` / `globalPlasterTemplate` match updater defaults.
-- Golden parity: `test/updater-goldens.test.ts` drives `injectMarkdown` against
-  vendored `test/fixtures/code-excerpt-updater/test_data/` from
-  [`chalin/code_excerpt_updater`][] (see that directory’s `README.md`).
+- Filesystem updater coverage now lives primarily in the repo-owned normalized
+  fixture suite `test/updater-fixtures.test.ts`; direct `inject.test.ts`
+  regressions cover parser / formatting edge paths that do not need fixture
+  directories.
 - See [`docs/spec.md`](spec.md) for the full instruction syntax.
 
 ### `src/instructionStats.ts`
