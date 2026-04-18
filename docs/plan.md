@@ -144,8 +144,9 @@ rules).
 Run the code-excerpter against a repo that uses one of the other excerpter tool
 versions, such as:
 
-- [ ] (IN PROGRESS) [open-telemetry/opentelemetry.io][]
-- [ ] [dart-lang/site-www][]
+- [x] [open-telemetry/opentelemetry.io][] (uses `code-excerpter` v0.1.0 from
+      npm)
+- [x] [dart-lang/site-www][]
 
 ## Appendix - possible later `inject.ts` refactoring
 

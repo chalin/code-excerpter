@@ -631,7 +631,7 @@ export function injectMarkdown(
     const escapeNg = ctx.escapeNgInterpolation !== false;
     const innerOut = working.map((line) =>
       escapeNgLine(
-        `${linePrefix}${indentStr}${line}`.replace(/\s+$/, ''),
+        `${linePrefix}${indentStr}${line.replace(/\s+$/, '')}`,
         escapeNg,
       ),
     );

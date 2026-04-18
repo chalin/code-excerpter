@@ -5,6 +5,8 @@ All notable user-facing changes to this project are documented in this file.
 The format is based on [Keep a Changelog][], and this project adheres to
 [Semantic Versioning][].
 
+Developer-focused changes recorded in separate "For developers" subsections.
+
 ## v0.2.0-dev - unreleased
 
 ### Added
@@ -18,14 +20,11 @@ The format is based on [Keep a Changelog][], and this project adheres to
   fences and paired by fence **kind** (backtick vs tilde vs Liquid prettify),
   consistent with backtick and prettify blocks.
 - CLI **`--version`**, reporting `version` from `package.json`.
-- Focused PI arg-processing tests for direct parser/classifier coverage.
-- **Husky** hooks ([docs/tooling.md](docs/tooling.md#git-hooks-husky)).
-- `npm run fix:dict` — normalize `.cspell/words.txt`.
+- [Excerpt processing](docs/spec.md#excerpt-processing): documented pipeline
+  from source read through structural prefixes and escaping.
 
 ### Changed
 
-- Development `package.json` version set to **0.2.0-dev** after the **0.1.0**
-  npm release.
 - README: improved installation instructions and Overview wording.
 - [`replace` expressions](docs/spec.md#replace-expressions) now features full
   JavaScript semantics
@@ -45,9 +44,29 @@ The format is based on [Keep a Changelog][], and this project adheres to
   longer than 3.
 - Discontiguous-region plaster lines now inherit the reopening `#docregion`
   directive indentation, matching `site-shared` and `site-www`.
+- `injectMarkdown` trims trailing whitespace on each excerpt line before
+  applying structural line prefixes (`indent-by`, list indentation), so
+  `replace` output cannot consume markdown indentation
+  ([details](docs/spec.md#excerpt-processing)).
+- CLI `--replace` help text: global replace applies to the entire excerpt text.
+
+### For developers
+
+Added:
+
+- Focused PI arg-processing tests for direct parser/classifier coverage.
+- **Husky** hooks ([docs/tooling.md](docs/tooling.md#git-hooks-husky)).
+- `npm run fix:dict` — normalize `.cspell/words.txt`.
+
+Changed:
+
+- Development `package.json` version set to **0.2.0-dev** after the **0.1.0**
+  npm release.
 - **`prepare`:** `build` + Husky (git installs still get `dist/`).
 - Cspell extras: `.cspell/words.txt` instead of inline `words:`.
 - **`npm run fix`:** delegates to `fix:all`.
+- `test:site-www` runs `npm run build` then `scripts/test-site-www.sh`
+  ([tooling](docs/tooling.md)).
 
 ## [v0.1.0][] - 2026-04-13
 

@@ -18,7 +18,7 @@
     "_diff:fail": "git diff --name-only --exit-code",
     "_fix:cspell:words": "perl scripts/sort.pl .cspell/words.txt",
     "_fix:markdown:lint": "npm run check:markdown -- --fix",
-    "_fix:trailing-spaces": "find . -name '*.md' -exec perl -i -pe 's/[ \t]+$//g' {} +",
+    "_fix:trailing-spaces": "find . -name '*.md' ! -path './test/fixtures/*/expected*/*' -exec perl -i -pe 's/[ \t]+$//g' {} +",
     "_list:diff-never-empty": "git diff --name-only --diff-filter=AMR HEAD | awk 'NF{print;c++} END{if(c==0)print \"README.md\"}'",
     "_list:diff:all": "(npm run -s _list:diff-never-empty; git ls-files --others --exclude-standard) | sort -u",
     "_list:fix:*": "npm run --loglevel=warn | grep -Ee '^\\s*fix:[^:]+$' | grep -Ev \"fix:all|${CMD_SKIP:-noop}\"",
@@ -45,7 +45,7 @@
     "pretest:watch": "npm run build",
     "seq": "bash -c 'for cmd in \"$@\"; do npm run $cmd || exit 1; done' - ",
     "test:base": "KEEP_TEST_TMP=${KEEP_TEST_TMP:-0} vitest run",
-    "test:site-www": "tsx scripts/test-site-www.mts",
+    "test:site-www": "npm run build && bash scripts/test-site-www.sh",
     "test:watch": "vitest",
     "test": "npm run check && npm run test:base",
     "update:packages": "npm-check-updates -u"
