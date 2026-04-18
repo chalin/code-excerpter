@@ -18,8 +18,10 @@ Semver pins live in `package.json`; this table is orientation only.
 | Lint                  | `eslint` + `typescript-eslint` (TypeScript / JavaScript)             |
 | Format                | `prettier`                                                           |
 | Markdown lint         | `markdownlint-cli2`                                                  |
+| Spell check           | `cspell` — [Spelling](#spelling-cspell)                              |
 | Type checking         | `tsc` - see [Type checking](#type-checking)                          |
 | Command-line args     | `commander`                                                          |
+| Git hooks             | `husky` — [Git hooks](#git-hooks-husky)                              |
 
 ---
 
@@ -45,9 +47,8 @@ triggers **TS5101** (`baseUrl` is deprecated and slated for removal in
 TypeScript 7). Emitting declarations with the project `tsconfig.json` keeps
 types aligned with the source tree without silencing deprecations.
 
-The `prepare` script runs `npm run build`, so installing from a git URL (for
-example `npm install github:chalin/code-excerpter`) still produces both
-`dist/*.js` and `dist/*.d.ts`.
+`prepare` runs `npm run build && husky` ([Git hooks](#git-hooks-husky)); git URL
+installs still produce `dist/*.js` and `dist/*.d.ts`.
 
 **Alternative considered:** `tsc` alone for everything — ruled out because it
 does not bundle or apply the CLI shebang as cleanly as esbuild/tsup.
@@ -104,6 +105,11 @@ without duplicate line-length enforcement.
 
 [markdownlint]: https://github.com/DavidAnson/markdownlint
 
+### Spelling (cspell)
+
+**cspell** uses `.cspell.yml`; extra words are in `.cspell/words.txt`.
+**`npm run fix:dict`** rewrites that file in place (`scripts/sort.pl`).
+
 ### Type checking
 
 **TypeScript** (`tsc --noEmit` via `npm run check:types`) enforces the type
@@ -126,6 +132,20 @@ type errors fail the gate even when formatting and lint are clean.
 
 ## Scripts
 
+### Git hooks (Husky)
+
+[Husky][husky] is invoked from `prepare` (see
+[tsup + TypeScript](#tsup--typescript-build)).
+
+| Location       | Files                                       |
+| -------------- | ------------------------------------------- |
+| `.husky/`      | `commit-msg`, `pre-push`                    |
+| `scripts/git/` | `commit-msg.sh`, `pre-push.sh`, `is-wip.sh` |
+
+Implementation details stay in those files.
+
+[husky]: https://typicode.github.io/husky/
+
 ### NPM scripts
 
 For the full list of NPM scripts, see `package.json` under `scripts`. Each entry
@@ -134,6 +154,7 @@ below states what it does / its purpose, not how it achieves that (see
 [tsup + TypeScript](#tsup--typescript-build).
 
 - `_build`: Produces publishable JS plus `.d.ts` (see tsup section).
+- `_check:spelling`: cspell entry (used by `check:spelling`).
 - `_diff:fail`: Fails CI or local checks when the tree still differs from `HEAD`
   after fixers.
 - `_list:diff-never-empty` / `_list:diff:all`: Supply changed or untracked paths
@@ -145,7 +166,8 @@ below states what it does / its purpose, not how it achieves that (see
   writing files.
 - `check:markdown`: Catches Markdown structure and style rules that Prettier
   does not cover (see [Markdown lint](#markdown-lint)).
-- `check:spelling`: Spell-checks the Markdown set the cspell config cares about.
+- `check:spelling`: Spell-checks the Markdown set the cspell config cares about
+  (see [Spelling](#spelling-cspell)).
 - `check:types`: Type-checks with `tsc --noEmit` (no build artifacts).
 - `check`: Provides one entry point through which humans and CI invoke every
   read-only quality gate before tests (exact steps and order live in
@@ -154,9 +176,9 @@ below states what it does / its purpose, not how it achieves that (see
   produced by `test/update.test.ts`). Leaves the rest of `tmp/` unchanged. Does
   nothing when no matching paths exist.
 - `dev`: Runs the CLI from TypeScript without a prior production build.
-- `fix`: Provides one entry point for supported auto-fixers so ESLint, Markdown,
-  and Prettier fixes do not need separate invocations (there is no type or
-  spelling auto-fix here).
+- `fix` / `fix:all` / `_list:fix:*` / `all`: See `package.json` — `fix` runs the
+  aggregated fix set.
+- `fix:dict`: `.cspell/words.txt` (via `_fix:cspell:words`).
 - `fix:format`: Applies Prettier to every supported path (respecting ignores).
 - `fix:format:diff`: Applies Prettier (`__check:format --write`) on the
   diff/untracked path set from `_list:diff*`.
@@ -173,7 +195,7 @@ below states what it does / its purpose, not how it achieves that (see
   `scripts/test-site-www.mts`. Supports `--root <dir>`, optional target files,
   and `--write` for restoring excerpted docs in a local `site-www` clone.
 - `postbuild`: Asserts `dist/` contains the expected build artifacts.
-- `prepare`: Builds on install so git URL consumers get `dist/`.
+- `prepare`: `build` + husky ([Git hooks](#git-hooks-husky)).
 - `test`: Offers the default “trust this tree” path: full read-only gates, then
   unit tests (see `package.json` for how `check` composes).
 - `pretest:base` / `pretest:watch`: Run `build` so `dist/cli.js` exists before

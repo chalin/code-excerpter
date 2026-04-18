@@ -23,22 +23,13 @@ languageSettings:
     ignoreRegExpList:
       - CodeBlock
       - HeadingID
+dictionaryDefinitions:
+  - name: words
+    path: .cspell/words.txt
 dictionaries:
+  - words
   # Programming languages and software terms
   - node
   - softwareTerms
   # Other
   - companies
-words:
-  - endprettify
-  - goldens
-  - postbuild
-  - chalin
-  - docregion
-  - docplaster
-  - enddocregion
-  - erlang
-  - excerpter
-  - kotlin
-  - nvmrc
-  - pkgs
