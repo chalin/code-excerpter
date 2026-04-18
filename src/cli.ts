@@ -52,7 +52,10 @@ program
     '--no-escape-ng-interpolation',
     'disable Angular {{/}} escaping in injected code',
   )
-  .option('--replace <expr>', 'global replace expression')
+  .option(
+    '--replace <expr>',
+    'global replace expression applied to entire excerpt text',
+  )
   .option('--plaster <template>', 'global plaster template')
   .action(
     async (

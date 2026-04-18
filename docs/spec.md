@@ -210,10 +210,6 @@ For the full algorithm, see [ECMA-262 `GetSubstitution`][].
 - The last set-instruction `replace` expression is applied next.
 - Finally the global `replace` expression is applied.
 
-[ECMA-262 `GetSubstitution`]: https://tc39.es/ecma262/#sec-getsubstitution
-[String.replace()]:
-  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
-
 ### Limitations
 
 - XML processing instructions cannot contain `>` (including inside quoted
@@ -240,6 +236,27 @@ Any whitespace between the final attribute and the closing `?>` is ignored, as
 is any whitespace following the closing `?>`. Any non-whitespace after the
 closing `?>` is reported via a warning and the document is left unchanged for
 that line.
+
+---
+
+## Excerpt processing
+
+For one fragment instruction, the tool processes and updates (if necessary) a
+code block excerpt body conceptually as follows:
+
+1. Resolve the source path from the fragment path plus the current `path-base`.
+2. Read the source text and extract the requested region (possibly cached),
+   producing excerpt lines and inserting plaster for discontiguous segments as
+   needed.
+3. Apply fragment-scoped transform operations to the excerpt lines, in PI order.
+4. Apply `replace` expressions in [Replace order](#replace-order) over the
+   entire excerpt text (not line by line).
+5. Drop leading and trailing blank lines, if any.
+6. Remove shared left indentation (from non-blank lines), then trim trailing
+   whitespace from each line.
+7. Apply the resolved `indent-by` value and any structural line prefix from the
+   surrounding Markdown context.
+8. Apply Angular interpolation escaping, if enabled.
 
 ---
 
@@ -343,3 +360,6 @@ This specification was originally adapted from the
 [`chalin/code_excerpt_updater`][] README, which is the canonical reference.
 
 [`chalin/code_excerpt_updater`]: https://github.com/chalin/code_excerpt_updater
+[ECMA-262 `GetSubstitution`]: https://tc39.es/ecma262/#sec-getsubstitution
+[String.replace()]:
+  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace

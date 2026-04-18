@@ -314,6 +314,36 @@ describe('inject', () => {
       `);
     });
 
+    it('injectMarkdown handles indentation of blank lines', () => {
+      const src = dedent`
+        // #docregion
+        next line is blank
+
+        but not this one
+        // #enddocregion
+      `;
+      const md = dedent`
+        * <?code-excerpt "list-item.dart"?>
+
+          \`\`\`
+          .
+          \`\`\`
+
+      `;
+      const out = injectMarkdown(md, ctx({ 'list-item.dart': src }));
+      expect(out).toStrictEqual(
+        [
+          '* <?code-excerpt "list-item.dart"?>',
+          '',
+          '  ```',
+          '  next line is blank',
+          '  ', // Note the whitespace here, per the spec
+          '  but not this one',
+          '  ```',
+        ].join('\n'),
+      );
+    });
+
     it('returns original block when source is missing', () => {
       const onError = vi.fn();
       const md = dedent`
@@ -1292,6 +1322,35 @@ describe('inject', () => {
         \`\`\`plaintext
         info - one
         info - two
+        \`\`\`
+
+      `);
+    });
+
+    it('trims trailing whitespace introduced by replace transforms', () => {
+      const src = dedent`
+        // #docregion
+        elideBody;
+        // #enddocregion
+      `;
+      const md = dedent`
+        <?code-excerpt replace="/elideBody;/... /g"?>
+        <?code-excerpt "trim-right.dart"?>
+
+        \`\`\`dart
+        old
+        \`\`\`
+
+      `;
+      const out = injectMarkdown(md, {
+        readFile: (p) => (p === 'trim-right.dart' ? src : null),
+      });
+      expect(out).toStrictEqual(dedent`
+        <?code-excerpt replace="/elideBody;/... /g"?>
+        <?code-excerpt "trim-right.dart"?>
+
+        \`\`\`dart
+        ...
         \`\`\`
 
       `);
