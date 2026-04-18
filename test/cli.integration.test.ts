@@ -152,4 +152,61 @@ describe('CLI (integration)', () => {
     );
     expect(readFileSync(mdPath, 'utf8')).toBe(md);
   });
+
+  describe('Angular interpolation escaping', () => {
+    function writeNgFixture(): {
+      docs: string;
+      md: string;
+      mdPath: string;
+      src: string;
+    } {
+      const work = useWorkDir();
+      const src = join(work, 'src');
+      const docs = join(work, 'docs');
+      mkdirSync(src, { recursive: true });
+      mkdirSync(docs, { recursive: true });
+      writeFileSync(
+        join(src, 'a.dart'),
+        dedent`
+          // #docregion
+          print('{{value}}');
+          // #enddocregion
+        `,
+        'utf8',
+      );
+      const md = dedent`
+        <?code-excerpt "a.dart"?>
+
+        \`\`\`dart
+        OLD
+        \`\`\`
+      `;
+      const mdPath = join(docs, 'page.md');
+      writeFileSync(mdPath, md, 'utf8');
+      return { docs, md, mdPath, src };
+    }
+
+    it('escapes Angular interpolation by default', async () => {
+      const { docs, mdPath, src } = writeNgFixture();
+
+      const result = await runCli(['-p', src, docs]);
+
+      expect(result.status, 'exit code').toBe(0);
+      expect(readFileSync(mdPath, 'utf8')).toContain("print('{!{value}!}');");
+    });
+
+    it('disables Angular interpolation escaping under --no-escape-ng-interpolation', async () => {
+      const { docs, mdPath, src } = writeNgFixture();
+
+      const result = await runCli([
+        '-p',
+        src,
+        '--no-escape-ng-interpolation',
+        docs,
+      ]);
+
+      expect(result.status, 'exit code').toBe(0);
+      expect(readFileSync(mdPath, 'utf8')).toContain("print('{{value}}');");
+    });
+  });
 });

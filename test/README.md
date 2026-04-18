@@ -86,12 +86,13 @@ Scenario coverage:
 
 ### Related behavior (outside the fragment table)
 
-| Topic                                   | Where                                  |
-| --------------------------------------- | -------------------------------------- |
-| Set `path-base` / `replace` / `plaster` | `inject.test.ts`, goldens              |
-| `globalReplace` (CLI-style)             | `inject.test.ts`, golden `replace.md`  |
-| Unsupported `diff-with`                 | `inject.test.ts` (error path)          |
-| Liquid `{% prettify %}` fences          | `inject.test.ts`, golden `prettify.md` |
+| Topic                                   | Where                                      |
+| --------------------------------------- | ------------------------------------------ |
+| Set `path-base` / `replace` / `plaster` | `inject.test.ts`, goldens                  |
+| `globalReplace` (CLI-style)             | `inject.test.ts`, golden `replace.md`      |
+| Angular interpolation escaping          | updater fixtures, goldens, CLI integration |
+| Unsupported `diff-with`                 | `inject.test.ts` (error path)              |
+| Liquid `{% prettify %}` fences          | `inject.test.ts`, golden `prettify.md`     |
 
 ## Updater test layers
 
