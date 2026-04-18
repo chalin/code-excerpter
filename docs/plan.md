@@ -87,7 +87,7 @@ B. [ ] Optional follow-up items:
        before processing (same `.md` once per run).
 2. [x] **Invalid `--exclude` patterns**: CLI compiles patterns with a friendly
        `error:` line on stderr and exit code 1 (see `src/excludePatterns.ts`).
-3. [ ] **`--no-escape-ng-interpolation`**: the CLI relies on Commander’s
+3. [x] **`--no-escape-ng-interpolation`**: the CLI relies on Commander’s
        handling of negated boolean flags; behavior must stay aligned with
        `injectMarkdown` (`escapeNgInterpolation !== false` means escape).
 
@@ -95,7 +95,7 @@ C. [ ] Test gaps:
 
 1. [x] CLI integration tests in `test/cli.integration.test.ts` (`--help`,
        invalid `--exclude`, `--fail-on-update` with `--dry-run`).
-2. [ ] `updatePaths`: assert `log` is called for expected lines; assert
+2. [x] `updatePaths`: assert `log` is called for expected lines; assert
        `warnings` in `UpdateResult` when `onWarning` fires.
 3. [x] `updatePaths`: duplicate / overlapping roots (dedupe; see
        `test/update.test.ts`).

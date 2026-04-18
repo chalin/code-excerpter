@@ -652,4 +652,56 @@ describe('updatePaths', () => {
     expect(updated).toContain('world');
     expect(updated).not.toContain('hello');
   });
+
+  it('records warnings and logs warning plus update lines', async () => {
+    const { src, docs } = useTmpSrcDocs();
+
+    writeFixture(
+      src,
+      'lib/warn.dart',
+      dedent`
+        // #docregion focus
+        // #docregion focus
+        const k = 42;
+        // #enddocregion focus
+      `,
+    );
+
+    writeFixture(
+      docs,
+      'page.md',
+      dedent`
+        <?code-excerpt "lib/warn.dart" region="focus"?>
+
+        \`\`\`dart
+        placeholder
+        \`\`\`
+      `,
+    );
+
+    const logs: string[] = [];
+    const result = await updatePaths([docs], {
+      pathBase: src,
+      log: (msg) => logs.push(msg),
+    });
+
+    expect(result.errors, result.errors.join('\n')).toEqual([]);
+    expect(result.filesUpdated).toBe(1);
+    expect(result.instructionStats).toEqual(ONE_FRAGMENT);
+
+    const warn = `warning: ${join(docs, 'page.md')}: repeated start for region "focus" at lib/warn.dart:2`;
+    const updated = `updated: ${join(docs, 'page.md')}`;
+
+    expect(result.warnings).toEqual([warn]);
+    expect(logs).toEqual([warn, updated]);
+    expect(readFileSync(join(docs, 'page.md'), 'utf8')).toStrictEqual(
+      dedent`
+        <?code-excerpt "lib/warn.dart" region="focus"?>
+
+        \`\`\`dart
+        const k = 42;
+        \`\`\`
+      `,
+    );
+  });
 });
