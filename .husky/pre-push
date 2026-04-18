@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# pre-push hook — delegates to version-controlled script
+#
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+exec "$REPO_ROOT/scripts/git/pre-push.sh" "$@"
