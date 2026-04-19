@@ -190,15 +190,15 @@ export async function updatePaths(
       globalReplace: opts.globalReplace,
       globalPlasterTemplate: opts.globalPlasterTemplate,
       instructionStats,
-      onWarning: (msg) => {
-        const w = `warning: ${filePath}: ${msg}`;
-        result.warnings.push(w);
-        log(w);
-      },
-      onError: (msg) => {
-        const e = `error: ${filePath}: ${msg}`;
-        result.errors.push(e);
-        log(e);
+      onIssue: (issue) => {
+        const prefix = `${issue.kind}: ${filePath}: `;
+        const full = `${prefix}${issue.message}`;
+        if (issue.kind === 'warning') {
+          result.warnings.push(full);
+        } else {
+          result.errors.push(full);
+        }
+        log(full);
       },
     };
 

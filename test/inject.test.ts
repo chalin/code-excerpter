@@ -9,6 +9,7 @@ import {
   injectMarkdown,
   PROC_INSTR_RE,
   type MarkdownInjectContext,
+  type ReportedIssue,
 } from '../src/inject.js';
 import dedent from './helpers/dedent.js';
 
@@ -17,6 +18,15 @@ function ctx(files: Record<string, string>, base = ''): MarkdownInjectContext {
     readFile: (p) => files[p] ?? null,
     pathBase: base,
   };
+}
+
+function issueMessages(
+  onIssue: ReturnType<typeof vi.fn>,
+  kind: ReportedIssue['kind'],
+): string[] {
+  return (onIssue.mock.calls as [ReportedIssue][])
+    .filter(([issue]) => issue.kind === kind)
+    .map(([issue]) => issue.message);
 }
 
 /** Expected plaster separator line inside ` ```lang ` fences for `it.each` plaster tests. */
@@ -345,7 +355,7 @@ describe('inject', () => {
     });
 
     it('returns original block when source is missing', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         <?code-excerpt "missing.dart"?>
 
@@ -354,13 +364,13 @@ describe('inject', () => {
         \`\`\`
 
       `;
-      const out = injectMarkdown(md, { readFile: () => null, onError });
+      const out = injectMarkdown(md, { readFile: () => null, onIssue });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalled();
+      expect(issueMessages(onIssue, 'error')).not.toEqual([]);
     });
 
     it('leaves block unchanged for diff-with with error', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         <?code-excerpt "a.dart" diff-with="b.dart"?>
 
@@ -371,10 +381,10 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: () => '//\n',
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalled();
+      expect(issueMessages(onIssue, 'error')).not.toEqual([]);
     });
 
     it('reads implicit default region when file has no directives', () => {
@@ -465,7 +475,7 @@ describe('inject', () => {
     });
 
     it('reports invalid processing instruction when regex does not match', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const bad = '<?code-excerpt "broken.dart skip="1"?>';
       const md = dedent`
         ${bad}
@@ -477,15 +487,15 @@ describe('inject', () => {
       `;
       injectMarkdown(md, {
         readFile: () => '//\n',
-        onError,
+        onIssue,
       });
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('invalid processing instruction'),
-      );
+      ]);
     });
 
     it('treats valueless named args as invalid processing-instruction syntax', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         <?code-excerpt "basic.dart (greeting)" title?>
 
@@ -496,17 +506,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: () => '//\n',
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('invalid processing instruction'),
-      );
+      ]);
     });
 
     it('warns when text follows ?> on the same line and does not inject', () => {
-      const onWarning = vi.fn();
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         NEVER
@@ -522,18 +531,17 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 't.dart' ? src : null),
-        onWarning,
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('extraneous text after closing "?>"'),
-      );
-      expect(onError).not.toHaveBeenCalled();
+      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
     });
 
     it('warns when PI is not closed with ?>', () => {
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         ok
@@ -549,15 +557,15 @@ describe('inject', () => {
       `;
       injectMarkdown(md, {
         readFile: (p) => (p === 'c.dart' ? src : null),
-        onWarning,
+        onIssue,
       });
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringMatching(/processing instruction must be closed using/),
-      );
+      ]);
     });
 
     it('warns when a space appears after "<?" in the PI opener', () => {
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         ok
@@ -573,16 +581,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'c.dart' ? src : null),
-        onWarning,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('must start with "<?code-excerpt"'),
-      );
+      ]);
     });
 
     it('errors on unterminated markdown fence and keeps original block', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         NOT_INJECTED
@@ -596,16 +604,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'u.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('unterminated markdown code block'),
-      );
+      ]);
     });
 
     it('errors when code block does not immediately follow excerpt PI', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = '//\n';
       const md = dedent`
         <?code-excerpt "q.dart"?>
@@ -618,16 +626,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'q.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringMatching(/code block should immediately follow/s),
-      );
+      ]);
     });
 
     it('errors on set instruction with more than one argument', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         <?code-excerpt path-base="a" replace="/x/y/g"?>
         <?code-excerpt "b.dart"?>
@@ -639,15 +647,15 @@ describe('inject', () => {
       `;
       injectMarkdown(md, {
         readFile: () => '//\n',
-        onError,
+        onIssue,
       });
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         'set instruction should have at most one argument',
-      );
+      ]);
     });
 
     it('warns and ignores unrecognized set instruction argument', () => {
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         <?code-excerpt foo="abc"?>
         <?code-excerpt "z.dart"?>
@@ -659,11 +667,11 @@ describe('inject', () => {
       `;
       injectMarkdown(md, {
         readFile: () => '//\n',
-        onWarning,
+        onIssue,
       });
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringMatching(/unrecognized set instruction argument:\s*foo/),
-      );
+      ]);
     });
 
     it('clears file-level replace when set replace is empty', () => {
@@ -696,7 +704,7 @@ describe('inject', () => {
     });
 
     it('does not apply invalid file-level set replace (reports error)', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         SRC_TOKEN
@@ -713,7 +721,7 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'inv.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt replace="not-a-regex-pipeline"?>
@@ -724,9 +732,9 @@ describe('inject', () => {
         \`\`\`
 
       `);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringMatching(/invalid replace attribute/),
-      );
+      ]);
     });
 
     it('applies globalReplace without file-level set replace', () => {
@@ -758,7 +766,7 @@ describe('inject', () => {
     });
 
     it('treats set class-only and title-only as no-ops (no warning)', () => {
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         ok
@@ -776,9 +784,10 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'noop.dart' ? src : null),
-        onWarning,
+        onIssue,
       });
-      expect(onWarning).not.toHaveBeenCalled();
+      expect(issueMessages(onIssue, 'warning')).toEqual([]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
       expect(out).toStrictEqual(dedent`
         <?code-excerpt class="prettyprint"?>
         <?code-excerpt title="Sample"?>
@@ -792,7 +801,7 @@ describe('inject', () => {
     });
 
     it('warns when a bare set instruction is a no-op', () => {
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         ok
@@ -809,13 +818,13 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         ...ctx({ 'noop.dart': src }),
-        onWarning,
+        onIssue,
       });
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining(
           'set instruction ignored: no argument provided',
         ),
-      );
+      ]);
       expect(out).toStrictEqual(dedent`
         <?code-excerpt?>
         <?code-excerpt "noop.dart"?>
@@ -918,7 +927,7 @@ describe('inject', () => {
     });
 
     it('leaves block unchanged on repeated region setting', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion r1
         in-r1
@@ -934,16 +943,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'reg.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('region: repeated setting argument'),
-      );
+      ]);
     });
 
     it('leaves block unchanged on repeated indent-by setting', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         ok
@@ -959,16 +968,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'dup-indent.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('indent-by: repeated setting argument'),
-      );
+      ]);
     });
 
     it('leaves block unchanged on invalid indent-by setting', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         ok
@@ -984,12 +993,12 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'bad-indent.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('indent-by: error parsing integer value'),
-      );
+      ]);
     });
 
     it('substitutes plaster markers using the default plaster template', () => {
@@ -1088,7 +1097,7 @@ describe('inject', () => {
     });
 
     it('errors on plaster="unset" on a set instruction', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         a
@@ -1109,7 +1118,7 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'unset-plaster.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(dedent`
         <?code-excerpt plaster="none"?>
@@ -1122,13 +1131,13 @@ describe('inject', () => {
         \`\`\`
 
       `);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         'plaster: invalid setting value on set instruction',
-      );
+      ]);
     });
 
     it('leaves block unchanged on repeated plaster setting', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         a
@@ -1147,16 +1156,16 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'dup-plaster.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('plaster: repeated setting argument'),
-      );
+      ]);
     });
 
     it('leaves block unchanged on fragment plaster="unset"', () => {
-      const onError = vi.fn();
+      const onIssue = vi.fn();
       const src = dedent`
         // #docregion
         a
@@ -1175,12 +1184,12 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: (p) => (p === 'frag-unset.dart' ? src : null),
-        onError,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onError).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'error')).toEqual([
         'plaster: invalid setting value on fragment instruction',
-      );
+      ]);
     });
 
     it('treats explicit fragment plaster as a full template', () => {
@@ -1427,28 +1436,25 @@ describe('inject', () => {
     });
 
     it('errors when input ends after excerpt PI (no code block)', () => {
-      const onError = vi.fn();
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         <?code-excerpt "end.dart"?>
       `;
       const out = injectMarkdown(md, {
         readFile: () => '//\n',
-        onError,
-        onWarning,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('reached end of input before code block'),
-      );
-      expect(onError).toHaveBeenCalledWith(
+      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('reached end of input'),
-      );
+      ]);
     });
 
     it('leaves comment-prefixed input unchanged when no code block follows a PI', () => {
-      const onError = vi.fn();
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         /// Missing code block
         /// <?code-excerpt "quote.md"?>
@@ -1456,21 +1462,19 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: () => 'ignored\n',
-        onError,
-        onWarning,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('code block should immediately follow'),
-      );
-      expect(onError).toHaveBeenCalledWith(
+      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('code block should immediately follow'),
-      );
+      ]);
     });
 
     it('leaves comment-prefixed input unchanged when the closing fence is missing', () => {
-      const onError = vi.fn();
-      const onWarning = vi.fn();
+      const onIssue = vi.fn();
       const md = dedent`
         /// Closing code-block token is missing below:
         /// <?code-excerpt "quote.md"?>
@@ -1479,16 +1483,15 @@ describe('inject', () => {
       `;
       const out = injectMarkdown(md, {
         readFile: () => 'ignored\n',
-        onError,
-        onWarning,
+        onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(onWarning).toHaveBeenCalledWith(
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('unterminated markdown code block'),
-      );
-      expect(onError).toHaveBeenCalledWith(
+      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('unterminated markdown code block'),
-      );
+      ]);
     });
 
     it('handles liquid prettify fences like backtick fences', () => {

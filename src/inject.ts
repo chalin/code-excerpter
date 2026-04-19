@@ -17,7 +17,8 @@ import { re } from './helpers/re.js';
  * Core `<?code-excerpt ...?>` match from the start of a line (no end-of-line rule).
  * Composed into {@link PROC_INSTR_RE}; also used alone so `injectMarkdown` can detect
  * a well-formed PI followed by **non-whitespace after `?>`** — that case does not match
- * {@link PROC_INSTR_RE}, triggers `onWarning`, and the line is skipped as an instruction.
+ * {@link PROC_INSTR_RE}, reports a warning issue, and the line is skipped as an
+ * instruction.
  */
 const PROC_INSTR_BODY =
   /^(?<linePrefix>\s*((?:\/\/\/?|-|\*)\s*)?)?<\?code-excerpt\s*(?:"(?<unnamed>[^"]+)")?(?<named>(?:\s+[-\w]+\s*=\s*"[^"]*"\s*)*)\s*\??>/;
@@ -27,8 +28,9 @@ const MALFORMED_PI_SPACE_AFTER_XML_OPEN = re`^(?:\s*((?:///?|-|\*)\s*)?)?<\?\s+c
 /**
  * Strict match: the **entire line** is only a `<?code-excerpt ...?>` plus optional trailing
  * whitespace (whole-line match with a `$` anchor). Export for tests and
- * tooling; lines with extra text after `?>` do not match — see `injectMarkdown`’s
- * `onWarning` path (`processing instruction ignored: extraneous text after closing "?>"`).
+ * tooling; lines with extra text after `?>` do not match — see
+ * `injectMarkdown`’s warning-issue path
+ * (`processing instruction ignored: extraneous text after closing "?>"`).
  */
 export const PROC_INSTR_RE = new RegExp(
   `${PROC_INSTR_BODY.source}\\s*$`,
@@ -52,6 +54,13 @@ export interface ParsedNamedArgEntry {
 
 export interface ParsedNamedArgs {
   entries: ParsedNamedArgEntry[];
+}
+
+export type IssueKind = 'warning' | 'error';
+
+export interface ReportedIssue {
+  kind: IssueKind;
+  message: string;
 }
 
 /** Backtick fences, tilde fences, or Liquid `{% prettify ... %}` (not arbitrary `{% ... %}`). */
@@ -130,8 +139,7 @@ export interface MarkdownInjectContext {
    * `0` first if you want per-call totals.
    */
   instructionStats?: InstructionStats;
-  onWarning?: (msg: string) => void;
-  onError?: (msg: string) => void;
+  onIssue?: (issue: ReportedIssue) => void;
 }
 
 function joinPathBase(pathBase: string, relPath: string): string {
@@ -443,10 +451,10 @@ export function injectMarkdown(
   let fileReplacePipeline: ((code: string) => string) | null = null;
 
   const warn = (msg: string): void => {
-    ctx.onWarning?.(msg);
+    ctx.onIssue?.({ kind: 'warning', message: msg });
   };
   const err = (msg: string): void => {
-    ctx.onError?.(msg);
+    ctx.onIssue?.({ kind: 'error', message: msg });
   };
 
   let appReplacePipeline: ((code: string) => string) | null = null;

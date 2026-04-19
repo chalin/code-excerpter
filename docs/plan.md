@@ -96,7 +96,7 @@ C. [ ] Test gaps:
 1. [x] CLI integration tests in `test/cli.integration.test.ts` (`--help`,
        invalid `--exclude`, `--fail-on-update` with `--dry-run`).
 2. [x] `updatePaths`: assert `log` is called for expected lines; assert
-       `warnings` in `UpdateResult` when `onWarning` fires.
+       `warnings` in `UpdateResult` when warning issues are reported.
 3. [x] `updatePaths`: duplicate / overlapping roots (dedupe; see
        `test/update.test.ts`).
 

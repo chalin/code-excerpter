@@ -97,6 +97,9 @@ orchestrates the extraction + transform pipeline for each code block.
   transforms (Dart `Updater` `fileAndCmdLineCodeTransformer` order).
 - Per-instruction transform order follows named-argument order in the PI; see
   [`docs/spec.md`](spec.md#processing-order-of-transform-arguments).
+- Non-throwing parser/update issues are surfaced through
+  `onIssue({ kind, message })` on the inject context; the filesystem updater
+  adapts those back into `warnings[]` and `errors[]` on `UpdateResult`.
 - `readFile(path, region?)` mirrors Dart `ExcerptGetter` when the callback
   resolves `.txt` fragments and `.excerpt.yaml` regions; optional
   `escapeNgInterpolation` / `globalPlasterTemplate` match updater defaults.
