@@ -548,7 +548,6 @@ export function injectMarkdown(
       warn(
         `fragment ignored: reached end of input before code block - "${relPath}"`,
       );
-      err(`reached end of input, expect code block - "${relPath}"`);
       return [];
     }
 
@@ -556,10 +555,7 @@ export function injectMarkdown(
     const openMatch = CODE_BLOCK_START.exec(opening);
     if (openMatch?.groups?.token === undefined) {
       warn(
-        `fragment ignored: code block should immediately follow - "${relPath}"`,
-      );
-      err(
-        `code block should immediately follow - "${relPath}"\n not: ${opening}`,
+        `fragment ignored: code block should immediately follow - "${relPath}"; not: ${opening}`,
       );
       return [opening];
     }
@@ -568,7 +564,6 @@ export function injectMarkdown(
       warn(
         `fragment ignored: unterminated markdown code block for "${relPath}"`,
       );
-      err(`unterminated markdown code block for "${relPath}"`);
       return fb.lines;
     }
 

@@ -70,6 +70,8 @@ Changed:
 - Library issue reporting now uses the shared structured
   `onIssue({ kind, message })` / `ReportedIssue` model across directive,
   extract, transform, inject, and update APIs.
+- Recoverable ignored-fragment cases now report warning issues only instead of
+  paired warning and error issues.
 
 ## [v0.1.0][] - 2026-04-13
 
