@@ -1,4 +1,5 @@
 import { type Directive, tryParseDirective } from './directive.js';
+import { reportWarning, type IssueReporter } from './issues.js';
 
 export const DEFAULT_PLASTER = '···';
 
@@ -65,13 +66,13 @@ function dropTrailingPlaster(lines: string[]): string[] {
  *
  * @param uri - Source URI used in warning messages (e.g. a file path).
  * @param content - The full source file content.
- * @param onWarning - Optional callback for warning messages.
+ * @param onIssue - Optional callback for warning issues.
  * @returns A map from region name to extracted lines.
  */
 export function extractExcerpts(
   uri: string,
   content: string,
-  onWarning?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): Map<string, string[]> {
   const lines = content.split('\n');
   const excerpts = new Map<string, string[]>();
@@ -80,7 +81,7 @@ export function extractExcerpts(
   let containsDirectives = false;
 
   const warn = (msg: string): void => {
-    onWarning?.(`${msg} at ${uri}:${lineIdx + 1}`);
+    reportWarning(onIssue, `${msg} at ${uri}:${lineIdx + 1}`);
   };
 
   const quoteName = (name: string): string =>
@@ -163,7 +164,7 @@ export function extractExcerpts(
     }
 
     for (const issue of directive.issues) {
-      warn(issue);
+      reportWarning(onIssue, `${issue.message} at ${uri}:${lineIdx + 1}`);
     }
 
     switch (directive.kind) {
@@ -229,9 +230,9 @@ export function getExcerptRegionLines(
   uri: string,
   content: string,
   region: string,
-  onWarning?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): string[] | null {
-  const excerpts = extractExcerpts(uri, content, onWarning);
+  const excerpts = extractExcerpts(uri, content, onIssue);
   if (excerpts.has(region)) {
     return excerpts.get(region)!;
   }

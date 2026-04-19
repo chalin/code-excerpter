@@ -10,6 +10,8 @@ Project conventions for code, documentation, and tests.
 
 - **Module system**: ESM throughout. Use `import`/`export`, never `require()`.
 - **TypeScript**: Strict mode enabled (`"strict": true` in `tsconfig.json`).
+  `npm run check:types` (`tsc --noEmit`) type-checks `src/**/*.ts` and
+  `test/**/*.ts`; declaration emit for publish uses `tsconfig.build.json`.
 - **Built-in imports**: Always use the `node:` prefix (e.g., `node:fs/promises`,
   `node:path`, `node:url`).
 - **Async I/O**: Prefer `node:fs/promises` for all file operations in `src/`.

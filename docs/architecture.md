@@ -34,7 +34,8 @@ Key porting notes:
 - Returns a structured object with:
   - `kind`: `'docregion' | 'enddocregion'`
   - `names`: `string[]` (parsed region names; `['']` for the default region)
-  - `issues`: `Issue[]` — a list of warnings and errors (not thrown exceptions)
+  - `issues`: `ReportedIssue[]` — a list of warnings and errors (not thrown
+    exceptions)
 - Returns `null` for lines that are not directives.
 
 ### `src/extract.ts` (Phase 1b)
@@ -47,6 +48,8 @@ Extracts named code regions from source file content (a `string[]` of lines).
 - The default (unnamed) region is represented as the empty string `''`.
 - Handles overlapping and nested regions, plaster lines, and blank line
   collapsing at region boundaries.
+- Directive/extraction warnings use the shared `ReportedIssue` / `IssueReporter`
+  model rather than a string-only callback.
 - Returns a `Map<string, string[]>` from region name to extracted lines.
 
 ### `src/transform.ts` (Phase 2)
@@ -71,6 +74,8 @@ Supported transforms:
 
 Key porting note: `BackReferenceReplaceTransform` in Dart already targets JS
 regex back-reference semantics (`$1`, `$2`), so this is a straightforward port.
+Parse/validation failures also use the shared `ReportedIssue` / `IssueReporter`
+model.
 
 ### `src/inject.ts` (Phase 3)
 
@@ -97,8 +102,8 @@ orchestrates the extraction + transform pipeline for each code block.
   transforms (Dart `Updater` `fileAndCmdLineCodeTransformer` order).
 - Per-instruction transform order follows named-argument order in the PI; see
   [`docs/spec.md`](spec.md#processing-order-of-transform-arguments).
-- Non-throwing parser/update issues are surfaced through
-  `onIssue({ kind, message })` on the inject context; the filesystem updater
+- Non-throwing parser/update issues flow through the shared
+  `onIssue({ kind, message })` / `ReportedIssue` model; the filesystem updater
   adapts those back into `warnings[]` and `errors[]` on `UpdateResult`.
 - `readFile(path, region?)` mirrors Dart `ExcerptGetter` when the callback
   resolves `.txt` fragments and `.excerpt.yaml` regions; optional

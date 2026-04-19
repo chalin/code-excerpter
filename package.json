@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "__check:format": "prettier --ignore-unknown",
-    "_build": "tsup && tsc --emitDeclarationOnly",
+    "_build": "tsup && tsc --emitDeclarationOnly -p tsconfig.build.json",
     "_check:spelling": "cspell --no-progress -c .cspell.yml",
     "_diff:fail": "git diff --name-only --exit-code",
     "_fix:cspell:words": "perl scripts/sort.pl .cspell/words.txt",

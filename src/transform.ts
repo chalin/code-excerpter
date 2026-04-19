@@ -13,11 +13,15 @@
  * “Transform operations and fragment settings”.
  */
 
+import { reportError, reportWarning, type IssueReporter } from './issues.js';
+
 const escapedSlashRe = /\\\//g;
 const zeroChar = '\u0000';
 const endRe = /^g;?\s*$/;
 const slashLetterRe = /\\([\\nt])/g;
 const slashHexRe = /\\x(..)/g;
+/** `arg` is slash-wrapped `/inner/` iff this matches; group 1 is `inner` (may be empty). */
+const slashWrappedArgRe = /^\/(.*)\/$/;
 
 export type LinePredicate = (line: string) => boolean;
 export type ExcerptTransformOpName =
@@ -67,7 +71,7 @@ const ORDERED_TRANSFORM_KEYS = new Set([
 function applyOneTransformOp(
   lines: string[],
   op: ExcerptTransformOp,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): string[] {
   switch (op.name) {
     case 'skip': {
@@ -79,23 +83,23 @@ function applyOneTransformOp(
       return n === null ? lines : applyTake(lines, n);
     }
     case 'from': {
-      const pred = patternToLinePredicate(op.value, onError);
+      const pred = patternToLinePredicate(op.value, onIssue);
       return pred === null ? lines : applyFrom(lines, pred);
     }
     case 'to': {
-      const pred = patternToLinePredicate(op.value, onError);
+      const pred = patternToLinePredicate(op.value, onIssue);
       return pred === null ? lines : applyTo(lines, pred);
     }
     case 'remove': {
-      const pred = patternToLinePredicate(op.value, onError);
+      const pred = patternToLinePredicate(op.value, onIssue);
       return pred === null ? lines : applyRemove(lines, pred);
     }
     case 'retain': {
-      const pred = patternToLinePredicate(op.value, onError);
+      const pred = patternToLinePredicate(op.value, onIssue);
       return pred === null ? lines : applyRetain(lines, pred);
     }
     case 'replace': {
-      return applyReplaceTransform(lines, op.value, onError);
+      return applyReplaceTransform(lines, op.value, onIssue);
     }
   }
 }
@@ -103,10 +107,10 @@ function applyOneTransformOp(
 function applyReplaceTransform(
   lines: string[],
   replace: string,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): string[] {
   if (replace === '' || lines.length === 0) return lines;
-  const pipeline = parseReplacePipeline(replace, onError);
+  const pipeline = parseReplacePipeline(replace, onIssue);
   if (pipeline === null) return lines;
   return pipeline(lines.join('\n')).split('\n');
 }
@@ -118,11 +122,11 @@ function applyReplaceTransform(
 export function applyOrderedExcerptTransformOps(
   lines: string[],
   ops: ExcerptTransformOp[],
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): string[] {
   let cur = [...lines];
   for (const op of ops) {
-    cur = applyOneTransformOp(cur, op, onError);
+    cur = applyOneTransformOp(cur, op, onIssue);
   }
   return cur;
 }
@@ -135,7 +139,7 @@ export function applyExcerptTransformsInOrder(
   lines: string[],
   keyOrder: string[],
   map: Map<string, string>,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): string[] {
   const ops: ExcerptTransformOp[] = [];
   for (const key of keyOrder) {
@@ -144,49 +148,68 @@ export function applyExcerptTransformsInOrder(
     if (val === undefined) continue;
     ops.push({ name: key as ExcerptTransformOpName, value: val });
   }
-  return applyOrderedExcerptTransformOps(lines, ops, onError);
+  return applyOrderedExcerptTransformOps(lines, ops, onIssue);
 }
 
 /** Parses `indent-by` attribute values (Dart `Updater._getIndentBy`). */
 export function parseIndentBy(
   s: string | undefined,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): number {
   if (s === undefined) return 0;
   // Match Dart `int.tryParse`: the entire value must be an integer (no `2abc` → 2).
   if (!/^[-+]?\d+$/.test(s)) {
-    onError?.(`indent-by: error parsing integer value: ${JSON.stringify(s)}`);
+    reportError(
+      onIssue,
+      `indent-by: error parsing integer value: ${JSON.stringify(s)}`,
+    );
     return 0;
   }
   const n = Number.parseInt(s, 10);
   if (n < 0 || n > 100) {
-    onError?.(`indent-by: integer out of range: ${n}`);
+    reportError(onIssue, `indent-by: integer out of range: ${n}`);
     return 0;
   }
   return n;
 }
 
 /**
- * Builds a line predicate from a `from` / `to` / `remove` / `retain` argument:
- * `/.../` is a regex test via {@link RegExp.prototype.test}; otherwise {@link String.prototype.includes}.
+ * Builds a line predicate from a `from` / `to` / `remove` / `retain` argument
+ * string. When `arg` is:
+ *
+ * - `/pattern/`: returns a predicate that uses `new RegExp(...).test`; invalid
+ *   patterns report via `onIssue` and yield `null`.
+ * - Otherwise: returns a predicate that uses {@link String.prototype.includes}.
+ *    A leading `\/` becomes `/` so the search string can start with `/` without
+ *    using the slash-wrapped form.
  */
 export function patternToLinePredicate(
   arg: string,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): LinePredicate | null {
-  if (arg.startsWith('/') && arg.endsWith('/') && arg.length >= 2) {
-    const inner = arg.slice(1, -1);
+  const wrapped = slashWrappedArgRe.exec(arg);
+  if (wrapped !== null) {
+    const patternSource = wrapped[1] ?? '';
+    if (arg === '//') {
+      reportWarning(
+        onIssue,
+        '"//" is the empty regexp and matches everything; use "" or "\\//"',
+      );
+    }
     try {
-      const re = new RegExp(inner);
+      const re = new RegExp(patternSource);
       return (line: string) => re.test(line);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      onError?.(`invalid regexp in pattern ${JSON.stringify(arg)}: ${msg}`);
+      reportError(
+        onIssue,
+        `invalid regexp in pattern ${JSON.stringify(arg)}: ${msg}`,
+      );
       return null;
     }
   }
-  const stringToMatch = arg.startsWith('\\/') ? arg.slice(1) : arg;
-  return (line: string) => line.includes(stringToMatch);
+  const literal = arg.startsWith('\\/') ? arg.slice(1) : arg;
+  return (line: string) => line.includes(literal);
 }
 
 function indexWhere(lines: string[], pred: LinePredicate): number {
@@ -274,14 +297,15 @@ function applyReplaceOne(
 
 /**
  * Parses a `replace` attribute like `/a/b/g;/c/d/g` and returns a function that applies
- * all segments, or `null` if invalid (errors reported via `onError`).
+ * all segments, or `null` if invalid (errors reported via `onIssue`).
  */
 export function parseReplacePipeline(
   replaceExp: string,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): ((code: string) => string) | null {
   const report = (detail: string): null => {
-    onError?.(
+    reportError(
+      onIssue,
       `invalid replace attribute (${JSON.stringify(replaceExp)}); ${detail}; ` +
         'supported syntax is 1 or more semi-colon-separated: /regexp/replacement/g',
     );
@@ -331,12 +355,12 @@ export function parseReplacePipeline(
  * several fields are set at once. Does not mutate `lines`. For markdown PIs,
  * use {@link applyExcerptTransformsInOrder} instead.
  *
- * @param onError - Parse/validation problems (indent-by, replace, bad `/regexp/` patterns).
+ * @param onIssue - Parse/validation problems (indent-by, replace, bad `/regexp/` patterns).
  */
 export function applyExcerptTransforms(
   lines: string[],
   options: ExcerptTransformOptions,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): string[] {
   let out = [...lines];
 
@@ -347,30 +371,30 @@ export function applyExcerptTransforms(
   if (takeN !== null) out = applyTake(out, takeN);
 
   if (options.from !== undefined) {
-    const pred = patternToLinePredicate(options.from, onError);
+    const pred = patternToLinePredicate(options.from, onIssue);
     if (pred !== null) out = applyFrom(out, pred);
   }
 
   if (options.to !== undefined) {
-    const pred = patternToLinePredicate(options.to, onError);
+    const pred = patternToLinePredicate(options.to, onIssue);
     if (pred !== null) out = applyTo(out, pred);
   }
 
   if (options.remove !== undefined) {
-    const pred = patternToLinePredicate(options.remove, onError);
+    const pred = patternToLinePredicate(options.remove, onIssue);
     if (pred !== null) out = applyRemove(out, pred);
   }
 
   if (options.retain !== undefined) {
-    const pred = patternToLinePredicate(options.retain, onError);
+    const pred = patternToLinePredicate(options.retain, onIssue);
     if (pred !== null) out = applyRetain(out, pred);
   }
 
   if (options.replace !== undefined && options.replace !== '') {
-    out = applyReplaceTransform(out, options.replace, onError);
+    out = applyReplaceTransform(out, options.replace, onIssue);
   }
 
-  const indent = parseIndentBy(options.indentBy, onError);
+  const indent = parseIndentBy(options.indentBy, onIssue);
   if (indent > 0) {
     const prefix = ' '.repeat(indent);
     out = out.map((line) => prefix + line);

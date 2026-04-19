@@ -9,8 +9,8 @@ import {
   injectMarkdown,
   PROC_INSTR_RE,
   type MarkdownInjectContext,
-  type ReportedIssue,
 } from '../src/inject.js';
+import type { ReportedIssue } from '../src/issues.js';
 import dedent from './helpers/dedent.js';
 
 function ctx(files: Record<string, string>, base = ''): MarkdownInjectContext {

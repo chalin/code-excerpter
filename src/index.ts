@@ -6,6 +6,12 @@ export {
 } from './directive.js';
 
 export {
+  type IssueKind,
+  type IssueReporter,
+  type ReportedIssue,
+} from './issues.js';
+
+export {
   DEFAULT_PLASTER,
   dropLeadingBlankLines,
   dropTrailingBlankLines,
@@ -18,10 +24,8 @@ export { type InstructionStats } from './instructionStats.js';
 
 export {
   injectMarkdown,
-  type IssueKind,
   type MarkdownInjectContext,
   PROC_INSTR_RE,
-  type ReportedIssue,
 } from './inject.js';
 
 export {
