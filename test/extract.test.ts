@@ -10,7 +10,7 @@ import {
 import type { ReportedIssue } from '../src/issues.js';
 import dedent from './helpers/dedent.js';
 
-const uri = 'foo';
+const uri = 'hello.ts';
 
 /**
  * Returns the non-directive lines of `content` (split on `\n`), with trailing
@@ -249,7 +249,7 @@ describe('extract', () => {
           '#docregion\n#enddocregion',
           warningMessages(warnings),
         );
-        expect(warnings).toEqual(['empty region at foo:2']);
+        expect(warnings).toEqual(['empty region at hello.ts:2']);
         expect(result).toEqual(new Map([['', []]]));
       });
 
@@ -260,7 +260,7 @@ describe('extract', () => {
           '#docregion a\n#enddocregion a',
           warningMessages(warnings),
         );
-        expect(warnings).toEqual(['empty region a at foo:2']);
+        expect(warnings).toEqual(['empty region a at hello.ts:2']);
         expect(result).toEqual(
           new Map([
             ['', []],
@@ -275,7 +275,7 @@ describe('extract', () => {
         const warnings: string[] = [];
         extractExcerpts(uri, '#enddocregion', warningMessages(warnings));
         expect(warnings).toEqual([
-          'region "" end without a prior start at foo:1',
+          'region "" end without a prior start at hello.ts:1',
         ]);
       });
 
@@ -283,7 +283,7 @@ describe('extract', () => {
         const warnings: string[] = [];
         extractExcerpts(uri, '#enddocregion a', warningMessages(warnings));
         expect(warnings).toEqual([
-          'region "a" end without a prior start at foo:1',
+          'region "a" end without a prior start at hello.ts:1',
         ]);
       });
 
@@ -291,7 +291,7 @@ describe('extract', () => {
         const warnings: string[] = [];
         extractExcerpts(uri, '#enddocregion a,b', warningMessages(warnings));
         expect(warnings).toEqual([
-          'regions ("a", "b") end without a prior start at foo:1',
+          'regions ("a", "b") end without a prior start at hello.ts:1',
         ]);
       });
 
@@ -303,7 +303,7 @@ describe('extract', () => {
           warningMessages(warnings),
         );
         expect(warnings).toEqual([
-          'region "" end without a prior start at foo:2',
+          'region "" end without a prior start at hello.ts:2',
         ]);
       });
     });
@@ -316,7 +316,9 @@ describe('extract', () => {
           '#docregion\n#docregion',
           warningMessages(warnings),
         );
-        expect(warnings).toEqual(['repeated start for region "" at foo:2']);
+        expect(warnings).toEqual([
+          'repeated start for region "" at hello.ts:2',
+        ]);
       });
 
       it('named region a repeated', () => {
@@ -326,7 +328,9 @@ describe('extract', () => {
           '#docregion a\n#docregion a',
           warningMessages(warnings),
         );
-        expect(warnings).toEqual(['repeated start for region "a" at foo:2']);
+        expect(warnings).toEqual([
+          'repeated start for region "a" at hello.ts:2',
+        ]);
       });
     });
 
@@ -335,14 +339,14 @@ describe('extract', () => {
         const warnings: string[] = [];
         extractExcerpts(uri, '#docregion ,a', warningMessages(warnings));
         expect(warnings).toEqual([
-          'unquoted default region name is deprecated at foo:1',
+          'unquoted default region name is deprecated at hello.ts:1',
         ]);
       });
 
       it('duplicate region argument', () => {
         const warnings: string[] = [];
         extractExcerpts(uri, '#docregion a,a', warningMessages(warnings));
-        expect(warnings).toEqual(['repeated argument "a" at foo:1']);
+        expect(warnings).toEqual(['repeated argument "a" at hello.ts:1']);
       });
     });
   });
