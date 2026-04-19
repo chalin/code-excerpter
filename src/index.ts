@@ -4,6 +4,7 @@ export {
   type DirectiveKind,
   tryParseDirective,
 } from './directive.js';
+
 export {
   DEFAULT_PLASTER,
   dropLeadingBlankLines,
@@ -12,12 +13,17 @@ export {
   getExcerptRegionLines,
   maxUnindent,
 } from './extract.js';
+
 export { type InstructionStats } from './instructionStats.js';
+
 export {
   injectMarkdown,
+  type IssueKind,
   type MarkdownInjectContext,
   PROC_INSTR_RE,
+  type ReportedIssue,
 } from './inject.js';
+
 export {
   applyExcerptTransforms,
   applyExcerptTransformsInOrder,
@@ -33,6 +39,7 @@ export {
   parseReplacePipeline,
   patternToLinePredicate,
 } from './transform.js';
+
 export {
   type UpdateOptions,
   type UpdateResult,
