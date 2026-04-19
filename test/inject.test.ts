@@ -589,7 +589,7 @@ describe('inject', () => {
       ]);
     });
 
-    it('errors on unterminated markdown fence and keeps original block', () => {
+    it('warns on unterminated markdown fence and keeps original block', () => {
       const onIssue = vi.fn();
       const src = dedent`
         // #docregion
@@ -607,12 +607,13 @@ describe('inject', () => {
         onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(issueMessages(onIssue, 'error')).toEqual([
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('unterminated markdown code block'),
       ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
     });
 
-    it('errors when code block does not immediately follow excerpt PI', () => {
+    it('warns when code block does not immediately follow excerpt PI', () => {
       const onIssue = vi.fn();
       const src = '//\n';
       const md = dedent`
@@ -629,9 +630,10 @@ describe('inject', () => {
         onIssue,
       });
       expect(out).toStrictEqual(md);
-      expect(issueMessages(onIssue, 'error')).toEqual([
+      expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringMatching(/code block should immediately follow/s),
       ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
     });
 
     it('errors on set instruction with more than one argument', () => {
@@ -1448,9 +1450,7 @@ describe('inject', () => {
       expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('reached end of input before code block'),
       ]);
-      expect(issueMessages(onIssue, 'error')).toEqual([
-        expect.stringContaining('reached end of input'),
-      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
     });
 
     it('leaves comment-prefixed input unchanged when no code block follows a PI', () => {
@@ -1466,11 +1466,11 @@ describe('inject', () => {
       });
       expect(out).toStrictEqual(md);
       expect(issueMessages(onIssue, 'warning')).toEqual([
-        expect.stringContaining('code block should immediately follow'),
+        expect.stringMatching(
+          /code block should immediately follow[\s\S]*not: int x = 0;/,
+        ),
       ]);
-      expect(issueMessages(onIssue, 'error')).toEqual([
-        expect.stringContaining('code block should immediately follow'),
-      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
     });
 
     it('leaves comment-prefixed input unchanged when the closing fence is missing', () => {
@@ -1489,9 +1489,7 @@ describe('inject', () => {
       expect(issueMessages(onIssue, 'warning')).toEqual([
         expect.stringContaining('unterminated markdown code block'),
       ]);
-      expect(issueMessages(onIssue, 'error')).toEqual([
-        expect.stringContaining('unterminated markdown code block'),
-      ]);
+      expect(issueMessages(onIssue, 'error')).toEqual([]);
     });
 
     it('handles liquid prettify fences like backtick fences', () => {
