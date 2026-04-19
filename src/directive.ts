@@ -1,3 +1,5 @@
+import type { ReportedIssue } from './issues.js';
+
 /**
  * Directives usually appear inside a line comment.
  *
@@ -42,7 +44,7 @@ export interface Directive {
   /** Parsed, deduplicated argument list. */
   args: string[];
   /** Warnings/errors accumulated during parsing. */
-  issues: string[];
+  issues: ReportedIssue[];
 }
 
 /** Returns a `Directive` parsed from `line`, or `null` if the line is not a directive. */
@@ -55,7 +57,7 @@ export function tryParseDirective(line: string): Directive | null {
   if (kind === null) return null;
 
   const rawArgs = match[4] ?? '';
-  const issues: string[] = [];
+  const issues: ReportedIssue[] = [];
 
   const argsMaybeWithDups: string[] =
     rawArgs === '' ? [] : rawArgs.split(argSeparator);
@@ -64,14 +66,17 @@ export function tryParseDirective(line: string): Directive | null {
 
   for (let arg of argsMaybeWithDups) {
     if (arg === '') {
-      issues.push('unquoted default region name is deprecated');
+      issues.push({
+        kind: 'warning',
+        message: 'unquoted default region name is deprecated',
+      });
     } else if (arg === "''") {
       arg = '';
     }
 
     const count = (argCounts.get(arg) ?? 0) + 1;
     if (count === 2) {
-      issues.push(`repeated argument "${arg}"`);
+      issues.push({ kind: 'warning', message: `repeated argument "${arg}"` });
     }
     argCounts.set(arg, count);
   }

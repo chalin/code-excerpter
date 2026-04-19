@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ReportedIssue } from '../src/issues.js';
 import {
   applyExcerptTransforms,
   applyExcerptTransformsInOrder,
@@ -14,27 +15,81 @@ import {
   patternToLinePredicate,
 } from '../src/transform.js';
 
+function errorMessages(onIssue: ReturnType<typeof vi.fn>): string[] {
+  return (onIssue.mock.calls as [ReportedIssue][])
+    .filter(([issue]) => issue.kind === 'error')
+    .map(([issue]) => issue.message);
+}
+
+function warningMessages(onIssue: ReturnType<typeof vi.fn>): string[] {
+  return (onIssue.mock.calls as [ReportedIssue][])
+    .filter(([issue]) => issue.kind === 'warning')
+    .map(([issue]) => issue.message);
+}
+
 describe('transform', () => {
   describe('patternToLinePredicate', () => {
-    it('substring match', () => {
-      const p = patternToLinePredicate('foo');
+    it('uses substring matching for plain strings', () => {
+      const p = patternToLinePredicate('be');
+
       expect(p).not.toBeNull();
-      expect(p!('afoob')).toBe(true);
-      expect(p!('bar')).toBe(false);
+      expect(p!('between')).toBe(true);
+      expect(p!('among')).toBe(false);
     });
 
-    it('regex form', () => {
-      const p = patternToLinePredicate('/^\\s{2}bar/');
+    it('treats a leading \\/ as a literal slash', () => {
+      const p = patternToLinePredicate(String.raw`\//`);
+
       expect(p).not.toBeNull();
-      expect(p!('  bar')).toBe(true);
-      expect(p!(' bar')).toBe(false);
+      expect(p!('path // comment')).toBe(true);
+      expect(p!('path / comment')).toBe(false);
     });
 
-    it('invalid regexp reports and returns null', () => {
-      const onError = vi.fn();
-      const p = patternToLinePredicate('/(/', onError);
+    it('treats an empty string as a literal match-all substring', () => {
+      const p = patternToLinePredicate('');
+
+      expect(p).not.toBeNull();
+      expect(p!('anything')).toBe(true);
+      expect(p!('')).toBe(true);
+    });
+
+    it('uses regexp matching for slash-wrapped patterns', () => {
+      const p = patternToLinePredicate('/^\\s{2}lime/');
+
+      expect(p).not.toBeNull();
+      expect(p!('  lime')).toBe(true);
+      expect(p!(' lime')).toBe(false);
+    });
+
+    it('supports non-capturing groups in regexp patterns', () => {
+      const p = patternToLinePredicate('/^apple-(?:carrot|celery) juice$/');
+
+      expect(p).not.toBeNull();
+      expect(p!('apple-carrot juice')).toBe(true);
+      expect(p!('apple-celery juice')).toBe(true);
+      expect(p!('apple-lemon juice')).toBe(false);
+    });
+
+    it('warns that // is the empty regexp and still matches everything', () => {
+      const onIssue = vi.fn();
+      const p = patternToLinePredicate('//', onIssue);
+
+      expect(p).not.toBeNull();
+      expect(p!('anything')).toBe(true);
+      expect(p!('')).toBe(true);
+      expect(warningMessages(onIssue)).toEqual([
+        String.raw`"//" is the empty regexp and matches everything; use "" or "\//"`,
+      ]);
+      expect(errorMessages(onIssue)).toEqual([]);
+    });
+
+    it('reports invalid regexp patterns and returns null', () => {
+      const onIssue = vi.fn();
+      const p = patternToLinePredicate('/(/', onIssue);
+
       expect(p).toBeNull();
-      expect(onError).toHaveBeenCalled();
+      expect(errorMessages(onIssue)).not.toEqual([]);
+      expect(warningMessages(onIssue)).toEqual([]);
     });
   });
 
@@ -125,10 +180,10 @@ describe('transform', () => {
     });
 
     it('invalid reports via onError', () => {
-      const onError = vi.fn();
-      const fn = parseReplacePipeline(`foo`, onError);
+      const onIssue = vi.fn();
+      const fn = parseReplacePipeline(`foo`, onIssue);
       expect(fn).toBeNull();
-      expect(onError).toHaveBeenCalled();
+      expect(errorMessages(onIssue)).not.toEqual([]);
     });
   });
 
@@ -253,26 +308,26 @@ describe('transform', () => {
     });
 
     it('indent-by out of range', () => {
-      const onError = vi.fn();
-      const out = applyExcerptTransforms(['a'], { indentBy: '101' }, onError);
+      const onIssue = vi.fn();
+      const out = applyExcerptTransforms(['a'], { indentBy: '101' }, onIssue);
       expect(out).toEqual(['a']);
-      expect(onError).toHaveBeenCalled();
+      expect(errorMessages(onIssue)).not.toEqual([]);
     });
 
     it('indent-by rejects non-integer strings (no parseInt prefix)', () => {
-      const onError = vi.fn();
-      const out = applyExcerptTransforms(['a'], { indentBy: '2abc' }, onError);
+      const onIssue = vi.fn();
+      const out = applyExcerptTransforms(['a'], { indentBy: '2abc' }, onIssue);
       expect(out).toEqual(['a']);
-      expect(onError).toHaveBeenCalledWith(
+      expect(errorMessages(onIssue)).toEqual([
         expect.stringContaining('indent-by: error parsing integer value'),
-      );
+      ]);
     });
 
     it('omit replace when invalid', () => {
-      const onError = vi.fn();
-      const out = applyExcerptTransforms(['ab'], { replace: 'bad' }, onError);
+      const onIssue = vi.fn();
+      const out = applyExcerptTransforms(['ab'], { replace: 'bad' }, onIssue);
       expect(out).toEqual(['ab']);
-      expect(onError).toHaveBeenCalled();
+      expect(errorMessages(onIssue)).not.toEqual([]);
     });
 
     it('invalid skip is ignored', () => {

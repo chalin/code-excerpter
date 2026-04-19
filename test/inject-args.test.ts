@@ -4,14 +4,21 @@ import {
   parseFragmentArgs,
   parseNamedArgs,
 } from '../src/inject.js';
+import type { ReportedIssue } from '../src/issues.js';
 import dedent from './helpers/dedent.js';
+
+function errorMessages(onIssue: ReturnType<typeof vi.fn>): string[] {
+  return (onIssue.mock.calls as [ReportedIssue][])
+    .filter(([issue]) => issue.kind === 'error')
+    .map(([issue]) => issue.message);
+}
 
 describe('inject arg processing', () => {
   describe('parseNamedArgs', () => {
     it('preserves encounter order for named args', () => {
       const parsed = parseNamedArgs('skip="1" retain="x" replace="/a/b/g"');
 
-      expect(parsed.entries).toStrictEqual([
+      expect(parsed?.entries).toStrictEqual([
         { key: 'skip', value: '1' },
         { key: 'retain', value: 'x' },
         { key: 'replace', value: '/a/b/g' },
@@ -19,23 +26,23 @@ describe('inject arg processing', () => {
     });
 
     it('reports a parse failure near the first invalid token', () => {
-      const onError = vi.fn();
-      const parsed = parseNamedArgs('skip="1" @oops replace="/a/b/g"', onError);
+      const onIssue = vi.fn();
+      const parsed = parseNamedArgs('skip="1" @oops replace="/a/b/g"', onIssue);
 
       expect(parsed).toBeNull();
-      expect(onError).toHaveBeenCalledWith(
+      expect(errorMessages(onIssue)).toEqual([
         expect.stringContaining('instruction argument parsing failure'),
-      );
+      ]);
     });
 
     it('rejects valueless named args', () => {
-      const onError = vi.fn();
-      const parsed = parseNamedArgs('skip="1" plaster retain="x"', onError);
+      const onIssue = vi.fn();
+      const parsed = parseNamedArgs('skip="1" plaster retain="x"', onIssue);
 
       expect(parsed).toBeNull();
-      expect(onError).toHaveBeenCalledWith(
+      expect(errorMessages(onIssue)).toEqual([
         expect.stringContaining('instruction argument parsing failure'),
-      );
+      ]);
     });
   });
 
@@ -43,7 +50,7 @@ describe('inject arg processing', () => {
     it('preserves repeated TOps in exact encounter order while splitting settings', () => {
       const parsed = parseNamedArgs(
         'skip="1" region="r" replace="/a/b/g" retain="x" replace="/b/c/g" indent-by="2" plaster="tpl"',
-      );
+      )!;
       const fragment = parseFragmentArgs(parsed);
 
       expect(fragment).toStrictEqual({
@@ -61,7 +68,7 @@ describe('inject arg processing', () => {
     });
 
     it('classifies fragment replace as a transform operation', () => {
-      const fragment = parseFragmentArgs(parseNamedArgs('replace="/a/b/g"'));
+      const fragment = parseFragmentArgs(parseNamedArgs('replace="/a/b/g"')!);
 
       expect(fragment?.transformOps).toStrictEqual([
         { name: 'replace', value: '/a/b/g' },
@@ -74,23 +81,23 @@ describe('inject arg processing', () => {
     it.each(['region', 'indent-by', 'plaster'] as const)(
       'rejects repeated %s settings',
       (key) => {
-        const onError = vi.fn();
+        const onIssue = vi.fn();
         const value = key === 'indent-by' ? '1' : 'x';
         const parsed = parseNamedArgs(
           `${key}="${value}" ${key}="${value}"`,
-          onError,
-        );
+          onIssue,
+        )!;
 
-        expect(parseFragmentArgs(parsed, onError)).toBeNull();
-        expect(onError).toHaveBeenCalledWith(
+        expect(parseFragmentArgs(parsed, onIssue)).toBeNull();
+        expect(errorMessages(onIssue)).toEqual([
           `${key}: repeated setting argument on fragment instruction`,
-        );
+        ]);
       },
     );
 
     it('flags unsupported diff args without adding transform ops', () => {
       const fragment = parseFragmentArgs(
-        parseNamedArgs('skip="1" diff-with="b.dart" diff-u="3"'),
+        parseNamedArgs('skip="1" diff-with="b.dart" diff-u="3"')!,
       );
 
       expect(fragment?.transformOps).toStrictEqual([

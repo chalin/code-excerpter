@@ -11,6 +11,7 @@ import {
   type ExcerptTransformOp,
   parseReplacePipeline,
 } from './transform.js';
+import { reportError, reportWarning, type IssueReporter } from './issues.js';
 import { re } from './helpers/re.js';
 
 /**
@@ -54,13 +55,6 @@ export interface ParsedNamedArgEntry {
 
 export interface ParsedNamedArgs {
   entries: ParsedNamedArgEntry[];
-}
-
-export type IssueKind = 'warning' | 'error';
-
-export interface ReportedIssue {
-  kind: IssueKind;
-  message: string;
 }
 
 /** Backtick fences, tilde fences, or Liquid `{% prettify ... %}` (not arbitrary `{% ... %}`). */
@@ -139,7 +133,7 @@ export interface MarkdownInjectContext {
    * `0` first if you want per-call totals.
    */
   instructionStats?: InstructionStats;
-  onIssue?: (issue: ReportedIssue) => void;
+  onIssue?: IssueReporter;
 }
 
 function joinPathBase(pathBase: string, relPath: string): string {
@@ -171,14 +165,17 @@ function normalizeListLinePrefix(prefix: string): string {
 
 export function parseNamedArgs(
   named: string,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): ParsedNamedArgs | null {
   const entries: ParsedNamedArgEntry[] = [];
   let rest = named.trim();
   while (rest.length > 0) {
     const m = NAMED_ARG_RE.exec(rest);
     if (m === null) {
-      onError?.(`instruction argument parsing failure at/around: ${rest}`);
+      reportError(
+        onIssue,
+        `instruction argument parsing failure at/around: ${rest}`,
+      );
       return null;
     }
     const key = m[1]!;
@@ -203,7 +200,7 @@ export interface ParsedFragmentArgs {
 
 export function parseFragmentArgs(
   parsed: ParsedNamedArgs,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): ParsedFragmentArgs | null {
   const transformOps: ExcerptTransformOp[] = [];
   let regionValue: string | undefined;
@@ -213,7 +210,10 @@ export function parseFragmentArgs(
   const seenSettings = new Set<FragmentSettingName>();
 
   const rejectRepeatedSetting = (key: FragmentSettingName): null => {
-    onError?.(`${key}: repeated setting argument on fragment instruction`);
+    reportError(
+      onIssue,
+      `${key}: repeated setting argument on fragment instruction`,
+    );
     return null;
   };
 
@@ -387,18 +387,21 @@ function applyPlasterToLines(
 function tryParseFragmentIndent(
   raw: string | undefined,
   defaultIndentation: number,
-  onError?: (msg: string) => void,
+  onIssue?: IssueReporter,
 ): { ok: boolean; value: number } {
   if (raw === undefined) {
     return { ok: true, value: defaultIndentation };
   }
   if (!/^[-+]?\d+$/.test(raw)) {
-    onError?.(`indent-by: error parsing integer value: ${JSON.stringify(raw)}`);
+    reportError(
+      onIssue,
+      `indent-by: error parsing integer value: ${JSON.stringify(raw)}`,
+    );
     return { ok: false, value: defaultIndentation };
   }
   const n = Number.parseInt(raw, 10);
   if (n < 0 || n > 100) {
-    onError?.(`indent-by: integer out of range: ${n}`);
+    reportError(onIssue, `indent-by: integer out of range: ${n}`);
     return { ok: false, value: defaultIndentation };
   }
   return { ok: true, value: n };
@@ -451,16 +454,16 @@ export function injectMarkdown(
   let fileReplacePipeline: ((code: string) => string) | null = null;
 
   const warn = (msg: string): void => {
-    ctx.onIssue?.({ kind: 'warning', message: msg });
+    reportWarning(ctx.onIssue, msg);
   };
   const err = (msg: string): void => {
-    ctx.onIssue?.({ kind: 'error', message: msg });
+    reportError(ctx.onIssue, msg);
   };
 
   let appReplacePipeline: ((code: string) => string) | null = null;
   const gr = ctx.globalReplace;
   if (gr !== undefined && gr !== '') {
-    const parsed = parseReplacePipeline(gr, err);
+    const parsed = parseReplacePipeline(gr, ctx.onIssue);
     if (parsed === null) {
       throw new Error(
         `invalid global replace expression: ${JSON.stringify(gr)}`,
@@ -489,7 +492,7 @@ export function injectMarkdown(
       if (val === '') {
         fileReplacePipeline = null;
       } else {
-        const parsed = parseReplacePipeline(val, err);
+        const parsed = parseReplacePipeline(val, ctx.onIssue);
         fileReplacePipeline = parsed;
       }
       return;
@@ -523,7 +526,7 @@ export function injectMarkdown(
     namedStr: string,
     linePrefixRaw: string | undefined,
   ): string[] => {
-    const namedArgs = parseNamedArgs(namedStr, err);
+    const namedArgs = parseNamedArgs(namedStr, ctx.onIssue);
     if (namedArgs === null) {
       const fb = consumeFenceBlock(queue);
       if (fb.lines.length === 0) {
@@ -532,7 +535,7 @@ export function injectMarkdown(
       }
       return fb.lines;
     }
-    const fragmentArgs = parseFragmentArgs(namedArgs, err);
+    const fragmentArgs = parseFragmentArgs(namedArgs, ctx.onIssue);
     const parsed = parsePathAndRegion(unnamed);
     let region = parsed.region;
     const relPath = parsed.path;
@@ -595,7 +598,7 @@ export function injectMarkdown(
       resolvedPath,
       source,
       region,
-      warn,
+      ctx.onIssue,
     );
     if (excerptLines === null) {
       err(`unknown region "${region}" in "${resolvedPath}"`);
@@ -619,7 +622,7 @@ export function injectMarkdown(
     working = applyOrderedExcerptTransformOps(
       working,
       fragmentArgs.transformOps,
-      err,
+      ctx.onIssue,
     );
 
     let joined = working.join('\n');
@@ -635,7 +638,7 @@ export function injectMarkdown(
     const parsedIndent = tryParseFragmentIndent(
       fragmentArgs.indentByRaw,
       defaultIndentation,
-      err,
+      ctx.onIssue,
     );
     if (!parsedIndent.ok) {
       return [opening, ...oldInner, closing];
@@ -697,7 +700,7 @@ export function injectMarkdown(
     }
 
     if (unnamed === undefined) {
-      const namedArgs = parseNamedArgs(namedStr, err);
+      const namedArgs = parseNamedArgs(namedStr, ctx.onIssue);
       if (namedArgs === null) continue;
       handleSetInstruction(namedArgs);
       continue;

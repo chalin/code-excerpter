@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { tryParseDirective } from '../src/directive.js';
+import type { ReportedIssue } from '../src/issues.js';
 import { expectDirective } from './helpers/index.js';
+
+function warning(message: string): ReportedIssue {
+  return { kind: 'warning', message };
+}
 
 describe('directive', () => {
   describe('basic', () => {
@@ -97,7 +102,9 @@ describe('directive', () => {
       expect(d.kind).toBe('startRegion');
       expect(d.rawArgs).toBe(',a');
       expect(d.args).toEqual(['', 'a']);
-      expect(d.issues).toEqual(['unquoted default region name is deprecated']);
+      expect(d.issues).toEqual([
+        warning('unquoted default region name is deprecated'),
+      ]);
     });
 
     it('Duplicate "a" region', () => {
@@ -106,7 +113,7 @@ describe('directive', () => {
       expect(d.kind).toBe('startRegion');
       expect(d.rawArgs).toBe('a,b,c,a');
       expect(d.args).toEqual(['a', 'b', 'c']);
-      expect(d.issues).toEqual(['repeated argument "a"']);
+      expect(d.issues).toEqual([warning('repeated argument "a"')]);
     });
 
     it('Duplicate "" region', () => {
@@ -115,7 +122,7 @@ describe('directive', () => {
       expect(d.kind).toBe('startRegion');
       expect(d.rawArgs).toBe("'',''");
       expect(d.args).toEqual(['']);
-      expect(d.issues).toEqual(['repeated argument ""']);
+      expect(d.issues).toEqual([warning('repeated argument ""')]);
     });
   });
 

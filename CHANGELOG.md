@@ -67,9 +67,9 @@ Changed:
 - **`npm run fix`:** delegates to `fix:all`.
 - `test:site-www` runs `npm run build` then `scripts/test-site-www.sh`
   ([tooling](docs/tooling.md)).
-- Library issue reporting now uses a single structured
-  `onIssue({ kind, message })` callback at the `injectMarkdown` / `updatePaths`
-  boundary.
+- Library issue reporting now uses the shared structured
+  `onIssue({ kind, message })` / `ReportedIssue` model across directive,
+  extract, transform, inject, and update APIs.
 
 ## [v0.1.0][] - 2026-04-13
 
