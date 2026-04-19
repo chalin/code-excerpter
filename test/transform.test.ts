@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ReportedIssue } from '../src/issues.js';
+import type { IssueKind, ReportedIssue } from '../src/issues.js';
 import {
   applyExcerptTransforms,
   applyExcerptTransformsInOrder,
@@ -15,15 +15,12 @@ import {
   patternToLinePredicate,
 } from '../src/transform.js';
 
-function errorMessages(onIssue: ReturnType<typeof vi.fn>): string[] {
+function messages(
+  onIssue: ReturnType<typeof vi.fn>,
+  kind?: IssueKind,
+): string[] {
   return (onIssue.mock.calls as [ReportedIssue][])
-    .filter(([issue]) => issue.kind === 'error')
-    .map(([issue]) => issue.message);
-}
-
-function warningMessages(onIssue: ReturnType<typeof vi.fn>): string[] {
-  return (onIssue.mock.calls as [ReportedIssue][])
-    .filter(([issue]) => issue.kind === 'warning')
+    .filter(([issue]) => (kind ? issue.kind === kind : true))
     .map(([issue]) => issue.message);
 }
 
@@ -77,10 +74,10 @@ describe('transform', () => {
       expect(p).not.toBeNull();
       expect(p!('anything')).toBe(true);
       expect(p!('')).toBe(true);
-      expect(warningMessages(onIssue)).toEqual([
+      expect(messages(onIssue, 'warning')).toEqual([
         String.raw`"//" is the empty regexp and matches everything; use "" or "\//"`,
       ]);
-      expect(errorMessages(onIssue)).toEqual([]);
+      expect(messages(onIssue, 'error')).toEqual([]);
     });
 
     it('reports invalid regexp patterns and returns null', () => {
@@ -88,8 +85,8 @@ describe('transform', () => {
       const p = patternToLinePredicate('/(/', onIssue);
 
       expect(p).toBeNull();
-      expect(errorMessages(onIssue)).not.toEqual([]);
-      expect(warningMessages(onIssue)).toEqual([]);
+      expect(messages(onIssue, 'error')).not.toEqual([]);
+      expect(messages(onIssue, 'warning')).toEqual([]);
     });
   });
 
@@ -168,9 +165,17 @@ describe('transform', () => {
 
   describe('parseReplacePipeline', () => {
     it('single segment', () => {
-      const fn = parseReplacePipeline(`/foo/bar/g`);
+      const fn = parseReplacePipeline(`/apple/banana/g`);
       expect(fn).not.toBeNull();
-      expect(fn!('foo')).toBe('bar');
+      expect(fn!('apple')).toBe('banana');
+    });
+
+    it('single segment with trailing semicolon is valid', () => {
+      const onIssue = vi.fn();
+      const fn = parseReplacePipeline(`/apple/banana/g;`, onIssue);
+      expect(fn).not.toBeNull();
+      expect(fn!('apple')).toBe('banana');
+      expect(messages(onIssue)).toEqual([]);
     });
 
     it('multiple segments compose left-to-right', () => {
@@ -179,11 +184,20 @@ describe('transform', () => {
       expect(fn!('a')).toBe('b');
     });
 
-    it('invalid reports via onError', () => {
+    it('multiple space-separated segments compose left-to-right', () => {
       const onIssue = vi.fn();
-      const fn = parseReplacePipeline(`foo`, onIssue);
+      const fn = parseReplacePipeline(`/a/x/g; /x/y/g;   /y/b/g;`, onIssue);
+      expect(fn).not.toBeNull();
+      expect(fn!('a')).toBe('b');
+      expect(messages(onIssue)).toEqual([]);
+    });
+
+    it('reports invalid replace expression via onIssue', () => {
+      const onIssue = vi.fn();
+      const fn = parseReplacePipeline(`not-a-replace-expression`, onIssue);
       expect(fn).toBeNull();
-      expect(errorMessages(onIssue)).not.toEqual([]);
+      expect(messages(onIssue, 'error')).toHaveLength(1);
+      expect(messages(onIssue)).toHaveLength(1);
     });
   });
 
@@ -311,14 +325,14 @@ describe('transform', () => {
       const onIssue = vi.fn();
       const out = applyExcerptTransforms(['a'], { indentBy: '101' }, onIssue);
       expect(out).toEqual(['a']);
-      expect(errorMessages(onIssue)).not.toEqual([]);
+      expect(messages(onIssue, 'error')).not.toEqual([]);
     });
 
     it('indent-by rejects non-integer strings (no parseInt prefix)', () => {
       const onIssue = vi.fn();
       const out = applyExcerptTransforms(['a'], { indentBy: '2abc' }, onIssue);
       expect(out).toEqual(['a']);
-      expect(errorMessages(onIssue)).toEqual([
+      expect(messages(onIssue, 'error')).toEqual([
         expect.stringContaining('indent-by: error parsing integer value'),
       ]);
     });
@@ -327,7 +341,7 @@ describe('transform', () => {
       const onIssue = vi.fn();
       const out = applyExcerptTransforms(['ab'], { replace: 'bad' }, onIssue);
       expect(out).toEqual(['ab']);
-      expect(errorMessages(onIssue)).not.toEqual([]);
+      expect(messages(onIssue, 'error')).not.toEqual([]);
     });
 
     it('invalid skip is ignored', () => {

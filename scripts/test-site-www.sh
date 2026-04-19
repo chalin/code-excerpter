@@ -14,7 +14,7 @@
 #   ./scripts/test-site-www.sh --root /path/to/site-www
 #   ./scripts/test-site-www.sh --write
 #   ./scripts/test-site-www.sh --root /path/to/site-www --write
-#   ./scripts/test-site-www.sh --root /path/to/site-www --write src/content/docs/foo.md
+#   ./scripts/test-site-www.sh --root /path/to/site-www --write src/content/docs/abc.md
 #
 # cSpell:ignore worktree
 

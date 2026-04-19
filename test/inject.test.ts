@@ -659,7 +659,7 @@ describe('inject', () => {
     it('warns and ignores unrecognized set instruction argument', () => {
       const onIssue = vi.fn();
       const md = dedent`
-        <?code-excerpt foo="abc"?>
+        <?code-excerpt oops="abc"?>
         <?code-excerpt "z.dart"?>
 
         \`\`\`
@@ -672,7 +672,7 @@ describe('inject', () => {
         onIssue,
       });
       expect(issueMessages(onIssue, 'warning')).toEqual([
-        expect.stringMatching(/unrecognized set instruction argument:\s*foo/),
+        expect.stringMatching(/unrecognized set instruction argument:\s*oops/),
       ]);
     });
 
