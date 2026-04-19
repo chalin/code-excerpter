@@ -81,7 +81,7 @@ A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
 2. [ ] Add Vitest goldens aligned with [updater_test.dart][] (copy `src/` → run
        updater → compare to `expected/`).
 
-B. [ ] Optional follow-up items:
+B. [x] Optional follow-up items:
 
 1. [x] **Overlapping `paths`**: `updatePaths` dedupes collected absolute paths
        before processing (same `.md` once per run).
@@ -91,7 +91,7 @@ B. [ ] Optional follow-up items:
        handling of negated boolean flags; behavior must stay aligned with
        `injectMarkdown` (`escapeNgInterpolation !== false` means escape).
 
-C. [ ] Test gaps:
+C. [x] Test gaps:
 
 1. [x] CLI integration tests in `test/cli.integration.test.ts` (`--help`,
        invalid `--exclude`, `--fail-on-update` with `--dry-run`).
@@ -100,19 +100,10 @@ C. [ ] Test gaps:
 3. [x] `updatePaths`: duplicate / overlapping roots (dedupe; see
        `test/update.test.ts`).
 
-D. [ ] **Revisit — `<?code-excerpt` in prose (e.g. markdown tables):** Today
-`injectMarkdown` treats any line **containing** the substring `<?code-excerpt`
-as a candidate PI; if the strict full-line regex does not match and the
-line-start `PROC_INSTR_BODY` regex also does not match (e.g. the PI text appears
-**mid-line** in documentation), the tool reports **invalid processing
-instruction**. That is awkward for docs that quote the syntax literally.
-**Current workaround:** escape the opening angle bracket in prose (e.g.
-`&lt;?code-excerpt …?>`) so the raw line does not contain `<?code-excerpt`.
-**Possible later change:** only run PI parsing / errors when there is a real
-line-start PI attempt (`PROC_INSTR_BODY` matches), so mid-line mentions are left
-alone; add a regression test and optionally document `&lt;` in
-[`docs/spec.md`](spec.md) for rare line-start edge cases (aligned with XML PI
-rules).
+D. [x] **Literal `<?code-excerpt` in prose:** documented the current workaround
+in [`docs/spec.md`](spec.md#markdown-input-assumptions): escape the opening
+angle bracket as `&lt;?code-excerpt …?>` when quoting the syntax literally in
+prose.
 
 ## Phase 5b - extra behavior
 

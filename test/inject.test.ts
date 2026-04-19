@@ -22,10 +22,10 @@ function ctx(files: Record<string, string>, base = ''): MarkdownInjectContext {
 
 function issueMessages(
   onIssue: ReturnType<typeof vi.fn>,
-  kind: ReportedIssue['kind'],
+  kind?: ReportedIssue['kind'],
 ): string[] {
   return (onIssue.mock.calls as [ReportedIssue][])
-    .filter(([issue]) => issue.kind === kind)
+    .filter(([issue]) => (kind ? issue.kind === kind : true))
     .map(([issue]) => issue.message);
 }
 
@@ -492,6 +492,39 @@ describe('inject', () => {
       expect(issueMessages(onIssue, 'error')).toEqual([
         expect.stringContaining('invalid processing instruction'),
       ]);
+    });
+
+    it('reports invalid processing instruction for a mid-line prose mention', () => {
+      const onIssue = vi.fn();
+      const md = dedent`
+        Inlined \`<?code-excerpt "a.dart"?>\` directive syntax in prose text.
+      `;
+
+      const out = injectMarkdown(md, {
+        readFile: () => '//\n',
+        onIssue,
+      });
+
+      expect(out).toStrictEqual(md);
+      expect(issueMessages(onIssue, 'error')).toEqual([
+        expect.stringContaining('invalid processing instruction'),
+      ]);
+      expect(issueMessages(onIssue)).toHaveLength(1);
+    });
+
+    it('ignores an escaped prose mention using &lt;', () => {
+      const onIssue = vi.fn();
+      const md = dedent`
+        "Escaped" directive syntax in prose:  \`&lt;?code-excerpt "a.dart"?>\`.
+      `;
+
+      const out = injectMarkdown(md, {
+        readFile: () => '//\n',
+        onIssue,
+      });
+
+      expect(out).toStrictEqual(md);
+      expect(issueMessages(onIssue)).toHaveLength(0);
     });
 
     it('treats valueless named args as invalid processing-instruction syntax', () => {

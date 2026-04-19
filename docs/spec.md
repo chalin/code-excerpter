@@ -29,6 +29,10 @@ parser. It scans lines for processing instructions and fenced blocks with
 regex-based rules. Inputs are assumed to be well-formed Markdown with processing
 instructions.
 
+When documentation needs to mention `<?code-excerpt ...?>` literally in prose,
+escape the opening angle bracket as `&lt;?code-excerpt ...?>`. Otherwise a line
+containing the raw substring `<?code-excerpt` can be treated as a PI attempt.
+
 After a fragment instruction, the next non-empty line should be an opening
 fence, and a matching close fence of the same kind should appear before the next
 excerpt block. Malformed nesting, unbalanced fences, or excerpts embedded in
