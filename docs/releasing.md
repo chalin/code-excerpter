@@ -46,7 +46,9 @@ Prepare the release on a short-lived PR branch based on `main` (for example,
 9. Bump the version with:
 
    ```sh
-   npm version X.Y.Z --no-git-tag-version
+   REL=X.Y.Z
+   echo $REL
+   npm version $REL --no-git-tag-version
    ```
 
    This updates `package.json` and `package-lock.json` together.
@@ -66,28 +68,29 @@ Prepare the release on a short-lived PR branch based on `main` (for example,
 
 ## Verify
 
+From the updated `main` branch:
+
 1. Ensure CI checks pass on the merged release commit.
-2. Build the publishable tarball:
-
-   ```sh
-   npm pack
-   ```
-
-3. Inspect the tarball contents briefly.
+2. Build the publishable tarball: `npm pack`
+3. Address any reported issues and inspect the tarball contents briefly.
 
 ## Tagging
 
-Create an annotated tag for the release version, for example:
+From `main`:
 
-```sh
-git tag -a v0.2.0 -m "v0.2.0"
-```
+1. Create a lightweight tag for the release version, for example:
 
-Then push `main` and the tag:
+   ```sh
+   REL=$(node -p 'require("./package.json").version')
+   echo $REL
+   git tag v$REL
+   ```
 
-```sh
-git push origin main --tags
-```
+2. From the same shell session, push the tag:
+
+   ```sh
+   git push origin v$REL
+   ```
 
 ## GitHub release
 
