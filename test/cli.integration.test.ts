@@ -148,7 +148,7 @@ describe('CLI (integration)', () => {
     expect(stdout).toBe('');
     expect(stderr).toMatch(/needs update:/);
     expect(stderr).toMatch(
-      /1 file\(s\) processed, 1 updated, \d+ error\(s\), \d+ warning\(s\); \d+ set directive\(s\), 1 fragment directive\(s\)/,
+      /1 file\(s\) processed, 1 need update, \d+ error\(s\), \d+ warning\(s\); \d+ set directive\(s\), 1 fragment directive\(s\)/,
     );
     expect(readFileSync(mdPath, 'utf8')).toBe(md);
   });

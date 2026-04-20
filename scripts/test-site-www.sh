@@ -100,4 +100,5 @@ fi
 
 cli_args+=("${path_args[@]}")
 
+set -x # Show resolved CLI invocation and arguments.
 node dist/cli.js "${cli_args[@]}"
