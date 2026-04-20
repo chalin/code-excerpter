@@ -73,6 +73,8 @@ Directory walking, file updating, CLI entry point.
 
 ## Phase 5a - follow-ups
 
+Unchecked items in this section are post-`0.2` follow-ups, not release blockers.
+
 A. [ ] **Follow-up** (site-shared updater goldens; complements Phase 3’s
 [code_excerpt_updater test_data][] inject-only goldens):
 
@@ -106,6 +108,8 @@ angle bracket as `&lt;?code-excerpt …?>` when quoting the syntax literally in
 prose.
 
 ## Phase 5b - extra behavior
+
+These items remain post-`0.2` follow-ups.
 
 ### Refreshing code excerpts in non-md files
 
@@ -157,7 +161,7 @@ reduces risk.
 [dart-lang/site-www]: https://github.com/dart-lang/site-www
 [chalin/code_excerpter]: https://github.com/chalin/code_excerpter
 [chalin/code_excerpter/test/excerpter_test.dart]:
-  https://github.com/chalin/code_excerpter/blob/master/test/excerpter_test.dart
+  https://github.com/chalin/code_excerpter/blob/main/test/excerpter_test.dart
 [dart-lang/site-shared pkgs/excerpter test_data]:
   https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter/test_data
 [updater_test.dart]:

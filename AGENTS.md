@@ -16,6 +16,8 @@ overview, installation, and clone workflow.
 - [docs/spec.md](docs/spec.md) — `<?code-excerpt?>` instruction syntax and
   transform argument order (PI attribute order in inject)
 - [docs/plan.md](docs/plan.md) — Phased porting plan with progress checkboxes
+- [docs/releasing.md](docs/releasing.md) — Release-prep checklist and task
+  rollover notes
 - [docs/scope.md](docs/scope.md) — Feature scoping for v1
 - [docs/tooling.md](docs/tooling.md) — Tooling stack, rationale, and how scripts
   fit together (canonical script list: `package.json` → `scripts`)

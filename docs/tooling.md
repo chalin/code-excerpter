@@ -17,6 +17,7 @@ Semver pins live in `package.json`; this table is orientation only.
 | Tests                 | `vitest`                                                             |
 | Lint                  | `eslint` + `typescript-eslint` (TypeScript / JavaScript)             |
 | Format                | `prettier`                                                           |
+| Link check            | `lychee`                                                             |
 | Markdown lint         | `markdownlint-cli2`                                                  |
 | Spell check           | `cspell` — [Spelling](#spelling-cspell)                              |
 | Type checking         | `tsc` - see [Type checking](#type-checking)                          |
@@ -104,6 +105,13 @@ layout can follow Prettier without duplicate line-length enforcement.
 
 [markdownlint]: https://github.com/DavidAnson/markdownlint
 
+### Link checking
+
+**lychee** checks repository links outside the Markdown-only linting path. CI
+uses `lycheeverse/lychee-action`; local `npm run check:links` requires a
+separately installed `lychee` binary. `.lycheecache` is committed so link-check
+results stay reusable and stable across runs.
+
 ### Spelling (cspell)
 
 **cspell** uses `.cspell.yml`; extra words are in `.cspell/words.txt`.
@@ -151,6 +159,7 @@ below states what it does / its purpose, not how it achieves that (see
 [tsup + TypeScript](#tsup--typescript-build).
 
 - `_build`: Produces publishable JS plus `.d.ts` (see tsup section).
+- `_check:links`: Lychee entry (used by `check:links`).
 - `_check:spelling`: cspell entry (used by `check:spelling`).
 - `_diff:fail`: Fails CI or local checks when the tree still differs from `HEAD`
   after fixers.
@@ -158,9 +167,11 @@ below states what it does / its purpose, not how it achieves that (see
   to diff-scoped Prettier. `_list:diff-never-empty` prints `README.md` when
   there are no changed paths against `HEAD`, so downstream commands always
   receive at least one path.
+- `_sort:lycheecache`: Sorts `.lycheecache` for stable diffs after link checks.
 - `build`: Serves as the public alias for `_build`.
 - `check:format`: Verifies Prettier formatting across supported paths without
   writing files.
+- `check:links`: Checks repository links with lychee.
 - `check:markdown`: Catches Markdown structure and style rules that Prettier
   does not cover (see [Markdown lint](#markdown-lint)).
 - `check:spelling`: Spell-checks the Markdown set the cspell config cares about
@@ -184,6 +195,7 @@ below states what it does / its purpose, not how it achieves that (see
   and a trailing-whitespace cleanup pass on `*.md` (markdownlint does not
   address line endings alone).
 - `lint`: Reports ESLint issues without writing files.
+- `postcheck:links`: Normalizes `.lycheecache` after link checks.
 - `seq`: Keeps `package.json` readable by centralizing “run these scripts in
   order, stop on the first failure” instead of long `&&` chains. Uses **bash**;
   on Windows, Git Bash, WSL, or another environment where `bash` is on `PATH` is

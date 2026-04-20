@@ -7,7 +7,9 @@ The format is based on [Keep a Changelog][], and this project adheres to
 
 Developer-focused changes recorded in separate "For developers" subsections.
 
-## v0.2.0-dev - unreleased
+## [v0.2.0][]
+
+> Released 2026-04-20
 
 ### Added
 
@@ -26,8 +28,8 @@ Developer-focused changes recorded in separate "For developers" subsections.
 ### Changed
 
 - README: improved installation instructions and Overview wording.
-- [`replace` expressions](docs/spec.md#replace-expressions) now features full
-  JavaScript semantics
+- [`replace` expressions](docs/spec.md#replace-expressions) now feature full
+  JavaScript semantics.
 - Spec now states clearly that excerpt **transform operations** run in the order
   they appear in the fragment instruction.
   [Details](docs/spec.md#processing-order-of-transform-arguments).
@@ -72,8 +74,12 @@ Changed:
   extract, transform, inject, and update APIs.
 - Recoverable ignored-fragment cases now report warning issues only instead of
   paired warning and error issues.
+- Link checking now uses `lycheeverse/lychee-action` in CI; local runs use
+  `npm run check:links`.
 
-## [v0.1.0][] - 2026-04-13
+## [v0.1.0][]
+
+> Released 2026-04-13
 
 ### Feature summary
 
@@ -108,4 +114,5 @@ Behavior and tests are based on the following Dart excerpter tools
 [dart-lang/site-shared]: https://github.com/dart-lang/site-shared
 [pkgs/excerpter]:
   https://github.com/dart-lang/site-shared/tree/main/pkgs/excerpter
+[v0.2.0]: https://github.com/chalin/code-excerpter/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/chalin/code-excerpter/releases/tag/v0.1.0
