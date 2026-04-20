@@ -92,7 +92,7 @@ program
       const { set, fragment } = result.instructionStats;
       const summary = [
         `${result.filesProcessed} file(s) processed`,
-        `${result.filesUpdated} updated`,
+        `${result.filesUpdated} ${opts.dryRun ? 'need update' : 'updated'}`,
         `${result.errors.length} error(s)`,
         `${result.warnings.length} warning(s)`,
       ].join(', ');
