@@ -1,0 +1,5 @@
+# https://github.com/lycheeverse/lychee
+
+cache = true
+max_cache_age = "7d"
+cache_exclude_status = []

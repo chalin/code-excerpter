@@ -7,9 +7,13 @@ enddocregion
 endprettify
 erlang
 excerpter
+github
 goldens
 kotlin
+lycheecache
+lycheeverse
 nvmrc
 pkgs
 postbuild
+postcheck
 toplevel
