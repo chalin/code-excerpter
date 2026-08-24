@@ -75,14 +75,17 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.5.0",
     "husky": "^9.1.7",
-    "markdownlint-cli2": "^0.22.0",
+    "markdownlint-cli2": "^0.23.2",
     "npm-check-updates": "^21.0.2",
     "prettier": "^3.8.3",
     "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
     "vitest": "^4.1.4",
     "yaml": "^2.8.3"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
   }
 }
