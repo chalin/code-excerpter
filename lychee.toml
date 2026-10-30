@@ -3,3 +3,7 @@
 cache = true
 max_cache_age = "7d"
 cache_exclude_status = []
+
+exclude = [
+  '^https://www\.npmjs\.com/package/', # bot-wall (403) on the package pages
+]
