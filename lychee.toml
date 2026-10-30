@@ -4,6 +4,3 @@ cache = true
 max_cache_age = "365d" # last-resort net: the committed cache is refreshed by hand
 cache_exclude_status = []
 
-exclude = [
-  '^https://www\.npmjs\.com/package/', # bot-wall (403) on the package pages
-]
