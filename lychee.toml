@@ -1,5 +1,6 @@
 # https://github.com/lycheeverse/lychee
 
 cache = true
-max_cache_age = "7d"
+max_cache_age = "365d" # last-resort net: the committed cache is refreshed by hand
 cache_exclude_status = []
+
