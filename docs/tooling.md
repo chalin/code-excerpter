@@ -23,7 +23,7 @@ Semver pins live in `package.json`; this table is orientation only.
 | Type checking         | `tsc` - see [Type checking](#type-checking)                          |
 | Command-line args     | `commander`                                                          |
 | Git hooks             | `husky` — [Git hooks](#git-hooks-husky)                              |
-| Dependency updates    | Renovate — [Dependency updates](#dependency-updates)                 |
+| Dependency updates    | Renovate ([Dependency updates](#dependency-updates))                 |
 
 ---
 
@@ -142,8 +142,12 @@ the GitHub Actions under `.github/workflows/`. Its settings live in
 security alerts and opens security updates (both are repository settings).
 
 - **Release age**: Renovate proposes a version only when its release is at least
-  7 days old. A harmful release is usually found and removed within that time.
-- **Schedule**: Renovate opens pull requests on Sunday (UTC) only.
+  7 days old. This gives time for a harmful release to be found and removed.
+- **Schedule**: Renovate opens its pull requests on Sunday (UTC).
+- **Pull requests**: patch updates of npm packages arrive in one pull request,
+  and minor updates in another. Each major update and each action update gets
+  its own. Renovate does not refresh the lock file by itself
+  (`lockFileMaintenance` is off): the lock changes only with a proposed update.
 - **Action pins**: each `uses:` line names a full commit SHA, then the full
   version in a comment:
 
@@ -154,10 +158,10 @@ security alerts and opens security updates (both are repository settings).
   A tag can move to another commit; a SHA cannot. Renovate reads the current
   version from the comment and updates both parts together. For actions, it
   takes versions and release dates from GitHub Releases, because a tag date can
-  be set by whoever pushes the tag. So use only actions that publish Releases,
-  and keep the comment a full version. A pull request that changes the SHA but
-  not the version means that a released tag moved: verify it upstream before
-  merging.
+  be set by whoever pushes the tag. So use only actions that publish Releases
+  (an action without them gets no version update, and no warning), and keep the
+  comment a full version. A pull request that changes the SHA but not the
+  version means that a released tag moved: verify it upstream before merging.
 
 - **`ignorePresets` caveat**: `config:best-practices` includes the preset
   `security:minimumReleaseAgeNpm`, which lowers the release age to 3 days for
