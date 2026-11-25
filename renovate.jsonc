@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  // For details about this repo's settings, see
+  // docs/tooling.md#dependency-updates
+  "extends": ["config:best-practices"],
+  "ignorePresets": ["security:minimumReleaseAgeNpm"],
+  "lockFileMaintenance": { "enabled": false },
+  "minimumReleaseAge": "7 days",
+  "schedule": ["* * * * 0"],
+  "timezone": "UTC",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "groupName": "all patch versions",
+      "matchUpdateTypes": ["patch"],
+      "matchManagers": ["!github-actions"],
+    },
+    {
+      "groupName": "all minor versions",
+      "matchUpdateTypes": ["minor"],
+      "matchManagers": ["!github-actions"],
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action", "workflow"],
+      "overrideDatasource": "github-releases",
+      "branchTopic": "{{{depNameSanitized}}}-{{{newDigest}}}",
+    },
+  ],
+}
